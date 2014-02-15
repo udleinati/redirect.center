@@ -299,7 +299,7 @@ body{
             <span class="en">
             A root domain (eg: nati.biz) cannot be a CNAME, a workaround for
             this is supported: point the A record for the root domain to the 
-            <span class="redirect-zone">redirect.zone</span> server (176.58.124.239) 
+            <span class="redirect-zone">redirect.zone</span> server (54.84.55.102) 
             and then create a CNAME matching the root domain (using CNAME or TXT 
             options as described above). For example to redirect 
             <a href="http://nati.biz">nati.biz</a> to 
