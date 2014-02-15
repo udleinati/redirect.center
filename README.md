@@ -9,4 +9,5 @@ somente alterando o DNS.
 
 O sistema será instalado no dominio http://redirect.zone,
 como este dominio está para liberação, temporariamente funcionando
-em http://toma.ai.
+em http://toma.ai. Substitua todas as referencias de redirect.zone
+para toma.ai no DNS.
