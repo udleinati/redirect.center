@@ -1,10 +1,14 @@
-<!DOCTYPE html>
+<?php
+
+$uptime = shell_exec("cut -d. -f1 /proc/uptime");
+
+?><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <title>REDIRECT ZONE</title>
-    <meta name="description" content="CNAMER, Domain redirects using CNAMEs, no configuration needed!"/>
-    <meta name="author" content="Samuel Ryan / sam@samryan.co.uk">
+    <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect"/>
+    <meta name="author" content="Udlei Nati / udlei@nati.biz">
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400|Inconsolata:400' rel='stylesheet' type='text/css'>
     <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
     <script type="text/javascript">
@@ -26,7 +30,48 @@
             }
         });
 
+        doUptime();
+
     });
+
+    var upSeconds=<?php echo $uptime ?>;
+
+    function doUptime() {
+        var uptimeString = "Server Uptime: ";
+        var secs = parseInt(upSeconds % 60);
+        var mins = parseInt(upSeconds / 60 % 60);
+        var hours = parseInt(upSeconds / 3600 % 24);
+        var days = parseInt(upSeconds / 86400);
+        
+        if (days > 0) {
+            uptimeString += days;
+            uptimeString += ((days == 1) ? " day" : " days");
+        }
+
+        if (hours > 0) {
+            uptimeString += ((days > 0) ? ", " : "") + hours;
+            uptimeString += ((hours == 1) ? " hour" : " hours");
+        }
+
+        if (mins > 0) {
+            uptimeString += ((days > 0 || hours > 0) ? ", " : "") + mins;
+            uptimeString += ((mins == 1) ? " minute" : " minutes");
+        }
+
+        if (secs > 0) {
+            uptimeString += ((days > 0 || hours > 0 || mins > 0) ? ", " : "") + secs;
+            uptimeString += ((secs == 1) ? " second" : " seconds");
+        }
+
+        var span_el = document.getElementById("uptime");
+        var replaceWith = document.createTextNode(uptimeString);
+        span_el.replaceChild(replaceWith, span_el.childNodes[0]);
+        
+        upSeconds++;
+        
+        setTimeout("doUptime()",1000);
+    
+    }
 
     </script>
     
@@ -193,12 +238,10 @@ body{
     </style>
 </head>
 <body>
-    <script type="text/javascript">
-    </script>
     <div id="header">
         <div class="container">
             <h1><a href="/">REDIRECT.ZONE</a></h1>
-            <h5><span id="domain_count">177</span> Domains &rarr; <span id="redirect_count">232119</span></h5>
+            <h5><span id="uptime">...</span></h5>
             <div class="language">
                 <a href="javascript:;" class="change to-en bold">english</a></span> . <a href="javascript:;" class="change to-pt-br">portugu&ecirc;s</a>
             </div>
@@ -265,13 +308,13 @@ body{
             <span class="pt-br">
             O dom&iacute;nio principal (ex: nati.biz) n&atilde;o pode ser do tipo CNAME, a alternativa
             para suportar o redirecionamento: apontar o dom&icuate;nio principal com tipo A para o IP do 
-            <span class="redirect-zone">redirect.zone</span> (176.58.124.239) 
+            <span class="redirect-zone">redirect.zone</span> (54.84.55.102) 
             e criar uma entrada do tipo CNAME apontando para o lugar que deseja redirecionar.
             Por exemplo para redirecionar <a href="http://nati.biz">nati.biz</a> para github.com:
             </span>
         </p>
         <code>
-            <span class="code-sub">A</span> nati.biz. IN A 176.58.124.239            <br/>
+            <span class="code-sub">A</span> nati.biz. IN A 54.84.55.102            <br/>
             <span class="code-sub">CNAME</span> redirect.zone.nati.biz. CNAME www.nati.biz.redirect.zone.        
         </code>
     </div>
