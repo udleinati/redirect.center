@@ -16,7 +16,7 @@ if ($r[0]['type'] == "A") {
 
 elseif ($r[0]['type'] == "CNAME") {
 
-	redirect($r[0]['type'],$_SERVER['HTTP_HOST'],$result[0]['target']);
+	redirect($r[0]['type'],$_SERVER['HTTP_HOST'],$r[0]['target']);
 
 }
 
