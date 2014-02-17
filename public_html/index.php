@@ -307,7 +307,7 @@ body{
             </span>
             <span class="pt-br">
             O dom&iacute;nio principal (ex: nati.biz) n&atilde;o pode ser do tipo CNAME, a alternativa
-            para suportar o redirecionamento: apontar o dom&icuate;nio principal com tipo A para o IP do 
+            para suportar o redirecionamento: apontar o dom&iacute;nio principal com tipo A para o IP do 
             <span class="redirect-zone">redirect.zone</span> (54.84.55.102) 
             e criar uma entrada do tipo CNAME apontando para o lugar que deseja redirecionar.
             Por exemplo para redirecionar <a href="http://nati.biz">nati.biz</a> para github.com:
