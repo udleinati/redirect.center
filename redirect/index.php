@@ -25,9 +25,26 @@ function redirect ($type,$record,$target) {
 	global $redirect_domain;
 
 	if ($type == "CNAME") {
-		
-		$target = str_replace(".".$redirect_domain,"",$target);
-		Header('location: http://' . $target , true, 301);
+
+        $code = 301;
+
+        $target = str_replace(".".$redirect_domain,"",$target);
+
+        # Verifica redirecionamento por URI
+        if (strstr($target,".opts-uri")) {
+            $target = str_replace(".opts-uri","",$target);
+            $target .= $_SERVER['REQUEST_URI'];
+        }
+
+        # Muda codigo de redirect
+        if (strstr($target,".opts-statuscode-")) {
+            $code = strstr($target,".opts-statuscode-");
+            $code = str_replace(".opts-statuscode-","",$code);
+            $target = str_replace(".opts-statuscode-".$code,"",$target);
+            $code = filter_var($code, FILTER_SANITIZE_NUMBER_INT);
+        }
+
+        Header('location: http://' . $target , true, $code);
 
 	}
 
