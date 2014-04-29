@@ -1,12 +1,12 @@
 <?php
 
-$redirect_domain = "redirect.zone";
+$redirect_domain = "redirect.center";
 
 $r = dns_get_record($_SERVER['HTTP_HOST'],DNS_A + DNS_CNAME);
 
 if ($r[0]['type'] == "A") {
 
-	# Verifica se existe a entrada redirect.zone.HTTP_HOST
+	# Verifica se existe a entrada redirect.center.HTTP_HOST
 	$record = $redirect_domain.".".$_SERVER['HTTP_HOST'];
 	$rr = dns_get_record($record,DNS_CNAME);
 
@@ -39,7 +39,7 @@ function redirect ($type,$record,$target) {
         print "Add in your dns server this entry:\n";
         print $redirect_domain.".".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$redirect_domain.".\n\n";
         print "If it is already done, may you need wait to try again.\n\n";
-        print "<a href='http://".$redirect_domain."'>".$redirect_zone."</a>";
+        print "<a href='http://".$redirect_domain."'>".$redirect_center."</a>";
         print "</pre></body></html>";	
    	}
 

@@ -6,7 +6,7 @@ $uptime = shell_exec("cut -d. -f1 /proc/uptime");
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>REDIRECT ZONE</title>
+    <title>REDIRECT CENTER</title>
     <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect"/>
     <meta name="author" content="Udlei Nati / udlei@nati.biz">
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400|Inconsolata:400' rel='stylesheet' type='text/css'>
@@ -231,7 +231,7 @@ body{
     margin-bottom: 10px;
 }
 
-.redirect-zone{
+.redirect.center{
     color: #fc5a44;
 }
 
@@ -240,7 +240,7 @@ body{
 <body>
     <div id="header">
         <div class="container">
-            <h1><a href="/">REDIRECT.ZONE</a></h1>
+            <h1><a href="/">REDIRECT.CENTER</a></h1>
             <h5><span id="uptime">...</span></h5>
             <div class="language">
                 <a href="javascript:;" class="change to-en bold">english</a></span> . <a href="javascript:;" class="change to-pt-br">portugu&ecirc;s</a>
@@ -264,15 +264,15 @@ body{
         </h1>
         <p id="overview">
             <span class="en">
-            Point a domain to the <span class="redirect-zone">redirect.zone</span> server
-            and <span class="redirect-zone">redirect.zone</span> will perform a DNS lookup and
+            Point a domain to the <span class="redirect.center">redirect.center</span> server
+            and <span class="redirect.center">redirect.center</span> will perform a DNS lookup and
             redirect the user to your specified destination. Throughout this documentation 
             "nati.biz" will be used as a placeholder for your domain, you can visit 
             any nati.biz example to see the redirect in action. 
             </span>
             <span class="pt-br">
-            Aponte um dom&iacute;nio para o servidor do <span class="redirect-zone">redirect.zone</span>
-            e o <span class="redirect-zone">redirect.zone</span> far&aacute; o redirecionamento
+            Aponte um dom&iacute;nio para o servidor do <span class="redirect.center">redirect.center</span>
+            e o <span class="redirect.center">redirect.center</span> far&aacute; o redirecionamento
             do usu&aacute;rio para o destino especificado. No decorrer desta documentação o dom&iacute;nio 
             "nati.biz" ser&aacute; usado como exemplo, voc&ecirc; pode visitar todos os exemplos para ver o 
             redirecionamento em a&ccedil;&atilde;o.
@@ -292,14 +292,14 @@ body{
             </span>
         </p>
         <code>
-            github.nati.biz. CNAME github.com.redirect.zone.
+            github.nati.biz. CNAME github.com.redirect.center.
         </code>
         <h2 id="usage:a"><a href="#usage:a">A Record</a></h2>
         <p>
             <span class="en">
             A root domain (eg: nati.biz) cannot be a CNAME, a workaround for
             this is supported: point the A record for the root domain to the 
-            <span class="redirect-zone">redirect.zone</span> server (54.84.55.102) 
+            <span class="redirect.center">redirect.center</span> server (54.84.55.102) 
             and then create a CNAME matching the root domain (using CNAME or TXT 
             options as described above). For example to redirect 
             <a href="http://nati.biz">nati.biz</a> to 
@@ -308,14 +308,14 @@ body{
             <span class="pt-br">
             O dom&iacute;nio principal (ex: nati.biz) n&atilde;o pode ser do tipo CNAME, a alternativa
             para suportar o redirecionamento: apontar o dom&iacute;nio principal com tipo A para o IP do 
-            <span class="redirect-zone">redirect.zone</span> (54.84.55.102) 
+            <span class="redirect.center">redirect.center</span> (54.84.55.102) 
             e criar uma entrada do tipo CNAME apontando para o lugar que deseja redirecionar.
             Por exemplo para redirecionar <a href="http://nati.biz">nati.biz</a> para github.com:
             </span>
         </p>
         <code>
             <span class="code-sub">A</span> nati.biz. IN A 54.84.55.102            <br/>
-            <span class="code-sub">CNAME</span> redirect.zone.nati.biz. CNAME www.nati.biz.redirect.zone.        
+            <span class="code-sub">CNAME</span> redirect.center.nati.biz. CNAME www.nati.biz.redirect.center.        
         </code>
     </div>
     <div id="footer">
@@ -325,17 +325,17 @@ body{
                 <a href="#about" class="pt-br">Sobre</a>
             </h1>
             <p class="en">
-                <span class="redirect-zone">REDIRECT.ZONE</span> is 
-                <a href="https://github.com/unattis/redirect.zone">open source</a>, code contributions, 
+                <span class="redirect.center">REDIRECT.CENTER</span> is 
+                <a href="https://github.com/unattis/redirect.center">open source</a>, code contributions, 
                 general feedback and ideas are greatly appreciated via either 
-                the <a href="https://github.com/unattis/redirect.zone/issues">GitHub issues</a>, 
+                the <a href="https://github.com/unattis/redirect.center/issues">GitHub issues</a>, 
                 <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz). 
             </p>
             <p class="pt-br">
-                <span class="redirect-zone">REDIRECT.ZONE</span> é 
-                <a href="https://github.com/unattis/redirect.zone">open source</a>, code contributions, 
+                <span class="redirect.center">REDIRECT.CENTER</span> é 
+                <a href="https://github.com/unattis/redirect.center">open source</a>, code contributions, 
                 feedback no geral de idéias s&atilde;o muito bem vindas, postar via
-                <a href="https://github.com/unattis/redirect.zone/issues">GitHub issues</a>, 
+                <a href="https://github.com/unattis/redirect.center/issues">GitHub issues</a>, 
                 <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz).
             </p>
         </div>
