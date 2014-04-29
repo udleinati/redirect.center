@@ -231,8 +231,28 @@ body{
     margin-bottom: 10px;
 }
 
-.redirect.center{
+.redirect-center{
     color: #fc5a44;
+}
+
+#options-table{
+    background-color: #F6F6F6;
+    display: block;
+    font-family: 'Inconsolata';
+    padding: 10px;
+}
+
+#options-table tr{
+    height: 24px;
+    text-align: left;
+}
+
+#options-table td{
+    padding-right: 30px;
+}
+
+#options-table th{
+    min-width: 100px;
 }
 
     </style>
@@ -264,15 +284,15 @@ body{
         </h1>
         <p id="overview">
             <span class="en">
-            Point a domain to the <span class="redirect.center">redirect.center</span> server
-            and <span class="redirect.center">redirect.center</span> will perform a DNS lookup and
+            Point a domain to the <span class="redirect-center">redirect.center</span> server
+            and <span class="redirect-center">redirect.center</span> will perform a DNS lookup and
             redirect the user to your specified destination. Throughout this documentation 
             "nati.biz" will be used as a placeholder for your domain, you can visit 
             any nati.biz example to see the redirect in action. 
             </span>
             <span class="pt-br">
-            Aponte um dom&iacute;nio para o servidor do <span class="redirect.center">redirect.center</span>
-            e o <span class="redirect.center">redirect.center</span> far&aacute; o redirecionamento
+            Aponte um dom&iacute;nio para o servidor do <span class="redirect-center">redirect.center</span>
+            e o <span class="redirect-center">redirect.center</span> far&aacute; o redirecionamento
             do usu&aacute;rio para o destino especificado. No decorrer desta documentação o dom&iacute;nio 
             "nati.biz" ser&aacute; usado como exemplo, voc&ecirc; pode visitar todos os exemplos para ver o 
             redirecionamento em a&ccedil;&atilde;o.
@@ -294,12 +314,81 @@ body{
         <code>
             github.nati.biz. CNAME github.com.redirect.center.
         </code>
+
+        <h3 id="options"><a href="#options"><span class="en">Options</span><span class="pt-br">Opções</span></a></h3>
+        <p>
+            <span class="en">
+            Options can be specified as part of a cname. 
+            For example to redirect www.oldwebsite.com to www.newwebsite.com with 
+            a 302 status code:
+            </span>
+            <span class="pt-br">
+            Opções podem ser usadas como parte do cpanem.
+            Por exemplo para redirecionar www.oldwebsite.com para www.newwebsite.com com
+            status code 302:
+            </span>
+        </p>
+        <code>
+            www.oldwebsite.com. CNAME www.newwebsite.com.opts-statuscode-302.redirect.zone
+        </code>
+
+        <p>
+            <span class="en">
+            Example to redirect with a path:
+            </span>
+            <span class="pt-br">
+            Exemplo para redirecionar com o path:
+            </span>
+        </p>
+        <code>
+            www.oldwebsite.com. CNAME www.newwebsite.com.opts-uri.redirect.center
+        </code>
+
+        <p>
+            <span class="en">
+            <span class="redirect-center">redirect.center</span> provides options to allow 
+            for the flexibility most situations will need.
+            </span>
+            <span class="pt-br">
+            <span class="redirect-center">redirect.center</span> tem opções para permitir os tipos
+            mais flexíveis de situações que você precisará.
+            </span>
+        </p>
+
+        <table id="options-table">
+            <tr>
+                <th><span class="en">Option</span><span class="pt-br">Opções</span></th>
+                <th><span class="en">Description</span><span class="pt-br">Descrição</span></th>
+            </tr>
+            <tr>
+                <td>opts-statuscode-{code}</td>
+                <td>
+                    <span class="en">
+                    HTTP Status Code to be used in the redirect. 
+                    </span>
+                    <span class="pt-br">
+                    HTTP Status Code usado para o redirecionamento.
+                    </span>
+                    <strong>302</strong>, <a href="http://httpstatus.es">HTTP Status Code</a></td>
+            </tr>
+            <tr>
+                <td>opts-uri</td>
+                <td>
+                <span class="en">
+                Append URI (if any) to the target URL
+                </span>
+                <span class="pt-br">
+                Adiciona a URI (se existir) na URL de redirecionamento.
+                </span>
+                </td>
+            </tr>
+        </table>
         <h2 id="usage:a"><a href="#usage:a">A Record</a></h2>
         <p>
             <span class="en">
             A root domain (eg: nati.biz) cannot be a CNAME, a workaround for
             this is supported: point the A record for the root domain to the 
-            <span class="redirect.center">redirect.center</span> server (54.84.55.102) 
+            <span class="redirect-center">redirect.center</span> server (54.84.55.102) 
             and then create a CNAME matching the root domain (using CNAME or TXT 
             options as described above). For example to redirect 
             <a href="http://nati.biz">nati.biz</a> to 
@@ -308,7 +397,7 @@ body{
             <span class="pt-br">
             O dom&iacute;nio principal (ex: nati.biz) n&atilde;o pode ser do tipo CNAME, a alternativa
             para suportar o redirecionamento: apontar o dom&iacute;nio principal com tipo A para o IP do 
-            <span class="redirect.center">redirect.center</span> (54.84.55.102) 
+            <span class="redirect-center">redirect.center</span> (54.84.55.102) 
             e criar uma entrada do tipo CNAME apontando para o lugar que deseja redirecionar.
             Por exemplo para redirecionar <a href="http://nati.biz">nati.biz</a> para github.com:
             </span>
@@ -325,14 +414,14 @@ body{
                 <a href="#about" class="pt-br">Sobre</a>
             </h1>
             <p class="en">
-                <span class="redirect.center">REDIRECT.CENTER</span> is 
+                <span class="redirect-center">REDIRECT.CENTER</span> is 
                 <a href="https://github.com/unattis/redirect.center">open source</a>, code contributions, 
                 general feedback and ideas are greatly appreciated via either 
                 the <a href="https://github.com/unattis/redirect.center/issues">GitHub issues</a>, 
                 <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz). 
             </p>
             <p class="pt-br">
-                <span class="redirect.center">REDIRECT.CENTER</span> é 
+                <span class="redirect-center">REDIRECT.CENTER</span> é 
                 <a href="https://github.com/unattis/redirect.center">open source</a>, code contributions, 
                 feedback no geral de idéias s&atilde;o muito bem vindas, postar via
                 <a href="https://github.com/unattis/redirect.center/issues">GitHub issues</a>, 

@@ -27,7 +27,7 @@ function redirect ($type,$record,$target) {
 	if ($type == "CNAME") {
 		
 		$target = str_replace(".".$redirect_domain,"",$target);
-		Header('location: http://' . $target , true, 302);
+		Header('location: http://' . $target , true, 301);
 
 	}
 
