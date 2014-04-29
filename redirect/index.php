@@ -3,8 +3,17 @@
 $redirect_domain = "redirect.center";
 
 $r = dns_get_record($_SERVER['HTTP_HOST'],DNS_A + DNS_CNAME);
+$found = $r[0];
 
-if ($r[0]['type'] == "A") {
+foreach ($r as $x) {
+
+    if ($x['host'] == $_SERVER['HTTP_HOST']) {
+        $found = $x;
+    }
+
+}
+
+if ($found['type'] == "A") {
 
 	# Verifica se existe a entrada redirect.center.HTTP_HOST
 	$record = "redirect.".$_SERVER['HTTP_HOST'];
@@ -14,9 +23,9 @@ if ($r[0]['type'] == "A") {
 
 }
 
-elseif ($r[0]['type'] == "CNAME") {
+elseif ($found['type'] == "CNAME") {
 
-	redirect($r[0]['type'],$_SERVER['HTTP_HOST'],$r[0]['target']);
+	redirect($found['type'],$_SERVER['HTTP_HOST'],$found['target']);
 
 }
 
