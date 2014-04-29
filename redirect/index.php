@@ -7,7 +7,7 @@ $r = dns_get_record($_SERVER['HTTP_HOST'],DNS_A + DNS_CNAME);
 if ($r[0]['type'] == "A") {
 
 	# Verifica se existe a entrada redirect.center.HTTP_HOST
-	$record = $redirect_domain.".".$_SERVER['HTTP_HOST'];
+	$record = "redirect.".$_SERVER['HTTP_HOST'];
 	$rr = dns_get_record($record,DNS_CNAME);
 
 	redirect($rr[0]['type'],$record,$rr[0]['target']);
