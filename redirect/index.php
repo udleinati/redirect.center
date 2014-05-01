@@ -63,7 +63,7 @@ function redirect ($type,$record,$target) {
         print "<html><head><title>error</title></head><body><pre>\n";
         print "I can't resolve record: ".$record.".\n\n";
         print "Add in your dns server this entry:\n";
-        print $redirect_domain.".".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$redirect_domain.".\n\n";
+        print "redirect.".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$redirect_domain.".\n\n";
         print "If it is already done, may you need wait to try again.\n\n";
         print "<a href='http://".$redirect_domain."'>".$redirect_center."</a>";
         print "</pre></body></html>";	
