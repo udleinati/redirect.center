@@ -260,7 +260,7 @@ body{
 }
 
 .csr-ninja {
-    color: #5D9170;
+    color: #5D9170 !important;
 }
 
 #options-table{
