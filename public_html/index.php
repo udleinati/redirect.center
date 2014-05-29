@@ -6,7 +6,7 @@ $uptime = shell_exec("cut -d. -f1 /proc/uptime");
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <title>REDIRECT CENTER</title>
+    <title>REDIRECT.CENTER</title>
     <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect"/>
     <meta name="author" content="Udlei Nati / udlei@nati.biz">
     <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400|Inconsolata:400' rel='stylesheet' type='text/css'>
@@ -101,6 +101,15 @@ body{
 .container{
     margin: auto;
     width: 800px;
+}
+
+#top-bar {
+    border-bottom: 1px solid #999999;
+}
+
+#top-bar .container {
+    text-align: right;
+    padding: 4px;
 }
 
 #header{
@@ -268,6 +277,14 @@ body{
     </style>
 </head>
 <body>
+    <div id="top-bar">
+        <div class="container">
+            See too :
+            <a href="http://redirect.center" class="redirect-center" title="redirect.center">redirect.center</a> 
+            :
+            <a href="http://csr.ninja" class="csr-ninja" title="csr.ninja">csr.ninja</a>
+        </div>
+    </div>
     <div id="header">
         <div class="container">
             <h1><a href="/">REDIRECT.CENTER</a></h1>
