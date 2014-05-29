@@ -104,12 +104,15 @@ body{
 }
 
 #top-bar {
+    background-color: #FAFAFA;
     border-bottom: 1px solid #999999;
 }
 
 #top-bar .container {
     text-align: right;
     padding: 4px;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+
 }
 
 #header{
@@ -251,7 +254,11 @@ body{
 }
 
 .redirect-center{
-    color: #fc5a44;
+    color: #fc5a44 !important;
+}
+
+.csr-ninja {
+    color: #5D9170;
 }
 
 #options-table{
