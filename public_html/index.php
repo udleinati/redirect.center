@@ -112,6 +112,8 @@ body{
     text-align: right;
     padding: 4px;
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    line-height: 1.42857;
 
 }
 
