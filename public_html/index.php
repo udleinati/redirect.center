@@ -315,7 +315,7 @@ body{
         </p>
         <code>
             <span class="code-sub">A</span> nati.biz. IN A 54.84.55.102            <br/>
-            <span class="code-sub">CNAME</span> redirect.zone.nati.biz. CNAME www.nati.biz.redirect.zone.        
+            <span class="code-sub">CNAME</span> redirect.zone.nati.biz. CNAME github.com.redirect.zone.        
         </code>
     </div>
     <div id="footer">
