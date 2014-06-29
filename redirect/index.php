@@ -7,7 +7,7 @@ $found = $r[0];
 
 foreach ($r as $x) {
 
-    if ($x['host'] == $_SERVER['HTTP_HOST']) {
+    if (strtolower($x['host']) == strtolower($_SERVER['HTTP_HOST'])) {
         $found = $x;
     }
 
@@ -32,6 +32,9 @@ elseif ($found['type'] == "CNAME") {
 function redirect ($type,$record,$target) {
 
 	global $redirect_domain;
+
+    $record = strtolower($record);
+    $target = strtolower($target);
 
 	if ($type == "CNAME") {
 
