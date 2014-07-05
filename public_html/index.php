@@ -427,20 +427,19 @@ body{
             <span class="redirect-center">redirect.center</span> server (54.84.55.102) 
             and then create a CNAME matching the root domain (using CNAME or TXT 
             options as described above). For example to redirect 
-            <a href="http://nati.biz">nati.biz</a> to 
-            github.com:
+            <a href="http://nati.biz">nati.biz</a> to www.nati.biz:
             </span>
             <span class="pt-br">
             O dom&iacute;nio principal (ex: nati.biz) n&atilde;o pode ser do tipo CNAME, a alternativa
             para suportar o redirecionamento: apontar o dom&iacute;nio principal com tipo A para o IP do 
             <span class="redirect-center">redirect.center</span> (54.84.55.102) 
             e criar uma entrada do tipo CNAME apontando para o lugar que deseja redirecionar.
-            Por exemplo para redirecionar <a href="http://nati.biz">nati.biz</a> para github.com:
+            Por exemplo para redirecionar <a href="http://nati.biz">nati.biz</a> para www.nati.biz:
             </span>
         </p>
         <code>
             <span class="code-sub">A</span> nati.biz. IN A 54.84.55.102            <br/>
-            <span class="code-sub">CNAME</span> redirect.nati.biz. CNAME github.com.redirect.center.        
+            <span class="code-sub">CNAME</span> redirect.nati.biz. CNAME www.nati.biz.redirect.center.        
         </code>
     </div>
     <div id="footer">
