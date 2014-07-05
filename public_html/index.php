@@ -348,7 +348,7 @@ body{
             </span>
         </p>
         <code>
-            github.nati.biz. CNAME github.com.redirect.center.
+            google.nati.biz. CNAME google.com.redirect.center.
         </code>
 
         <h3 id="options"><a href="#options"><span class="en">Options</span><span class="pt-br">Opções</span></a></h3>
