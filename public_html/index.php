@@ -263,6 +263,10 @@ body{
     color: #5D9170 !important;
 }
 
+.planilha-zone {
+    color: #006DA3;
+}
+
 #options-table{
     background-color: #F6F6F6;
     display: block;
@@ -292,6 +296,8 @@ body{
             <a href="http://redirect.center" class="redirect-center" title="redirect.center">redirect.center</a> 
             :
             <a href="http://csr.ninja" class="csr-ninja" title="csr.ninja">csr.ninja</a>
+            :
+            <a href="http://planilha.zone" class="planilha-zone" title="planilha.zone">planilha.zone</a>
         </div>
     </div>
     <div id="header">
