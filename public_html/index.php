@@ -371,7 +371,7 @@ body{
             </span>
         </p>
         <code>
-            www.oldwebsite.com. CNAME www.newwebsite.com.opts-statuscode-302.redirect.zone
+            www.oldwebsite.com. CNAME www.newwebsite.com.opts-statuscode-302.redirect.center
         </code>
 
         <p>
