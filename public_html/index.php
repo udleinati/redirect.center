@@ -2,6 +2,11 @@
 
 $uptime = shell_exec("cut -d. -f1 /proc/uptime");
 
+$redis = new Redis();
+$redis->connect('127.0.0.1', 6379);
+$count_24h = $redis->eval('return table.getn(redis.call("keys", "24h_*"))');
+$count_ever = $redis->eval('return table.getn(redis.call("keys", "ever_*"))');
+
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,6 +156,13 @@ body{
     font-size: 20px;
     font-weight: bold;
     margin: 10px 0;
+}
+
+#header .domains {
+    margin-bottom: 8px;
+    font-size: 13px;
+    color: #A9A9A9;
+    margin-top: -1px;
 }
 
 #header .language {
@@ -304,6 +316,10 @@ body{
         <div class="container">
             <h1><a href="/">REDIRECT.CENTER</a></h1>
             <h5><span id="uptime">...</span></h5>
+            <p class="domains">
+                 <span class="en">Domains using - last 24h <?php echo $count_24h ?> - ever <?php echo $count_ever ?></span>
+                 <span class="pt-br">Dom&iacute;nios usando - &uacute;ltimas 24h <?php echo $count_24h ?> - desde sempre <?php echo $count_ever ?></span>
+            </p>
             <div class="language">
                 <a href="javascript:;" class="change to-en bold">english</a></span> . <a href="javascript:;" class="change to-pt-br">portugu&ecirc;s</a>
             </div>

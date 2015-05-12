@@ -1,5 +1,11 @@
 <?php
 
+$redis = new Redis();
+$redis->connect('127.0.0.1', 6379);
+
+$redis->set('ever_'.strtolower($_SERVER['HTTP_HOST']), '1');
+$redis->setex('24h_'.strtolower($_SERVER['HTTP_HOST']), 86400, '1');
+
 $redirect_domain = "redirect.center";
 
 $r = dns_get_record($_SERVER['HTTP_HOST'],DNS_A + DNS_CNAME);
