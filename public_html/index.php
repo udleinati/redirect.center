@@ -263,8 +263,26 @@ body{
     width: 100%;
 }
 
+.title-h1 {
+    font-family: 'Inconsolata', Georgia, sans-serif;
+    text-transform: uppercase;
+    color: #FF350D !important;
+    font-size: 28px;
+    margin-bottom: 10px !important;
+}
+
+#usage .title-h1 {
+    color: #000000 !important;
+}
+
 #footer h1{
     margin-bottom: 10px;
+}
+
+#footer .google-keywords {
+    list-style-type: none; 
+    font-size: 12px; 
+    padding-left:0px
 }
 
 .redirect-center{
@@ -336,10 +354,10 @@ body{
         </div>
     </div>
     <div id="content" class="container">
-        <h1 id="usage">
-            <a href="#usage" class="en">Usage</a>
-            <a href="#usage" class="pt-br">Uso</a>
-        </h1>
+        <p id="usage" class="title-h1">
+            <a href="#usage" class="en title-h1">Usage</a>
+            <a href="#usage" class="pt-br title-h1">Uso</a>
+        </p>
         <p id="overview">
             <span class="en">
             Point a domain to the <span class="redirect-center">redirect.center</span> server
@@ -466,10 +484,10 @@ body{
     </div>
     <div id="footer">
         <div class="container">
-            <h1 id="about">
-                <a href="#about" class="en">About</a>
-                <a href="#about" class="pt-br">Sobre</a>
-            </h1>
+            <p id="about" class="title-h1">
+                <a href="#about" class="en title-h1">About</a>
+                <a href="#about" class="pt-br title-h1">Sobre</a>
+            </p>
             <p class="en">
                 <span class="redirect-center">REDIRECT.CENTER</span> is 
                 <a href="https://github.com/unattis/redirect.center">open source</a>, code contributions, 
@@ -484,6 +502,18 @@ body{
                 <a href="https://github.com/unattis/redirect.center/issues">GitHub issues</a>, 
                 <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz).
             </p>
+            <ul class="google-keywords">
+                <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
+                <li>redirigida por dns, redireccionamiento de dominio, redirigir cname dns</li>
+                <li>Перенаправление на DNS, домен перенаправления, перенаправлять DNS CNAME</li>
+                <li>إعادة توجيه من قبل نظام أسماء النطاقات، إعادة توجيه المجال توجيه DNS CNAME</li>
+                <li>הפניה על ידי DNS, הפניה תחום, להפנות CNAME DNS</li>
+                <li>डीएनएस, डोमेन अनुप्रेषित द्वारा पुन: निर्देशित DNS CNAME अनुप्रेषित</li>
+                <li>DNS, 도메인 리디렉션으로 리디렉션의 DNS CNAME 리디렉션</li>
+                <li>DNSは、ドメインリダイレクトによってリダイレクト、DNSのCNAMEのリダイレクト</li>
+                <li>通过DNS，域名重定向重定向，重定向DNS CNAME</li>
+                <li>通過DNS，域名重定向重定向，重定向DNS CNAME</li>
+            </ul>
         </div>
     </div>
 </body>
