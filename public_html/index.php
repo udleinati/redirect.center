@@ -422,7 +422,19 @@ body{
 
         <p>
             <span class="en">
-            <span class="redirect-center">redirect.center</span> provides options to allow 
+            Example to redirect for a different path:
+            </span>
+            <span class="pt-br">
+            Exemplo para redirecionar para outro path:
+            </span>
+        </p>
+        <code>
+            www.oldwebsite.com. CNAME www.newwebsite.com.slash.contact.redirect.center
+        </code>
+
+        <p>
+            <span class="en">
+            <span class="redirect-center">redirect.center</span> provides options to allow
             for the flexibility most situations will need.
             </span>
             <span class="pt-br">
