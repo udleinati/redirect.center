@@ -266,7 +266,7 @@ location: http://www.<?php echo $test_domain_destination ?>/jobs
                 <a href="mailto:<?php echo $github_project_author_email ?>">email</a> (<?php echo $github_project_author_email ?>).
             </p>
             <p class="en">
-                <span><?php echo $site_name ?></span> é
+                <span><?php echo $site_name ?></span> is
                 <a href="https://github.com/<?php echo $github_project_address ?>">open source</a>, code contributions,
                 general feedback and ideas are greatly appreciated via either
                 the <a href="https://github.com/<?php echo $github_project_address ?>/issues">GitHub issues</a>,
