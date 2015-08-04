@@ -50,7 +50,13 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
     <script src="https://code.jquery.com/jquery-1.11.3.min.js"></script>
     <style>
 
-        a:hover { color: #EDD5DA; }
+        body { background-color: #F8F8F8; }
+
+        p.languages a { color: #fff; }
+        p.languages a:hover { color: #EDD5DA !important; }
+
+        footer a { color: #fff; }
+        footer a:hover { color: #EDD5DA !important; }
 
         ul { padding-left: 0px; }
         ul.redirect-models li:first-child { margin-top: 25px; }
@@ -60,7 +66,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         footer { margin-top: 75px; }
         footer p { margin-top: 5px; margin-bottom: 5px; }
 
-        header, footer { background-color: #A60808; }
+        header, footer { background-color: #c0392b; }
         header a, header small, header span, footer p, footer a { color: #fff; }
 
         div#content { margin-top: 10px; }
@@ -94,7 +100,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             </p>
             <?php } ?>
 
-            <p>
+            <p class="languages">
                 <span><a href="javascript:;" class="change-language to-en">English</a> - <a class="change-language to-pt-br" href="javascript:;">Português</a></span>
             </p>
 
