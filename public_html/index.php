@@ -87,16 +87,16 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             <p><span id="uptime">...</span></p>
             <?php } ?>
 
-            <p>
-                <span><a href="javascript:;" class="change-language to-en">English</a> - <a class="change-language to-pt-br" href="javascript:;">Português</a></span>
-            </p>
-
             <?php if ($counter_visible == "true") { ?>
             <p class="domains">
                  <span class="en">Domains using - last 24h <?php echo $count_24h ?> - ever <?php echo $count_ever ?></span>
                  <span class="pt-br">Dom&iacute;nios usando - &uacute;ltimas 24h <?php echo $count_24h ?> - desde sempre <?php echo $count_ever ?></span>
             </p>
             <?php } ?>
+
+            <p>
+                <span><a href="javascript:;" class="change-language to-en">English</a> - <a class="change-language to-pt-br" href="javascript:;">Português</a></span>
+            </p>
 
         </div>
     </header>
