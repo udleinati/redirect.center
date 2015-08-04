@@ -80,15 +80,15 @@ $count_ever = $redis->eval('return table.getn(redis.call("keys", "ever_*"))');
 
     </script>
     
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-51158860-1', 'redirect.center');
-  ga('send', 'pageview');
-</script>
+      ga('create', 'UA-51158860-1', 'redirect.center');
+      ga('send', 'pageview');
+    </script>
 
     <style>
 
@@ -99,7 +99,7 @@ body{
     padding: 0;
 }
 
-.bold { 
+.bold {
     font-weight: bold;
 }
 
@@ -129,7 +129,7 @@ body{
     width: 100%;
 }
 
-#header h1, 
+#header h1,
 #footer h1{
     color: #fc5a44;
     font-family: 'Inconsolata', Georgia, sans-serif;
@@ -140,12 +140,12 @@ body{
     text-transform: uppercase;
 }
 
-#header h1 a, 
+#header h1 a,
 #footer h1 a{
     color: #fc5a44;
 }
 
-#header h1 a:hover, 
+#header h1 a:hover,
 #footer h1 a:hover{
     color: #FF350D;
 }
@@ -183,30 +183,30 @@ body{
     background-color: #FFF;
 }
 
-.container h1, 
-.container h2, 
-.container h3, 
-.container h4, 
-.container h5, 
+.container h1,
+.container h2,
+.container h3,
+.container h4,
+.container h5,
 .container h6{
     font-family: 'Inconsolata', Georgia, sans-serif;
     text-transform: uppercase;
 }
 
-.container h1 a, 
-.container h2 a, 
-.container h3 a, 
-.container h4 a, 
-.container h5 a, 
+.container h1 a,
+.container h2 a,
+.container h3 a,
+.container h4 a,
+.container h5 a,
 .container h6 a{
     color: #000;
 }
 
-.container h1 a:hover, 
-.container h2 a:hover, 
-.container h3 a:hover, 
-.container h4 a:hover, 
-.container h5 a:hover, 
+.container h1 a:hover,
+.container h2 a:hover,
+.container h3 a:hover,
+.container h4 a:hover,
+.container h5 a:hover,
 .container h6 a:hover{
     color: #999;
     text-decoration: none;
@@ -280,8 +280,8 @@ body{
 }
 
 #footer .google-keywords {
-    list-style-type: none; 
-    font-size: 12px; 
+    list-style-type: none;
+    font-size: 12px;
     padding-left:0px
 }
 
@@ -363,21 +363,21 @@ body{
             Point a domain to the <span class="redirect-center">redirect.center</span> server
             and <span class="redirect-center">redirect.center</span> will perform a DNS lookup and
             redirect the user to your specified destination. Throughout this documentation 
-            "nati.biz" will be used as a placeholder for your domain, you can visit 
-            any nati.biz example to see the redirect in action. 
+            "nati.biz" will be used as a placeholder for your domain, you can visit
+            any nati.biz example to see the redirect in action.
             </span>
             <span class="pt-br">
             Aponte um dom&iacute;nio para o servidor do <span class="redirect-center">redirect.center</span>
             e o <span class="redirect-center">redirect.center</span> far&aacute; o redirecionamento
             do usu&aacute;rio para o destino especificado. No decorrer desta documentação o dom&iacute;nio 
-            "nati.biz" ser&aacute; usado como exemplo, voc&ecirc; pode visitar todos os exemplos para ver o 
+            "nati.biz" ser&aacute; usado como exemplo, voc&ecirc; pode visitar todos os exemplos para ver o
             redirecionamento em a&ccedil;&atilde;o.
             </span>
         </p>
         <h2 id="usage:cname"><a href="#usage:cname">CNAME</a></h2>
         <p>
             <span class="en">
-            Specify the destination domain as a subdomain of nati.biz. A 
+            Specify the destination domain as a subdomain of nati.biz. A
             simple subdomain redirect of <a href="http://google.nati.biz">google.nati.biz</a>
             to github.com:
             </span>
@@ -491,7 +491,7 @@ body{
         </p>
         <code>
             <span class="code-sub">A</span> nati.biz. IN A 54.84.55.102            <br/>
-            <span class="code-sub">CNAME</span> redirect.nati.biz. CNAME www.nati.biz.redirect.center.        
+            <span class="code-sub">CNAME</span> redirect.nati.biz. CNAME www.nati.biz.redirect.center.
         </code>
     </div>
     <div id="footer">
@@ -505,7 +505,7 @@ body{
                 <a href="https://github.com/unattis/redirect.center">open source</a>, code contributions, 
                 general feedback and ideas are greatly appreciated via either 
                 the <a href="https://github.com/unattis/redirect.center/issues">GitHub issues</a>, 
-                <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz). 
+                <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz).
             </p>
             <p class="pt-br">
                 <span class="redirect-center">REDIRECT.CENTER</span> é 
