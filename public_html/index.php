@@ -10,314 +10,82 @@ $count_ever = $redis->eval('return table.getn(redis.call("keys", "ever_*"))');
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
-    <title>REDIRECT.CENTER</title>
-    <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect"/>
-    <meta name="author" content="Udlei Nati / udlei@nati.biz">
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400|Inconsolata:400' rel='stylesheet' type='text/css'>
-    <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-    <script type="text/javascript">
+  <meta charset="utf-8" />
+  <title>REDIRECT.CENTER</title>
+  <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect"/>
+  <meta name="author" content="Udlei Nati / udlei@nati.biz">
+  <link href='http://fonts.googleapis.com/css?family=Open+Sans:300,400|Inconsolata:400' rel='stylesheet' type='text/css'>
+  <script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  <script type="text/javascript">
+  function activeEn() {
+    $('.change').removeClass('bold');
+    $('.change.to-en').addClass('bold');
+    $('.en').show();
+    $('.pt-br').hide();
+    location.hash = 'en';
+  }
+  function activePtBr() {
+    $('.change').removeClass('bold');
+    $('.change.to-pt-br').addClass('bold');
+    $('.en').hide();
+    $('.pt-br').show();
+    location.hash = 'pt-br';
+  }
+  $(document).ready(function() {
+      if(location.hash == '#en') {
+        activeEn();
+      } else if(location.hash == '#pt-br') {
+        activePtBr();
+      };
+      $('.change').on('click',function() {
+          if($(this).hasClass('to-en')) {
+            activeEn();
+          } else {
+            activePtBr();
+          }
+      });
+      doUptime();
+  });
+  var upSeconds=<?php echo $uptime ?>;
+  function doUptime() {
+      var uptimeString = "Server Uptime: ";
+      var secs = parseInt(upSeconds % 60);
+      var mins = parseInt(upSeconds / 60 % 60);
+      var hours = parseInt(upSeconds / 3600 % 24);
+      var days = parseInt(upSeconds / 86400);
+      if (days > 0) {
+          uptimeString += days;
+          uptimeString += ((days == 1) ? " day" : " days");
+      }
+      if (hours > 0) {
+          uptimeString += ((days > 0) ? ", " : "") + hours;
+          uptimeString += ((hours == 1) ? " hour" : " hours");
+      }
+      if (mins > 0) {
+          uptimeString += ((days > 0 || hours > 0) ? ", " : "") + mins;
+          uptimeString += ((mins == 1) ? " minute" : " minutes");
+      }
+      if (secs > 0) {
+          uptimeString += ((days > 0 || hours > 0 || mins > 0) ? ", " : "") + secs;
+          uptimeString += ((secs == 1) ? " second" : " seconds");
+      }
+      var span_el = document.getElementById("uptime");
+      var replaceWith = document.createTextNode(uptimeString);
+      span_el.replaceChild(replaceWith, span_el.childNodes[0]);
+      upSeconds++;
+      setTimeout("doUptime()",1000);
+  }
+  </script>
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-    $(document).ready(function() {
-
-        $('.change').on('click',function() {
-
-            $('.change').removeClass('bold');
-
-            if($(this).hasClass('to-en')) {
-                $(this).addClass('bold');
-                $('.en').show();
-                $('.pt-br').hide();
-            } else {
-                $(this).addClass('bold');
-                $('.en').hide();
-                $('.pt-br').show();
-            }
-        });
-
-        doUptime();
-
-    });
-
-    var upSeconds=<?php echo $uptime ?>;
-
-    function doUptime() {
-        var uptimeString = "Server Uptime: ";
-        var secs = parseInt(upSeconds % 60);
-        var mins = parseInt(upSeconds / 60 % 60);
-        var hours = parseInt(upSeconds / 3600 % 24);
-        var days = parseInt(upSeconds / 86400);
-        
-        if (days > 0) {
-            uptimeString += days;
-            uptimeString += ((days == 1) ? " day" : " days");
-        }
-
-        if (hours > 0) {
-            uptimeString += ((days > 0) ? ", " : "") + hours;
-            uptimeString += ((hours == 1) ? " hour" : " hours");
-        }
-
-        if (mins > 0) {
-            uptimeString += ((days > 0 || hours > 0) ? ", " : "") + mins;
-            uptimeString += ((mins == 1) ? " minute" : " minutes");
-        }
-
-        if (secs > 0) {
-            uptimeString += ((days > 0 || hours > 0 || mins > 0) ? ", " : "") + secs;
-            uptimeString += ((secs == 1) ? " second" : " seconds");
-        }
-
-        var span_el = document.getElementById("uptime");
-        var replaceWith = document.createTextNode(uptimeString);
-        span_el.replaceChild(replaceWith, span_el.childNodes[0]);
-        
-        upSeconds++;
-        
-        setTimeout("doUptime()",1000);
-    
-    }
-
-    </script>
-    
-<script>
-  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
-
-  ga('create', 'UA-51158860-1', 'redirect.center');
-  ga('send', 'pageview');
-</script>
-
-    <style>
-
-body{
-    color: #000;
-    font-family: Georgia, 'Open Sans', sans-serif;
-    margin: 0;
-    padding: 0;
-}
-
-.bold { 
-    font-weight: bold;
-}
-
-.container{
-    margin: auto;
-    width: 800px;
-}
-
-#top-bar {
-    background-color: #FAFAFA;
-    border-bottom: 1px solid #999999;
-}
-
-#top-bar .container {
-    text-align: right;
-    padding: 4px;
-    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
-    font-size: 14px;
-    line-height: 1.42857;
-
-}
-
-#header{
-    background-color: #f6f6f6;
-    height: auto;
-    padding: 20px 0;
-    width: 100%;
-}
-
-#header h1, 
-#footer h1{
-    color: #fc5a44;
-    font-family: 'Inconsolata', Georgia, sans-serif;
-    font-size: 50px;
-    font-weight: bold;
-    margin: 0;
-    text-align: justify;
-    text-transform: uppercase;
-}
-
-#header h1 a, 
-#footer h1 a{
-    color: #fc5a44;
-}
-
-#header h1 a:hover, 
-#footer h1 a:hover{
-    color: #FF350D;
-}
-
-#header h5{
-    color: #A9A9A9;
-    font-family: 'Inconsolata', Georgia, sans-serif;
-    font-size: 20px;
-    font-weight: bold;
-    margin: 10px 0;
-}
-
-#header .domains {
-    margin-bottom: 8px;
-    font-size: 13px;
-    color: #A9A9A9;
-    margin-top: -1px;
-}
-
-#header .language {
-    color: #999999;
-    font-size: 12px;
-}
-
-.pt-br { display: none;}
-
-#intro{
-    background-color: #ffe9e3;
-    height: auto;
-    padding: 20px 0;
-    width: 100%;
-}
-
-#intro code{
-    background-color: #FFF;
-}
-
-.container h1, 
-.container h2, 
-.container h3, 
-.container h4, 
-.container h5, 
-.container h6{
-    font-family: 'Inconsolata', Georgia, sans-serif;
-    text-transform: uppercase;
-}
-
-.container h1 a, 
-.container h2 a, 
-.container h3 a, 
-.container h4 a, 
-.container h5 a, 
-.container h6 a{
-    color: #000;
-}
-
-.container h1 a:hover, 
-.container h2 a:hover, 
-.container h3 a:hover, 
-.container h4 a:hover, 
-.container h5 a:hover, 
-.container h6 a:hover{
-    color: #999;
-    text-decoration: none;
-}
-
-.container p{
-    font-size: 16px;
-    line-height: 22px;
-    margin: 0 0 0 0;
-    width: 600px;
-}
-
-.container a{
-    color: #025D8C;
-    text-decoration: none;
-}
-
-.container a:hover{
-    text-decoration: underline;
-}
-
-.container code{
-    background-color: #F6F6F6;
-    display: block;
-    font-family: 'Inconsolata';
-    line-height: 22px;
-    padding: 10px;
-}
-
-.container code .code-sub{
-    display: inline-block;
-    font-weight: bold;
-    text-transform: uppercase;
-    width: 80px;
-}
-
-.container hr{
-    background-color: #CDCDCD;
-    border: 0;
-    height: 1px;
-}
-
-#content p{
-    font-size: 16px;
-    line-height: 22px;
-    margin: 20px 0;
-    width: 600px;
-}
-
-#footer{
-    background-color: #ffe9e3;
-    margin-top: 40px;
-    padding: 30px 0 40px 0;
-    width: 100%;
-}
-
-.title-h1 {
-    font-family: 'Inconsolata', Georgia, sans-serif;
-    text-transform: uppercase;
-    color: #FF350D !important;
-    font-size: 28px;
-    margin-bottom: 10px !important;
-}
-
-#usage .title-h1 {
-    color: #000000 !important;
-}
-
-#footer h1{
-    margin-bottom: 10px;
-}
-
-#footer .google-keywords {
-    list-style-type: none; 
-    font-size: 12px; 
-    padding-left:0px
-}
-
-.redirect-center{
-    color: #fc5a44 !important;
-}
-
-.csr-ninja {
-    color: #5D9170 !important;
-}
-
-.planilha-zone {
-    color: #006DA3;
-}
-
-#options-table{
-    background-color: #F6F6F6;
-    display: block;
-    font-family: 'Inconsolata';
-    padding: 10px;
-}
-
-#options-table tr{
-    height: 24px;
-    text-align: left;
-}
-
-#options-table td{
-    padding-right: 30px;
-}
-
-#options-table th{
-    min-width: 100px;
-}
-
-    </style>
+    ga('create', 'UA-51158860-1', 'redirect.center');
+    ga('send', 'pageview');
+  </script>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
     <div id="top-bar">
