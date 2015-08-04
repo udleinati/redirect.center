@@ -52,8 +52,8 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 
         body { background-color: #F8F8F8; }
 
-        p.languages a { color: #fff; }
-        p.languages a:hover { color: #EDD5DA !important; }
+        header a { color: #fff !important; }
+        header a:hover { color: #EDD5DA !important; }
 
         footer a { color: #fff; }
         footer a:hover { color: #EDD5DA !important; }
