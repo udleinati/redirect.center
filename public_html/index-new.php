@@ -1,6 +1,7 @@
 <?php
 
 $uptime_visible = getenv("UPTIME_VISIBLE");
+$uptime = 0;
 
 if ($uptime_visible == "true") {
     $uptime = shell_exec("cut -d. -f1 /proc/uptime");
@@ -39,9 +40,11 @@ $test_domain_destination = getenv("TEST_DOMAIN_DESTINATION");
     <style>
 
         ul { padding-left: 0px; }
-        ul.redirect-models li { margin-top: 25px; }
+        ul.redirect-models li:first-child { margin-top: 25px; }
+        ul.redirect-models li { margin-top: 75px; }
+
         header { padding-bottom: 10px; }
-        footer { margin-top: 10px; }
+        footer { margin-top: 75px; }
         footer p { margin-top: 5px; margin-bottom: 5px; }
 
         header, footer { background-color: #A60808; }
@@ -90,12 +93,13 @@ $test_domain_destination = getenv("TEST_DOMAIN_DESTINATION");
                 <a name="redirect-model-1"></a>
                 <h4>Redirecionar <code class="test_origin">http://<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></h4>
                 <div class="hightlight">
+                <p>Configura seu DNS da seguinte forma:</p>
 <pre>
-- - Como seu DNS tem que ficar:
+Host Record: &lt;deixe-vazio&gt;  Type: A      To: 54.84.55.102
+Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
+</pre>
 
-&lt;deixe-vazio&gt; IN A     54.84.55.102
-redirect      IN CNAME www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
-
+<!--
 
 - - Veja funcionando:
 
@@ -110,6 +114,7 @@ redirect.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_
 $ curl -I -s http://<?php echo $test_domain_origin ?> | grep "HTTP\|location"
 HTTP/1.1 301 Moved Permanently
 location: http://<?php echo $test_domain_origin ?>/
+-->
 </pre>
                 </div>
             </li>
@@ -117,11 +122,12 @@ location: http://<?php echo $test_domain_origin ?>/
                 <a name="redirect-model-2"></a>
                 <h4>Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></h4>
                 <div class="hightlight">
+                <p>Configura seu DNS da seguinte forma:</p>
 <pre>
-- - Como seu DNS tem que ficar:
+Host Record: www            Type: CNAME  To: www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>
+</pre>
 
-www IN CNAME www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>
-
+<!--
 
 - - Veja funcionando:
 
@@ -132,23 +138,25 @@ www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domai
 $ curl -I -s http://www.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
 HTTP/1.1 301 Moved Permanently
 location: http://www.<?php echo $test_domain_destination ?>/
-</pre>
+-->
                 </div>
             </li>
             <li class="pr-br">
                 <a name="redirect-model-3"></a>
                 <h4>Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;mesma-coisa&gt;</code></h4>
                 <div class="hightlight">
+                <p>Configura seu DNS da seguinte forma:</p>
+
 <pre>
-- - Como seu DNS tem que ficar:
+Host Record: www            Type: CNAME  To: www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>
+</pre>
 
-www IN CNAME www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>
+<span class="label label-danger">ATENÇÃO</span>
+<span>
+O parâmetro <code>.opts-uri.</code> é o responsável por repassar o caminhodo da URL origem para a URL destino.
+</span>
 
-
-- - ATENÇÃO
-
-Repare que o www está apontando para uma URL onde existe um parametro opts-uri, este é o parametro que repassa o caminho completo.
-
+<!--
 - - Veja funcionando:
 
 $ host www.<?php echo $test_domain_origin ?>
@@ -158,23 +166,23 @@ www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domai
 $ curl -I -s http://www.<?php echo $test_domain_origin ?>/testxyz | grep "HTTP\|location"
 HTTP/1.1 301 Moved Permanently
 location: http://www.<?php echo $test_domain_destination ?>/testxyz
-</pre>
+-->
                 </div>
             </li>
             <li class="pr-br">
                 <a name="redirect-model-4"></a>
                 <h4>Redirecionar <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></h4>
                 <div class="hightlight">
+                <p>Configura seu DNS da seguinte forma:</p>
 <pre>
-- - Como seu DNS tem que ficar:
+Host Record: jobs           Type: CNAME  To: www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>
+</pre>
+<span class="label label-danger">ATENÇÃO</span>
+<span>
+O parâmetro <code>.opts-slash.</code> é o responsável por repassar por transformar <code>.jobs</code> para <code>/jobs</code> e repassar para a URL destino.
+</span>
 
-jobs IN CNAME www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>
-
-
-- - ATENÇÃO
-
-Repare que o www está apontando para uma URL onde existe um parametro opts-slash, este é o parametro que repassa a palavra após o ponto para a URL, no caso /jobs.
-
+<!--
 - - Veja funcionando:
 
 $ host jobs.<?php echo $test_domain_origin ?>
@@ -184,7 +192,8 @@ jobs.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_doma
 $ curl -I -s http://jobs.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
 HTTP/1.1 301 Moved Permanently
 location: http://www.<?php echo $test_domain_destination ?>/jobs
-</pre>
+-->
+
                 </div>
             </li>
         </ul>
