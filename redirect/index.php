@@ -56,6 +56,7 @@ function redirect ($type,$record,$target) {
 
         # Redirect to specific path when there are slashes
         $target = str_replace(".slash.","/",$target);
+        $target = str_replace(".opts-slash.","/",$target);
 
         # Muda codigo de redirect
         if (strstr($target,".opts-statuscode-")) {
