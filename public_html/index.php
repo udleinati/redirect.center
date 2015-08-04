@@ -131,8 +131,14 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
                     <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                     <span class="en">Configure your DNS Zone as follows:</span>
                 </p>
-<pre>
+<pre class="pt-br">
 Host Record: &lt;deixe-vazio&gt;  Type: A      To: <?php echo $site_redirect_ip ?>
+
+Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
+</pre>
+
+<pre class="en">
+Host Record: &lt;leave-empty&gt;  Type: A      To: <?php echo $site_redirect_ip ?>
 
 Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
 </pre>
