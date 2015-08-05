@@ -40,14 +40,13 @@ $ sudo /etc/init.d/redis restart
 
 Environment Variables:
 
-export SITE_NAME='DIRECIONAR.COM.BR'
-export SITE_DOMAIN='redirecionar.com.br'
+export SITE_NAME='REDIRECT.CENTER'
+export SITE_DOMAIN='redirect.center'
 export SITE_REDIRECT_IP='54.84.55.102'
 export SITE_DEFAULT_LANGUAGE='en'
 
-export TEST_DOMAIN_ORIGIN='meu-dominio.com.br'
-export TEST_DOMAIN_DESTINATION='meu-outro-domino.com.br'
-export DEFAULT_LANGUAGE='pt-br'
+export TEST_DOMAIN_ORIGIN='my-domain.com'
+export TEST_DOMAIN_DESTINATION='my-other-domain.com'
 
 export UPTIME_VISIBLE='true'
 
@@ -61,3 +60,5 @@ export GITHUB_PROJECT_AUTHOR_EMAIL='udlei@nati.biz'
 
 export GOOGLE_KEYWORDS_VISIBLE='true'
 export GOOGLE_ANALYTICS_CODE='UA-51158860-1'
+
+export CREDIT_VISIBLE='true'

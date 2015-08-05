@@ -39,6 +39,8 @@ $github_forkme_visible = getenv("GITHUB_FORKME_VISIBLE") ? getenv("GITHUB_FORKME
 $github_project_address = getenv("GITHUB_PROJECT_ADDRESS") ? getenv("GITHUB_PROJECT_ADDRESS") : 'udlei/redirect.center';
 $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("GITHUB_PROJECT_AUTHOR_EMAIL") : 'udlei@nati.biz';
 
+$credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
+
 ?><!DOCTYPE html>
 <html lang="<?php echo $site_default_language ?>">
 <head>
@@ -52,7 +54,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 
         body { background-color: #F8F8F8; }
 
-        header a, footer a { color: #fff; }
+        header a:link, footer a { color: #fff; }
         header a:hover, footer a:hover { color: #BBD4E4 !important; }
 
         .margin-lg { margin: 40px 0; }
@@ -116,7 +118,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         <div class="panel panel-default">
           <a name="redirect-model-1"></a>
           <div class="panel-heading">
-            <span class="glyphicon glyphicon-console"></span>
+            <span class="glyphicon glyphicon-chevron-right"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
               <span class="en">Redirect <code class="test_origin">http://<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
@@ -128,7 +130,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
             <div class="row">
-              <div class="col-lg-9">
+              <div class="col-lg-10">
                 <div class="en" style="width: 100%;">
                   <div class="well well-sm">
                     <div class="row">
@@ -181,7 +183,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         <div class="panel panel-default">
           <a name="redirect-model-2"></a>
           <div class="panel-heading">
-            <span class="glyphicon glyphicon-console"></span>
+            <span class="glyphicon glyphicon-chevron-right"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
               <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
@@ -193,7 +195,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
             <div class="row">
-              <div class="col-lg-9">
+              <div class="col-lg-10">
                 <div class="well well-sm">
                   <div class="row">
                     <div class="col-xs-4">Host Record: <strong>www</strong></div>
@@ -222,7 +224,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         <div class="panel panel-default">
           <a name="redirect-model-3"></a>
           <div class="panel-heading">
-            <span class="glyphicon glyphicon-console"></span>
+            <span class="glyphicon glyphicon-chevron-right"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;mesma-coisa&gt;</code></span>
               <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;same-thing&gt;</code></span>
@@ -234,7 +236,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
             <div class="row">
-              <div class="col-lg-9">
+              <div class="col-lg-10">
                 <div class="well well-sm">
                   <div class="row">
                     <div class="col-xs-4">Host Record: <strong>www</strong></div>
@@ -272,7 +274,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         <div class="panel panel-default">
           <a name="redirect-model-4"></a>
           <div class="panel-heading">
-            <span class="glyphicon glyphicon-console"></span>
+            <span class="glyphicon glyphicon-chevron-right"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
               <span class="en">Redirect <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
@@ -318,8 +320,11 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
           </div>
         </div>
     </div>
+
+    <?php if ($credit_visible == 'true' || $google_keywords_visible == 'true') { ?>
     <footer>
         <div class="container">
+            <?php if ($credit_visible == 'true') { ?>
             <p class="pt-br">
                 <span><?php echo $site_name ?></span> é
                 <a href="https://github.com/<?php echo $github_project_address ?>">open source</a>, code contributions,
@@ -334,6 +339,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
                 the <a href="https://github.com/<?php echo $github_project_address ?>/issues">GitHub issues</a>,
                 <a href="mailto:<?php echo $github_project_author_email ?>">email</a> (<?php echo $github_project_author_email ?>).
             </p>
+            <?php } ?>
             <?php if ($google_keywords_visible == 'true') { ?>
             <ul class="google-keywords">
                 <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
@@ -348,12 +354,12 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
                 <li>通過DNS，域名重定向重定向，重定向DNS CNAME</li>
             </ul>
             <?php } ?>
-
         </div>
     </footer>
+    <?php } ?>
 
 <?php if ($github_forkme_visible == "true") { ?>
-<a href="https://github.com/<?php echo $github_project_address ?>"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/a6677b08c955af8400f44c6298f40e7d19cc5b2d/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f677261795f3664366436642e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_gray_6d6d6d.png"></a></body>
+<a href="https://github.com/<?php echo $github_project_address ?>"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
 <?php } ?>
 
 <script type="text/javascript">
