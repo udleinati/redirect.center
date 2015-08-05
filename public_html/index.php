@@ -18,10 +18,10 @@ $counter_redis_host = getenv("COUNTER_REDIS_HOST") ? getenv("COUNTER_REDIS_HOST"
 $counter_redis_port = getenv("COUNTER_REDIS_PORT") ? getenv("COUNTER_REDIS_PORT") : '6379';
 
 if ($counter_visible == "true") {
-    $redis = new Redis();
-    $redis->connect($counter_redis_host, $counter_redis_port);
-    $count_24h = $redis->eval('return table.getn(redis.call("keys", "24h_*"))');
-    $count_ever = $redis->eval('return table.getn(redis.call("keys", "ever_*"))');
+    #$redis = new Redis();
+    #$redis->connect($counter_redis_host, $counter_redis_port);
+    $count_24h = 1;#$redis->eval('return table.getn(redis.call("keys", "24h_*"))');
+    $count_ever = 1;#$redis->eval('return table.getn(redis.call("keys", "ever_*"))');
 }
 
 $google_analytics_code = getenv("GOOGLE_ANALYTICS_CODE") ? getenv("GOOGLE_ANALYTICS_CODE") : 'UA-51158860-1' ;
@@ -52,16 +52,13 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 
         body { background-color: #F8F8F8; }
 
-        header a { color: #fff !important; }
-        header a:hover { color: #EDD5DA !important; }
+        header a, footer a { color: #fff; }
+        header a:hover, footer a:hover { color: #BBD4E4 !important; }
 
-        footer a { color: #fff; }
-        footer a:hover { color: #EDD5DA !important; }
-
-        ul { padding-left: 0px; }
-        ul.redirect-models li:first-child { margin-top: 25px; }
-        ul.redirect-models li { margin-top: 75px; }
-
+        .margin-lg { margin: 40px 0; }
+        .list-group-item .glyphicon, .panel .panel-heading .glyphicon { vertical-align: -1px; margin-right: 5px; }
+        .bold { font-weight: bold; }
+        
         header { padding-bottom: 10px; }
         footer { margin-top: 75px; }
         footer p { margin-top: 5px; margin-bottom: 5px; }
@@ -114,10 +111,11 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         </p>
         <div class="anchor-to-redirect-models list-group">
         </div>
-        <hr />
+        <hr class="margin-lg" />
         <div class="panel panel-default">
           <a name="redirect-model-1"></a>
           <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
               <span class="en">Redirect <code class="test_origin">http://<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
@@ -159,9 +157,11 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             </pre>
           </div>
         </div>
+        <br />
         <div class="panel panel-default">
           <a name="redirect-model-2"></a>
           <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
               <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
@@ -190,9 +190,11 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             -->
           </div>
         </div>
+        <br />
         <div class="panel panel-default">
           <a name="redirect-model-3"></a>
           <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;mesma-coisa&gt;</code></span>
               <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;same-thing&gt;</code></span>
@@ -230,9 +232,11 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             -->
           </div>
         </div>
+        <br />
         <div class="panel panel-default">
           <a name="redirect-model-4"></a>
           <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
             <strong>
               <span class="pt-br">Redirecionar <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
               <span class="en">Redirect <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
@@ -268,9 +272,6 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             -->
           </div>
         </div>
-        
-        <ul class="redirect-models">
-        </ul>
     </div>
     <footer>
         <div class="container">
@@ -311,28 +312,38 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 <?php } ?>
 
 <script type="text/javascript">
+function activeEn() {
+  $('.change-language').removeClass('bold');
+  $('.change-language.to-en').addClass('bold');
+  $('.en').show();
+  $('.pt-br').hide();
+  location.hash = 'en';
+}
+function activePtBr() {
+  $('.change-language').removeClass('bold');
+  $('.change-language.to-pt-br').addClass('bold');
+  $('.en').hide();
+  $('.pt-br').show();
+  location.hash = 'pt-br';
+}
 
 $(document).ready(function() {
-
-    $('.change-language').on('click',function() {
-
-        $('.change-language').removeClass('bold');
-
-        if($(this).hasClass('to-en')) {
-            $(this).addClass('bold');
-            $('.en').show();
-            $('.pt-br').hide();
-        } else {
-            $(this).addClass('bold');
-            $('.en').hide();
-            $('.pt-br').show();
-        }
-    });
-
+  if(location.hash == '#en') {
+    activeEn();
+  } else if(location.hash == '#pt-br') {
+    activePtBr();
+  };
+  $('.change-language').on('click',function() {
+    if($(this).hasClass('to-en')) {
+      activeEn();
+    } else {
+      activePtBr();
+    }
+  });
 });
 
 <?php if ($uptime_visible == 'true') { ?>
-
+/*
 var upSeconds=<?php echo $uptime ?>;
 
 function doUptime() {
@@ -373,13 +384,13 @@ function doUptime() {
 }
 
 doUptime();
-
+*/
 <?php } ?>
 
 $('.panel').each(function(index) {
     anchor = $(this).find("a").attr("name");
     text = $(this).find(".panel-heading strong").html();
-    $('.anchor-to-redirect-models').append('<a href="#' + anchor + '" class="list-group-item">' + text + '</a>');
+    $('.anchor-to-redirect-models').append('<a href="#' + anchor + '" class="list-group-item"><span class="glyphicon glyphicon-share-alt"></span>' + text + '</a>');
 });
 
 </script>
