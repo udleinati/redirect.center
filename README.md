@@ -29,7 +29,7 @@ $ sudo vim /etc/httpd/conf.d/redirect.conf
 <VirtualHost *:80>
     DocumentRoot /opt/redirect.center/redirect
     ServerName alias.redirect.center
-    ServerAlias *.redirect.center
+    ServerAlias *
 
     <Directory /opt/redirect.center/redirect>
         AllowOverride None
