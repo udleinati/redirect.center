@@ -52,21 +52,19 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 
         body { background-color: #F8F8F8; }
 
-        header a { color: #fff !important; }
-        header a:hover { color: #EDD5DA !important; }
+        header a, footer a { color: #fff; }
+        header a:hover, footer a:hover { color: #BBD4E4 !important; }
 
-        footer a { color: #fff; }
-        footer a:hover { color: #EDD5DA !important; }
-
-        ul { padding-left: 0px; }
-        ul.redirect-models li:first-child { margin-top: 25px; }
-        ul.redirect-models li { margin-top: 75px; }
-
+        .margin-lg { margin: 40px 0; }
+        .list-group-item .glyphicon, .panel .panel-heading .glyphicon { vertical-align: -1px; margin-right: 5px; }
+        .bold { font-weight: bold; }
+        .well { margin: 0; }
+        
         header { padding-bottom: 10px; }
         footer { margin-top: 75px; }
         footer p { margin-top: 5px; margin-bottom: 5px; }
 
-        header, footer { background-color: #c0392b; }
+        header, footer { background-color: #2980b9; }
         header a, header small, header span, footer p, footer a { color: #fff; }
 
         div#content { margin-top: 10px; }
@@ -95,8 +93,8 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 
             <?php if ($counter_visible == "true") { ?>
             <p class="domains">
-                 <span class="en">Domains using - last 24h <?php echo $count_24h ?> - ever <?php echo $count_ever ?></span>
-                 <span class="pt-br">Dom&iacute;nios usando - &uacute;ltimas 24h <?php echo $count_24h ?> - desde sempre <?php echo $count_ever ?></span>
+                 <span class="en">Domains using - Last 24h: <?php echo $count_24h ?> - Ever: <?php echo $count_ever ?></span>
+                 <span class="pt-br">Dom&iacute;nios usando - &Uacute;ltimas 24h: <?php echo $count_24h ?> - Desde sempre: <?php echo $count_ever ?></span>
             </p>
             <?php } ?>
 
@@ -107,166 +105,218 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         </div>
     </header>
     <div id="content" class="container">
-
+        <br />
         <p class="lead">
             <span class="pt-br">O que você quer fazer?</span>
             <span class="en">What do you want to do?</span>
         </p>
-
-        <ul class="anchor-to-redirect-models">
-
-        </ul>
-
-        <hr />
-
-        <ul class="redirect-models">
-            <li class="pr-br">
-                <a name="redirect-model-1"></a>
-                <h4>
-                    <span class="pt-br">Redirecionar <code class="test_origin">http://<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
-                    <span class="en">Redirect <code class="test_origin">http://<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
-                </h4>
-                <div class="hightlight">
-                <p>
-                    <span class="pt-br">Configure seu DNS da seguinte forma:</span>
-                    <span class="en">Configure your DNS Zone as follows:</span>
-                </p>
-<pre class="pt-br">
-Host Record: &lt;deixe-vazio&gt;  Type: A      To: <?php echo $site_redirect_ip ?>
-
-Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
-</pre>
-
-<pre class="en">
-Host Record: &lt;leave-empty&gt;  Type: A      To: <?php echo $site_redirect_ip ?>
-
-Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
-</pre>
-
-<!--
-
-- - Veja funcionando:
-
-$ host <?php echo $test_domain_origin ?>
-
-<?php echo $test_domain_origin ?> has address 54.84.55.102
-
-$ host redirect.<?php echo $test_domain_origin ?>
-
-redirect.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>.
-
-$ curl -I -s http://<?php echo $test_domain_origin ?> | grep "HTTP\|location"
-HTTP/1.1 301 Moved Permanently
-location: http://<?php echo $test_domain_origin ?>/
--->
-</pre>
+        <div class="anchor-to-redirect-models list-group">
+        </div>
+        <hr class="margin-lg" />
+        <div class="panel panel-default">
+          <a name="redirect-model-1"></a>
+          <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
+            <strong>
+              <span class="pt-br">Redirecionar <code class="test_origin">http://<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
+              <span class="en">Redirect <code class="test_origin">http://<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?></code></span>
+            </strong>
+          </div>
+          <div class="panel-body">
+            <p>
+              <span class="pt-br">Configure seu DNS da seguinte forma:</span>
+              <span class="en">Configure your DNS Zone as follows:</span>
+            </p>
+            <div class="row">
+              <div class="col-lg-9">
+                <div class="en" style="width: 100%;">
+                  <div class="well well-sm">
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>&lt;leave-empty&gt;</strong></div>
+                      <div class="col-xs-2">Type: <strong>A</strong></div>
+                      <div class="col-xs-6">To: <strong><?php echo $site_redirect_ip ?></strong></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>redirect</strong></div>
+                      <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                      <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?></strong></div>
+                    </div>
+                  </div>
                 </div>
-            </li>
-            <li class="pr-br">
-                <a name="redirect-model-2"></a>
-                <h4>
-                    <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
-                    <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
-                </h4>
-                <div class="hightlight">
-                <p>
-                    <span class="pt-br">Configure seu DNS da seguinte forma:</span>
-                    <span class="en">Configure your DNS Zone as follows:</span>
-                </p>
-<pre>
-Host Record: www            Type: CNAME  To: www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>
-</pre>
-
-<!--
-
-- - Veja funcionando:
-
-$ host www.<?php echo $test_domain_origin ?>
-
-www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>.
-
-$ curl -I -s http://www.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
-HTTP/1.1 301 Moved Permanently
-location: http://www.<?php echo $test_domain_destination ?>/
--->
+                <div class="pt-br" style="width: 100%;">
+                  <div class="well well-sm">
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>&lt;deixe-vazio&gt;</strong></div>
+                      <div class="col-xs-2">Type: <strong>A</strong></div>
+                      <div class="col-xs-6">To: <strong><?php echo $site_redirect_ip ?></strong></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>redirect</strong></div>
+                      <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                      <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?></strong></div>
+                    </div>
+                  </div>
                 </div>
-            </li>
-            <li class="pr-br">
-                <a name="redirect-model-3"></a>
-                <h4>
-                    <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;mesma-coisa&gt;</code></span>
-                    <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;same-thing&gt;</code></span>
-                </h4>
-                <div class="hightlight">
-                <p>
-                    <span class="pt-br">Configure seu DNS da seguinte forma:</span>
-                    <span class="en">Configure your DNS Zone as follows:</span>
-                </p>
-<pre>
-Host Record: www            Type: CNAME  To: www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>
-</pre>
+              </div>
+            </div>
+            <!--
 
-<span class="label label-danger pt-br">ATENÇÃO</span>
-<span class="label label-danger en">ATTENTION</span>
+            - - Veja funcionando:
 
-<span class="pt-br">
-    O parâmetro <code>.opts-uri.</code> é o responsável por repassar o caminhodo da URL origem para a URL destino.
-</span>
-<span class="en">
-    The <code>.opts-uri.</code> parameter is responsible for passing the path of the source URL to the destination URL.
-</span>
+            $ host <?php echo $test_domain_origin ?>
 
-<!--
-- - Veja funcionando:
+            <?php echo $test_domain_origin ?> has address 54.84.55.102
 
-$ host www.<?php echo $test_domain_origin ?>
+            $ host redirect.<?php echo $test_domain_origin ?>
 
-www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>.
+            redirect.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>.
 
-$ curl -I -s http://www.<?php echo $test_domain_origin ?>/testxyz | grep "HTTP\|location"
-HTTP/1.1 301 Moved Permanently
-location: http://www.<?php echo $test_domain_destination ?>/testxyz
--->
+            $ curl -I -s http://<?php echo $test_domain_origin ?> | grep "HTTP\|location"
+            HTTP/1.1 301 Moved Permanently
+            location: http://<?php echo $test_domain_origin ?>/
+            -->
+          </div>
+        </div>
+        <br />
+        <div class="panel panel-default">
+          <a name="redirect-model-2"></a>
+          <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
+            <strong>
+              <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
+              <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?></code></span>
+            </strong>
+          </div>
+          <div class="panel-body">
+            <p>
+              <span class="pt-br">Configure seu DNS da seguinte forma:</span>
+              <span class="en">Configure your DNS Zone as follows:</span>
+            </p>
+            <div class="row">
+              <div class="col-lg-9">
+                <div class="well well-sm">
+                  <div class="row">
+                    <div class="col-xs-4">Host Record: <strong>www</strong></div>
+                    <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                    <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?></strong></div>
+                  </div>
                 </div>
-            </li>
-            <li class="pr-br">
-                <a name="redirect-model-4"></a>
-                <h4>
-                    <span class="pt-br">Redirecionar <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
-                    <span class="en">Redirect <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
-                </h4>
-                <div class="hightlight">
-                <p>
-                    <span class="pt-br">Configure seu DNS da seguinte forma:</span>
-                    <span class="en">Configure your DNS Zone as follows:</span>
-                </p>
-<pre>
-Host Record: jobs           Type: CNAME  To: www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>
-</pre>
-<span class="label label-danger pt-br">ATENÇÃO</span>
-<span class="label label-danger en">ATTENTION</span>
-<span class="pt-br">
-    O parâmetro <code>.opts-slash.</code> é o responsável por transformar <code>.jobs</code> para <code>/jobs</code> e repassar para a URL destino.
-</span>
-<span class="en">
-    The <code>.opts-slash.</code> parameter is responsible to tuning <code>.jobs</code> to <code>/jobs</code> and pass on to the destination URL.
-</span>
+              </div>
+            </div>
 
-<!--
-- - Veja funcionando:
+            <!--
 
-$ host jobs.<?php echo $test_domain_origin ?>
+            - - Veja funcionando:
 
-jobs.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>.
+            $ host www.<?php echo $test_domain_origin ?>
 
-$ curl -I -s http://jobs.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
-HTTP/1.1 301 Moved Permanently
-location: http://www.<?php echo $test_domain_destination ?>/jobs
--->
+            www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>.
 
+            $ curl -I -s http://www.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
+            HTTP/1.1 301 Moved Permanently
+            location: http://www.<?php echo $test_domain_destination ?>/
+            -->
+          </div>
+        </div>
+        <br />
+        <div class="panel panel-default">
+          <a name="redirect-model-3"></a>
+          <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
+            <strong>
+              <span class="pt-br">Redirecionar <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;mesma-coisa&gt;</code></span>
+              <span class="en">Redirect <code class="test_origin">http://www.<?php echo $test_domain_origin ?>/&lt;anything&gt;</code> to <code class="test_destination">http://www.<?php echo $test_domain_destination ?>/&lt;same-thing&gt;</code></span>
+            </strong>
+          </div>
+          <div class="panel-body">
+            <p>
+              <span class="pt-br">Configure seu DNS da seguinte forma:</span>
+              <span class="en">Configure your DNS Zone as follows:</span>
+            </p>
+            <div class="row">
+              <div class="col-lg-9">
+                <div class="well well-sm">
+                  <div class="row">
+                    <div class="col-xs-4">Host Record: <strong>www</strong></div>
+                    <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                    <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?></strong></div>
+                  </div>
                 </div>
-            </li>
-        </ul>
+              </div>
+            </div>
+            <br />
+            <span class="label label-danger pt-br">ATENÇÃO</span>
+            <span class="label label-danger en">ATTENTION</span>
+
+            <span class="pt-br">
+                O parâmetro <code>.opts-uri.</code> é o responsável por repassar o caminhodo da URL origem para a URL destino.
+            </span>
+            <span class="en">
+                The <code>.opts-uri.</code> parameter is responsible for passing the path of the source URL to the destination URL.
+            </span>
+
+            <!--
+            - - Veja funcionando:
+
+            $ host www.<?php echo $test_domain_origin ?>
+
+            www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>.
+
+            $ curl -I -s http://www.<?php echo $test_domain_origin ?>/testxyz | grep "HTTP\|location"
+            HTTP/1.1 301 Moved Permanently
+            location: http://www.<?php echo $test_domain_destination ?>/testxyz
+            -->
+          </div>
+        </div>
+        <br />
+        <div class="panel panel-default">
+          <a name="redirect-model-4"></a>
+          <div class="panel-heading">
+            <span class="glyphicon glyphicon-console"></span>
+            <strong>
+              <span class="pt-br">Redirecionar <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> para <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
+              <span class="en">Redirect <code class="test_origin">http://jobs.<?php echo $test_domain_origin ?></code> to <code class="test_destination">http://www.<?php echo $test_domain_origin ?>/jobs</code></span>
+            </strong>
+          </div>
+          <div class="panel-body">
+            <p>
+              <span class="pt-br">Configure seu DNS da seguinte forma:</span>
+              <span class="en">Configure your DNS Zone as follows:</span>
+            </p>
+            <div class="row">
+              <div class="col-lg-10">
+                <div class="well well-sm">
+                  <div class="row">
+                    <div class="col-xs-3">Host Record: <strong>jobs</strong></div>
+                    <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                    <div class="col-xs-7">To: <strong>www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?></strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br />
+            <span class="label label-danger pt-br">ATENÇÃO</span>
+            <span class="label label-danger en">ATTENTION</span>
+            <span class="pt-br">
+                O parâmetro <code>.opts-slash.</code> é o responsável por transformar <code>.jobs</code> para <code>/jobs</code> e repassar para a URL destino.
+            </span>
+            <span class="en">
+                The <code>.opts-slash.</code> parameter is responsible to tuning <code>.jobs</code> to <code>/jobs</code> and pass on to the destination URL.
+            </span>
+
+            <!--
+            - - Veja funcionando:
+
+            $ host jobs.<?php echo $test_domain_origin ?>
+
+            jobs.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>.
+
+            $ curl -I -s http://jobs.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
+            HTTP/1.1 301 Moved Permanently
+            location: http://www.<?php echo $test_domain_destination ?>/jobs
+            -->
+          </div>
+        </div>
     </div>
     <footer>
         <div class="container">
@@ -307,24 +357,34 @@ location: http://www.<?php echo $test_domain_destination ?>/jobs
 <?php } ?>
 
 <script type="text/javascript">
+function activeEn() {
+  $('.change-language').removeClass('bold');
+  $('.change-language.to-en').addClass('bold');
+  $('.en').show();
+  $('.pt-br').hide();
+  location.hash = 'en';
+}
+function activePtBr() {
+  $('.change-language').removeClass('bold');
+  $('.change-language.to-pt-br').addClass('bold');
+  $('.en').hide();
+  $('.pt-br').show();
+  location.hash = 'pt-br';
+}
 
 $(document).ready(function() {
-
-    $('.change-language').on('click',function() {
-
-        $('.change-language').removeClass('bold');
-
-        if($(this).hasClass('to-en')) {
-            $(this).addClass('bold');
-            $('.en').show();
-            $('.pt-br').hide();
-        } else {
-            $(this).addClass('bold');
-            $('.en').hide();
-            $('.pt-br').show();
-        }
-    });
-
+  if(location.hash == '#en') {
+    activeEn();
+  } else if(location.hash == '#pt-br') {
+    activePtBr();
+  };
+  $('.change-language').on('click',function() {
+    if($(this).hasClass('to-en')) {
+      activeEn();
+    } else {
+      activePtBr();
+    }
+  });
 });
 
 <?php if ($uptime_visible == 'true') { ?>
@@ -372,10 +432,10 @@ doUptime();
 
 <?php } ?>
 
-$('ul.redirect-models li').each(function(index) {
+$('.panel').each(function(index) {
     anchor = $(this).find("a").attr("name");
-    text = $(this).find("h4").html();
-    $('ul.anchor-to-redirect-models').append('<li><a href="#' + anchor + '">' + text + '</a></li>');
+    text = $(this).find(".panel-heading strong").html();
+    $('.anchor-to-redirect-models').append('<a href="#' + anchor + '" class="list-group-item"><span class="glyphicon glyphicon-share-alt"></span>' + text + '</a>');
 });
 
 </script>
