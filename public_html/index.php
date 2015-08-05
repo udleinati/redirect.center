@@ -58,6 +58,7 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
         .margin-lg { margin: 40px 0; }
         .list-group-item .glyphicon, .panel .panel-heading .glyphicon { vertical-align: -1px; margin-right: 5px; }
         .bold { font-weight: bold; }
+        .well { margin: 0; }
         
         header { padding-bottom: 10px; }
         footer { margin-top: 75px; }
@@ -126,18 +127,38 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="pt-br">Configure seu DNS da seguinte forma:</span>
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
-            <pre class="pt-br">
-            Host Record: &lt;deixe-vazio&gt;  Type: A      To: <?php echo $site_redirect_ip ?>
-
-            Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
-            </pre>
-
-            <pre class="en">
-            Host Record: &lt;leave-empty&gt;  Type: A      To: <?php echo $site_redirect_ip ?>
-
-            Host Record: redirect       Type: CNAME  To: www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>
-            </pre>
-
+            <div class="row">
+              <div class="col-lg-9">
+                <div class="en" style="width: 100%;">
+                  <div class="well well-sm">
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>&lt;leave-empty&gt;</strong></div>
+                      <div class="col-xs-2">Type: <strong>A</strong></div>
+                      <div class="col-xs-6">To: <strong><?php echo $site_redirect_ip ?></strong></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>redirect</strong></div>
+                      <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                      <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?></strong></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="pt-br" style="width: 100%;">
+                  <div class="well well-sm">
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>&lt;deixe-vazio&gt;</strong></div>
+                      <div class="col-xs-2">Type: <strong>A</strong></div>
+                      <div class="col-xs-6">To: <strong><?php echo $site_redirect_ip ?></strong></div>
+                    </div>
+                    <div class="row">
+                      <div class="col-xs-4">Host Record: <strong>redirect</strong></div>
+                      <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                      <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?></strong></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
             <!--
 
             - - Veja funcionando:
@@ -154,7 +175,6 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
             HTTP/1.1 301 Moved Permanently
             location: http://<?php echo $test_domain_origin ?>/
             -->
-            </pre>
           </div>
         </div>
         <br />
@@ -172,9 +192,17 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="pt-br">Configure seu DNS da seguinte forma:</span>
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
-            <pre>
-            Host Record: www            Type: CNAME  To: www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>
-            </pre>
+            <div class="row">
+              <div class="col-lg-9">
+                <div class="well well-sm">
+                  <div class="row">
+                    <div class="col-xs-4">Host Record: <strong>www</strong></div>
+                    <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                    <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?></strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <!--
 
@@ -205,10 +233,18 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="pt-br">Configure seu DNS da seguinte forma:</span>
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
-            <pre>
-            Host Record: www            Type: CNAME  To: www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>
-            </pre>
-
+            <div class="row">
+              <div class="col-lg-9">
+                <div class="well well-sm">
+                  <div class="row">
+                    <div class="col-xs-4">Host Record: <strong>www</strong></div>
+                    <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                    <div class="col-xs-6">To: <strong>www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?></strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br />
             <span class="label label-danger pt-br">ATENÇÃO</span>
             <span class="label label-danger en">ATTENTION</span>
 
@@ -247,9 +283,18 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
               <span class="pt-br">Configure seu DNS da seguinte forma:</span>
               <span class="en">Configure your DNS Zone as follows:</span>
             </p>
-            <pre>
-            Host Record: jobs           Type: CNAME  To: www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>
-            </pre>
+            <div class="row">
+              <div class="col-lg-10">
+                <div class="well well-sm">
+                  <div class="row">
+                    <div class="col-xs-3">Host Record: <strong>jobs</strong></div>
+                    <div class="col-xs-2">Type: <strong>CNAME</strong></div>
+                    <div class="col-xs-7">To: <strong>www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?></strong></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br />
             <span class="label label-danger pt-br">ATENÇÃO</span>
             <span class="label label-danger en">ATTENTION</span>
             <span class="pt-br">
