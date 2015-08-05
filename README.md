@@ -1,12 +1,14 @@
-redirect.center
-===============
-Why PHP with Apache HTTPD?
+# redirect.center
+
+### Why PHP with Apache HTTPD?
 Because every server has.
 
-Why not use node.js, go, python...?
+### Why not use node.js, go, python...?
 For a simple redirect? No. Any server can run with minimal effort.
 
-How do I install?
+### How do I install?
+
+```sh
 $ cd /opt
 $ git clone https://github.com/udlei/redirect.center.git
 $ sudo yum install php55-pecl-redis
@@ -37,9 +39,10 @@ $ sudo vim /etc/httpd/conf.d/redirect.conf
 
 $ sudo /etc/init.d/httpd restart
 $ sudo /etc/init.d/redis restart
+```
 
-Environment Variables:
-
+### Environment Variables
+```sh
 export SITE_NAME='REDIRECT.CENTER'
 export SITE_DOMAIN='redirect.center'
 export SITE_REDIRECT_IP='54.84.55.102'
@@ -62,3 +65,4 @@ export GOOGLE_KEYWORDS_VISIBLE='true'
 export GOOGLE_ANALYTICS_CODE='UA-51158860-1'
 
 export CREDIT_VISIBLE='true'
+```
