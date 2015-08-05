@@ -1,36 +1,63 @@
 redirect.center
 ===============
-Redirecionamento de DNS sem a necessidade do cliente contratar um 
-servidor de hospedagem ou um servidor de dns com este recurso.
+Why PHP with Apache HTTPD?
+Because every server has.
 
-Por exemplo, o dominio pode ser redirecionado de forma simples:
-meuamigopet.com.br para www.meuamigopet.com.br
-somente alterando o DNS.
+Why not use node.js, go, python...?
+For a simple redirect? No. Any server can run with minimal effort.
 
-O sistema será instalado no dominio http://redirect.center,
-como este dominio está para liberação, temporariamente funcionando
-em http://toma.ai. Substitua todas as referencias de redirect.center
-para toma.ai no DNS.
+How do I install?
+$ cd /opt
+$ git clone https://github.com/udlei/redirect.center.git
+$ sudo yum install php55-pecl-redis
+$ sudo yum install php55
+$ sudo yum install redis
+$ sudo vim /etc/httpd/conf.d/redirect.conf
 
-===============
+<VirtualHost *:80>
+    DocumentRoot /opt/redirect.center/public_html
+    ServerName redirect.center
 
-What do you want?
+    <Directory /opt/redirect.center/public_html>
+        AllowOverride None
+        Require all granted
+    </Directory>
+</VirtualHost>
 
-- Redirect domain.com to www.domain.com
-.domain.com IN A 54.84.55.102
-redirect.domain.com IN CNAME www.domain.com.redirect.center
+<VirtualHost *:80>
+    DocumentRoot /opt/redirect.center/redirect
+    ServerName alias.redirect.center
+    ServerAlias *.redirect.center
 
-- Redirect www.domain.com to www.otherdomain.com without uri
-www.domain.com IN CNAME www.otherdomain.com.redirect.center
+    <Directory /opt/redirect.center/redirect>
+        AllowOverride None
+        Require all granted
+    </Directory>
+</VirtualHost>
 
-- Redirect www.domain.com to www.otherdomain.com with uri
-www.domain.com IN CNAME www.otherdomain.com.opts-uri.redirect.center
+$ sudo /etc/init.d/httpd restart
+$ sudo /etc/init.d/redis restart
 
-- Redirect test.domain.com to www.otherdomain.com without querystring
-test.domain.com IN CNAME www.otherdomain.com.redirect.center
+Environment Variables:
 
-- Redirect URL http://jobs.domain.com to http://www.domain.com/jobs
-jobs.domain.com IN CNAME www.domain.com.opts-slash.jobs.redirect.center
+export SITE_NAME='DIRECIONAR.COM.BR'
+export SITE_DOMAIN='redirecionar.com.br'
+export SITE_REDIRECT_IP='54.84.55.102'
+export SITE_DEFAULT_LANGUAGE='en'
 
-- Redirect URL http://www.domain.com/test to http://test.domain.com
-Its not possible
+export TEST_DOMAIN_ORIGIN='meu-dominio.com.br'
+export TEST_DOMAIN_DESTINATION='meu-outro-domino.com.br'
+export DEFAULT_LANGUAGE='pt-br'
+
+export UPTIME_VISIBLE='true'
+
+export COUNTER_VISIBLE='true'
+export COUNTER_REDIS_HOST=127.0.0.1
+export COUNTER_REDIS_PORT=6379
+
+export GITHUB_FORKME_VISIBLE='true'
+export GITHUB_PROJECT_ADDRESS='udlei/redirect.center'
+export GITHUB_PROJECT_AUTHOR_EMAIL='udlei@nati.biz'
+
+export GOOGLE_KEYWORDS_VISIBLE='true'
+export GOOGLE_ANALYTICS_CODE='UA-51158860-1'
