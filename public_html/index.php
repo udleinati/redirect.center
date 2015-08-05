@@ -18,10 +18,10 @@ $counter_redis_host = getenv("COUNTER_REDIS_HOST") ? getenv("COUNTER_REDIS_HOST"
 $counter_redis_port = getenv("COUNTER_REDIS_PORT") ? getenv("COUNTER_REDIS_PORT") : '6379';
 
 if ($counter_visible == "true") {
-    #$redis = new Redis();
-    #$redis->connect($counter_redis_host, $counter_redis_port);
-    $count_24h = 1;#$redis->eval('return table.getn(redis.call("keys", "24h_*"))');
-    $count_ever = 1;#$redis->eval('return table.getn(redis.call("keys", "ever_*"))');
+    $redis = new Redis();
+    $redis->connect($counter_redis_host, $counter_redis_port);
+    $count_24h = $redis->eval('return table.getn(redis.call("keys", "24h_*"))');
+    $count_ever = $redis->eval('return table.getn(redis.call("keys", "ever_*"))');
 }
 
 $google_analytics_code = getenv("GOOGLE_ANALYTICS_CODE") ? getenv("GOOGLE_ANALYTICS_CODE") : 'UA-51158860-1' ;
@@ -343,7 +343,7 @@ $(document).ready(function() {
 });
 
 <?php if ($uptime_visible == 'true') { ?>
-/*
+
 var upSeconds=<?php echo $uptime ?>;
 
 function doUptime() {
@@ -384,7 +384,7 @@ function doUptime() {
 }
 
 doUptime();
-*/
+
 <?php } ?>
 
 $('.panel').each(function(index) {
