@@ -102,8 +102,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
 
             <?php if ($counter_visible == "true") { ?>
             <p class="domains">
-                 <span class="en">Domains using - Last 24h: <?php echo $count_24h ?> - Ever: <?php echo $count_ever ?></span>
-                 <span class="pt-br">Dom&iacute;nios usando - &Uacute;ltimas 24h: <?php echo $count_24h ?> - Desde sempre: <?php echo $count_ever ?></span>
+                 <span class="en">Domains using - Last 24h: <?php echo $count_24h ?> - Since last restart: <?php echo $count_ever ?></span>
+                 <span class="pt-br">Dom&iacute;nios usando - &Uacute;ltimas 24h: <?php echo $count_24h ?> - Desde o último restart: <?php echo $count_ever ?></span>
             </p>
             <?php } ?>
 
