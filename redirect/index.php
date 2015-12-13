@@ -25,19 +25,17 @@ if ($found['type'] == "A") {
 	$record = "redirect.".$_SERVER['HTTP_HOST'];
 	$rr = dns_get_record($record,DNS_CNAME);
 
-	redirect($rr[0]['type'],$record,$rr[0]['target']);
+	redirect($redirect_domain,$rr[0]['type'],$record,$rr[0]['target']);
 
 }
 
 elseif ($found['type'] == "CNAME") {
 
-	redirect($found['type'],$_SERVER['HTTP_HOST'],$found['target']);
+	redirect($redirect_domain,$found['type'],$_SERVER['HTTP_HOST'],$found['target']);
 
 }
 
-function redirect ($type,$record,$target) {
-
-	global $redirect_domain;
+function redirect ($redirect_domain,$type,$record,$target) {
 
     $record = strtolower($record);
     $target = strtolower($target);
@@ -67,20 +65,18 @@ function redirect ($type,$record,$target) {
         }
 
         Header('location: http://' . $target , true, $code);
+        return;
 
 	}
 
-	else {
-
-		// ERRO INDICANDO QUE DEVERIA SER DO TIPO CNAME
-        print "<html><head><title>error</title></head><body><pre>\n";
-        print "I can't resolve record: ".$record.".\n\n";
-        print "Add in your dns server this entry:\n";
-        print "redirect.".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$redirect_domain.".\n\n";
-        print "If it is already done, may you need wait to try again.\n\n";
-        print "<a href='http://".$redirect_domain."'>".$redirect_center."</a>";
-        print "</pre></body></html>";	
-   	}
+	// ERRO INDICANDO QUE DEVERIA SER DO TIPO CNAME
+    print "<html><head><title>error</title></head><body><pre>\n";
+    print "I can't resolve record: ".$record.".\n\n";
+    print "Add in your dns server this entry:\n";
+    print "redirect.".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$redirect_domain.".\n\n";
+    print "If it is already done, may you need wait to try again.\n\n";
+    print "<a href='http://".$redirect_domain."'>".$redirect_domain."</a>";
+    print "</pre></body></html>";	
 
 }
 ?>
