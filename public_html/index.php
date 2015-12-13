@@ -236,7 +236,7 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
                 <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#redirect-model-3" aria-expanded="false" aria-controls="redirect-model-3">
                   <span class="glyphicon glyphicon-share-alt"></span>
                   <span class="pt-br">Redirecionar <code class="test_origin">http://www.my-domain.com/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.my-other-domain.com/&lt;mesma-coisa&gt;</code></span>
-                  <span class="en">Redirect <code class="test_origin">http://www.my-domain.com/&lt;anything&gt;</code> to <code class="test_destination">http://www.my-other-domain.com/&lt;some-thing&gt;</code></span>
+                  <span class="en">Redirect <code class="test_origin">http://www.my-domain.com/&lt;anything&gt;</code> to <code class="test_destination">http://www.my-other-domain.com/&lt;same-thing&gt;</code></span>
                 </a>
               </h4>
             </div>
