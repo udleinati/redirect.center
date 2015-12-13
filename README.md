@@ -1,4 +1,7 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/grade/0ca94eb639ed4622b6797842d9b72028)](https://www.codacy.com/app/udlei/redirect-center)
+
 # redirect.center
+Redirect domains using DNS only.
 
 ### Why PHP with Apache HTTPD?
 Because every server has.
