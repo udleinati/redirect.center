@@ -1,10 +1,15 @@
 <?php
 
-$redis = new Redis();
-$redis->connect('127.0.0.1', 6379);
+$counter_visible = getenv("COUNTER_VISIBLE") ? getenv("COUNTER_VISIBLE") : 'true';
+$counter_redis_host = getenv("COUNTER_REDIS_HOST") ? getenv("COUNTER_REDIS_HOST") : '127.0.0.1';
+$counter_redis_port = getenv("COUNTER_REDIS_PORT") ? getenv("COUNTER_REDIS_PORT") : '6379';
 
-$redis->set('ever_'.strtolower($_SERVER['HTTP_HOST']), '1');
-$redis->setex('24h_'.strtolower($_SERVER['HTTP_HOST']), 86400, '1');
+if ($counter_visible == "true") {
+    $redis = new Redis();
+    $redis->connect($counter_redis_host, $counter_redis_port);
+    $redis->set('ever_'.strtolower($_SERVER['HTTP_HOST']), '1');
+    $redis->setex('24h_'.strtolower($_SERVER['HTTP_HOST']), 86400, '1');
+}
 
 $redirect_domain = getenv("SITE_DOMAIN") ? getenv("SITE_DOMAIN") : 'redirect.center';
 $GLOBALS['redirect_domain'] = $redirect_domain;
