@@ -6,7 +6,8 @@ $redis->connect('127.0.0.1', 6379);
 $redis->set('ever_'.strtolower($_SERVER['HTTP_HOST']), '1');
 $redis->setex('24h_'.strtolower($_SERVER['HTTP_HOST']), 86400, '1');
 
-$redirect_domain = "redirect.center";
+$redirect_domain = getenv("SITE_DOMAIN") ? getenv("SITE_DOMAIN") : 'redirect.center';
+$GLOBALS['redirect_domain'] = $redirect_domain;
 
 $r = dns_get_record($_SERVER['HTTP_HOST'],DNS_A + DNS_CNAME);
 $found = $r[0];
@@ -25,17 +26,17 @@ if ($found['type'] == "A") {
 	$record = "redirect.".$_SERVER['HTTP_HOST'];
 	$rr = dns_get_record($record,DNS_CNAME);
 
-	redirect($redirect_domain,$rr[0]['type'],$record,$rr[0]['target']);
+	redirect($rr[0]['type'],$record,$rr[0]['target']);
 
 }
 
 elseif ($found['type'] == "CNAME") {
 
-	redirect($redirect_domain,$found['type'],$_SERVER['HTTP_HOST'],$found['target']);
+	redirect($found['type'],$_SERVER['HTTP_HOST'],$found['target']);
 
 }
 
-function redirect ($redirect_domain,$type,$record,$target) {
+function redirect ($type,$record,$target) {
 
     $record = strtolower($record);
     $target = strtolower($target);
@@ -44,7 +45,7 @@ function redirect ($redirect_domain,$type,$record,$target) {
 
         $code = 301;
 
-        $target = str_replace(".".$redirect_domain,"",$target);
+        $target = str_replace(".".$GLOBALS['redirect_domain'],"",$target);
 
         # Verifica redirecionamento por URI
         if (strstr($target,".opts-uri")) {
@@ -73,9 +74,9 @@ function redirect ($redirect_domain,$type,$record,$target) {
     print "<html><head><title>error</title></head><body><pre>\n";
     print "I can't resolve record: ".$record.".\n\n";
     print "Add in your dns server this entry:\n";
-    print "redirect.".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$redirect_domain.".\n\n";
+    print "redirect.".$_SERVER['HTTP_HOST']." CNAME your_redirect.".$GLOBALS['redirect_domain'].".\n\n";
     print "If it is already done, may you need wait to try again.\n\n";
-    print "<a href='http://".$redirect_domain."'>".$redirect_domain."</a>";
+    print "<a href='http://".$GLOBALS['redirect_domain']."'>".$GLOBALS['redirect_domain']."</a>";
     print "</pre></body></html>";	
 
 }
