@@ -92,8 +92,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
         <div class="container">
             <h1>
                 <a href="/"><?php echo $site_name ?></a>
-                <small class="pt-br">Redirecione domínios usando somente o DNS</small>
                 <small class="en">Redirect domains using DNS only</small>
+                <small class="pt-br">Redirecione domínios usando somente o DNS</small>
             </h1>
 
             <?php if ($uptime_visible == "true") { ?>
@@ -116,8 +116,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
     <div id="content" class="container">
         <br />
         <p class="lead">
-            <span class="pt-br">O que você quer fazer?</span>
             <span class="en">What do you want to do?</span>
+            <span class="pt-br">O que você quer fazer?</span>
         </p>
         <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
           <div class="panel panel-default">
@@ -133,8 +133,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
             <div id="redirect-model-1" class="panel-collapse collapse in" role="tabpanel" aria-labelledby="headingOne">
               <div class="panel-body">
                 <p>
-                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                   <span class="en">Configure your DNS Zone as follows:</span>
+                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                 </p>
                 <div class="row">
                   <div class="col-lg-10">
@@ -192,16 +192,16 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
               <h4 class="panel-title">
                 <a class="collapsed" role="button" data-toggle="collapse" data-parent="#accordion" href="#redirect-model-2" aria-expanded="false" aria-controls="redirect-model-2">
                   <span class="glyphicon glyphicon-share-alt"></span>
-                  <span class="pt-br">Redirecionar <code class="test_origin">http://www.my-domain.com/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.my-other-domain.com</code></span>
                   <span class="en">Redirect <code class="test_origin">http://www.my-domain.com/&lt;anything&gt;</code> to <code class="test_destination">http://www.my-other-domain.com</code></span>
+                  <span class="pt-br">Redirecionar <code class="test_origin">http://www.my-domain.com/&lt;qualquer-coisa&gt;</code> para <code class="test_destination">http://www.my-other-domain.com</code></span>
                 </a>
               </h4>
             </div>
             <div id="redirect-model-2" class="panel-collapse collapse" role="tabpanel" aria-labelledby="redirect-model-two">
               <div class="panel-body">
                 <p>
-                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                   <span class="en">Configure your DNS Zone as follows:</span>
+                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                 </p>
                 <div class="row">
                   <div class="col-lg-10">
@@ -243,8 +243,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
             <div id="redirect-model-3" class="panel-collapse collapse" role="tabpanel" aria-labelledby="redirect-model-three">
               <div class="panel-body">
                 <p>
-                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                   <span class="en">Configure your DNS Zone as follows:</span>
+                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                 </p>
                 <div class="row">
                   <div class="col-lg-10">
@@ -258,8 +258,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
                   </div>
                 </div>
                 <br />
-                <span class="label label-danger pt-br">ATENÇÃO</span>
                 <span class="label label-danger en">ATTENTION</span>
+                <span class="label label-danger pt-br">ATENÇÃO</span>
 
                 <span class="pt-br">
                     O parâmetro <code>.opts-uri.</code> é o responsável por repassar o caminhodo da URL origem para a URL destino.
@@ -295,8 +295,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
             <div id="redirect-model-4" class="panel-collapse collapse" role="tabpanel" aria-labelledby="redirect-model-four">
               <div class="panel-body">
                 <p>
-                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                   <span class="en">Configure your DNS Zone as follows:</span>
+                  <span class="pt-br">Configure seu DNS da seguinte forma:</span>
                 </p>
                 <div class="row">
                   <div class="col-lg-10">
@@ -310,8 +310,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
                   </div>
                 </div>
                 <br />
-                <span class="label label-danger pt-br">ATENÇÃO</span>
                 <span class="label label-danger en">ATTENTION</span>
+                <span class="label label-danger pt-br">ATENÇÃO</span>
                 <span class="pt-br">
                     O parâmetro <code>.opts-slash.</code> é o responsável por transformar <code>.jobs</code> para <code>/jobs</code> e repassar para a URL destino.
                 </span>
