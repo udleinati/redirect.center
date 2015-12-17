@@ -357,6 +357,7 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
             <?php } ?>
             <?php if ($google_keywords_visible == 'true') { ?>
             <ul class="google-keywords">
+                <li>dns cname redirect, redirect http, redirect url, cname url redirect, domain redirect, http redirect code, redirect host</li>
                 <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
                 <li>redirigida por dns, redireccionamiento de dominio, redirigir cname dns</li>
                 <li>Перенаправление на DNS, домен перенаправления, перенаправлять DNS CNAME</li>
