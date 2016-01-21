@@ -304,7 +304,7 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
                       <div class="row">
                         <div class="col-xs-3">Host Record: <strong>jobs</strong></div>
                         <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                        <div class="col-xs-7">To: <strong>www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?></strong></div>
+                        <div class="col-xs-7">To: <strong>www.<?php echo $test_domain_origin ?>.opts-slash.jobs.<?php echo $site_domain ?></strong></div>
                       </div>
                     </div>
                   </div>
