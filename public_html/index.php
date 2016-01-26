@@ -41,6 +41,8 @@ $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("G
 
 $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
 
+$see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true';
+
 ?><!DOCTYPE html>
 <html lang="<?php echo $site_default_language ?>">
 <head>
@@ -80,6 +82,8 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
 
         footer .google-keywords { list-style-type: none; font-size: 10px; padding-left:0px; color: #ccc; margin-top: 10px; }
 
+        .see-too { color: white; font-size: 12px; opacity: 0.8; }
+
         .pt-br { display: none;}
         .en { display: none; }
 
@@ -110,6 +114,14 @@ $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';
             <p class="languages">
                 <span><a href="javascript:;" class="change-language to-en">English</a> - <a class="change-language to-pt-br" href="javascript:;">Português</a></span>
             </p>
+
+            <?php if ($see_too_visible == 'true') { ?>
+            <div class="see-too">
+              See too
+              : <a href="http://redirect.center" title="redirect.center">redirect.center</a>
+              : <a href="http://csr.ninja" title="csr.ninja">csr.ninja</a>
+            </div>
+            <?php } ?>
 
         </div>
     </header>

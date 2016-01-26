@@ -55,6 +55,7 @@ export TEST_DOMAIN_ORIGIN='my-domain.com'
 export TEST_DOMAIN_DESTINATION='my-other-domain.com'
 
 export UPTIME_VISIBLE='true'
+export SEE_TOO_VISIBLE='true'
 
 export COUNTER_VISIBLE='true'
 export COUNTER_REDIS_HOST=127.0.0.1
