@@ -118,7 +118,6 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
             <?php if ($see_too_visible == 'true') { ?>
             <div class="see-too">
               See too
-              : <a href="http://redirect.center" title="redirect.center">redirect.center</a>
               : <a href="http://csr.ninja" title="csr.ninja">csr.ninja</a>
             </div>
             <?php } ?>
