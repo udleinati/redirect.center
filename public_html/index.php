@@ -116,10 +116,10 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
             </p>
 
             <?php if ($see_too_visible == 'true') { ?>
-            <div class="see-too">
+<!--            <div class="see-too">
               See too
               : <a href="http://csr.ninja" title="csr.ninja">csr.ninja</a>
-            </div>
+            </div>-->
             <?php } ?>
 
         </div>
