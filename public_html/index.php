@@ -20,8 +20,10 @@ $counter_redis_port = getenv("COUNTER_REDIS_PORT") ? getenv("COUNTER_REDIS_PORT"
 if ($counter_visible == "true") {
     $redis = new Redis();
     $redis->connect($counter_redis_host, $counter_redis_port);
-    $count_24h = $redis->eval('return table.getn(redis.call("keys", "24h_*"))');
-    $count_ever = $redis->eval('return table.getn(redis.call("keys", "ever_*"))');
+    $count_24h_domains = $redis->eval('return table.getn(redis.call("keys", "24h_domains*"))');
+    $count_ever_domains = $redis->eval('return table.getn(redis.call("keys", "ever_domains*"))');
+    $count_24h_hosts = $redis->eval('return table.getn(redis.call("keys", "24h_hosts*"))');
+    $count_ever_hosts = $redis->eval('return table.getn(redis.call("keys", "ever_hosts*"))');
 }
 
 $google_analytics_code = getenv("GOOGLE_ANALYTICS_CODE") ? getenv("GOOGLE_ANALYTICS_CODE") : 'UA-51158860-1' ;
@@ -106,8 +108,8 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
 
             <?php if ($counter_visible == "true") { ?>
             <p class="domains">
-                 <span class="en">Domains using - Last 24h: <?php echo $count_24h ?> - Since last restart: <?php echo $count_ever ?></span>
-                 <span class="pt-br">Dom&iacute;nios usando - &Uacute;ltimas 24h: <?php echo $count_24h ?> - Desde o último restart: <?php echo $count_ever ?></span>
+                 <span class="en">Last 24h: <?php echo $count_24h_domains ?> domains, <?php echo $count_24h_hosts ?> hosts - Since last restart: <?php echo $count_ever_domains ?> domains, <?php echo $count_ever_hosts ?> hosts</span>
+                 <span class="pt-br">&Uacute;ltimas 24h: <?php echo $count_24h_domains ?> dom&iacute;nios, <?php echo $count_24h_hosts ?> hosts - Desde o último restart: <?php echo $count_ever_domains ?> dom&iacute;nios, <?php echo $count_ever_hosts ?> hosts</span>
             </p>
             <?php } ?>
 

@@ -7,8 +7,10 @@ $counter_redis_port = getenv("COUNTER_REDIS_PORT") ? getenv("COUNTER_REDIS_PORT"
 if ($counter_visible == "true") {
     $redis = new Redis();
     $redis->connect($counter_redis_host, $counter_redis_port);
-    $redis->set('ever_'.strtolower($_SERVER['HTTP_HOST']), '1');
-    $redis->setex('24h_'.strtolower($_SERVER['HTTP_HOST']), 86400, '1');
+    $redis->set('ever_hosts_'.strtolower($_SERVER['HTTP_HOST']), '1');
+    $redis->setex('24h_hosts_'.strtolower($_SERVER['HTTP_HOST']), 86400, '1');
+    $redis->set('ever_domains_'.strtolower(getDomain($_SERVER['HTTP_HOST'])), '1');
+    $redis->setex('24h_domains_'.strtolower(getDomain($_SERVER['HTTP_HOST'])), 86400, '1');
 }
 
 $redirect_domain = getenv("SITE_DOMAIN") ? getenv("SITE_DOMAIN") : 'redirect.center';
@@ -85,4 +87,55 @@ function redirect ($type,$record,$target) {
     print "</pre></body></html>";	
 
 }
+
+// http://stackoverflow.com/questions/2679618/get-domain-name-not-subdomain-in-php
+function getDomain($dom='', $fast=false) {
+    // general
+    $dom = !$dom ? $_SERVER['SERVER_NAME'] : $dom;
+    // for parse_url()                  ftp://           http://          https://
+    $dom = !isset($dom[5]) || ($dom[3] != ':' && $dom[4] != ':' && $dom[5] != ':') ? 'http://' . $dom : $dom;
+    // remove "/path/file.html", "/:80", etc.
+    $dom = parse_url($dom, PHP_URL_HOST);
+    // replace absolute domain name by relative (http://www.dns-sd.org/TrailingDotsInDomainNames.html)
+    $dom = trim($dom, '.');
+    // for fast check
+    $dom = $fast ? str_replace(array('www.', 'ww.'), '', $dom) : $dom;
+    // separate domain level
+    $lvl = explode('.', $dom);// 0 => www, 1 => example, 2 => co, 3 => uk
+    // fast check
+    if ($fast) {
+        if (!isset($lvl[2])) {
+            return isset($lvl[1]) ? $dom : false;
+        }
+    }
+
+    krsort($lvl);// 3 => uk, 2 => co, 1 => example, 0 => www
+    $lvl = array_values($lvl);// 0 => uk, 1 => co, 2 => example, 3 => www
+    $_1st = $lvl[0];
+    $_2nd = isset($lvl[1]) ? $lvl[1] . '.' . $_1st : false;
+    $_3rd = isset($lvl[2]) ? $lvl[2] . '.' . $_2nd : false;
+    $_4th = isset($lvl[3]) ? $lvl[3] . '.' . $_3rd : false;
+    // tld check
+    require('../libs/TLDs.php'); // includes "$tlds"-Array or feel free to use this instead of the cache version:
+    //$tlds = array('co.uk', 'co.jp');
+    $tlds = array_flip($tlds);// needed for isset()
+    // fourth level is TLD
+    if ($_4th && !isset($tlds[ '!' . $_4th ]) && (isset($tlds[ $_4th ]) || isset($tlds[ '*.' . $_3rd ]))) {
+        $dom = isset($lvl[4]) ? $lvl[4] . '.' . $_4th : false;
+    }
+    // third level is TLD
+    else if ($_3rd && !isset($tlds[ '!' . $_3rd ]) && (isset($tlds[ $_3rd ]) || isset($tlds[ '*.' . $_2nd ]))) {
+        $dom = $_4th;
+    }
+    // second level is TLD
+    else if (!isset($tlds[ '!' . $_2nd ]) && (isset($tlds[ $_2nd ]) || isset($tlds[ '*.' . $_1st ]))) {
+        $dom = $_3rd;
+    }
+    // first level is TLD
+    else {
+        $dom = $_2nd;
+    }
+    return $dom ? $dom : false;
+}
+
 ?>
