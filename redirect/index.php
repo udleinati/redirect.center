@@ -51,6 +51,7 @@ function redirect ($type,$record,$target) {
 	if ($type == "CNAME") {
 
         $code = 301;
+        $protocol = "http";
 
         $target = str_replace(".".$GLOBALS['redirect_domain'],"",$target);
 
@@ -58,6 +59,12 @@ function redirect ($type,$record,$target) {
         if (strstr($target,".opts-uri")) {
             $target = str_replace(".opts-uri","",$target);
             $target .= $_SERVER['REQUEST_URI'];
+        }
+
+        # Verifica redirecionamento por HTTPS
+        if (strstr($target,".opts-https")) {
+            $target = str_replace(".opts-https","",$target);
+            $protocol = "https";
         }
 
         # Redirect to specific path when there are slashes
@@ -72,7 +79,7 @@ function redirect ($type,$record,$target) {
             $code = filter_var($code, FILTER_SANITIZE_NUMBER_INT);
         }
 
-        Header('location: http://' . $target , true, $code);
+        Header('location: '.$protocol.'://'.$target,true,$code);
         return;
 
 	}

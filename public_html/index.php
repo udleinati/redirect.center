@@ -181,22 +181,17 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
                     </div>
                   </div>
                 </div>
-                <!--
 
-                - - Veja funcionando:
+                <br />
+                <span class="label label-danger en">PARAMETER</span>
+                <span class="label label-danger pt-br">PARÂMETRO</span>
+                <span class="pt-br">
+                    O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
+                <span class="en">
+                    The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
 
-                $ host <?php echo $test_domain_origin ?>
-
-                <?php echo $test_domain_origin ?> has address 54.84.55.102
-
-                $ host redirect.<?php echo $test_domain_origin ?>
-
-                redirect.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_origin ?>.<?php echo $site_domain ?>.
-
-                $ curl -I -s http://<?php echo $test_domain_origin ?> | grep "HTTP\|location"
-                HTTP/1.1 301 Moved Permanently
-                location: http://<?php echo $test_domain_origin ?>/
-                -->
               </div>
             </div>
           </div>
@@ -228,18 +223,16 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
                   </div>
                 </div>
 
-                <!--
+                <br />
+                <span class="label label-danger en">PARAMETER</span>
+                <span class="label label-danger pt-br">PARÂMETRO</span>
+                <span class="pt-br">
+                    O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
+                <span class="en">
+                    The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
 
-                - - Veja funcionando:
-
-                $ host www.<?php echo $test_domain_origin ?>
-
-                www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.<?php echo $site_domain ?>.
-
-                $ curl -I -s http://www.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
-                HTTP/1.1 301 Moved Permanently
-                location: http://www.<?php echo $test_domain_destination ?>/
-                -->
               </div>
             </div>
           </div>
@@ -280,18 +273,16 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
                 <span class="en">
                     The <code>.opts-uri.</code> parameter is responsible for passing the path of the source URL to the destination URL.
                 </span>
+                <br />
+                <span class="label label-danger en">PARAMETER</span>
+                <span class="label label-danger pt-br">PARÂMETRO</span>
+                <span class="pt-br">
+                    O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
+                <span class="en">
+                    The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
 
-                <!--
-                - - Veja funcionando:
-
-                $ host www.<?php echo $test_domain_origin ?>
-
-                www.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.opts-uri.<?php echo $site_domain ?>.
-
-                $ curl -I -s http://www.<?php echo $test_domain_origin ?>/testxyz | grep "HTTP\|location"
-                HTTP/1.1 301 Moved Permanently
-                location: http://www.<?php echo $test_domain_destination ?>/testxyz
-                -->
               </div>
             </div>
           </div>
@@ -331,18 +322,17 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
                 <span class="en">
                     The <code>.opts-slash.</code> parameter is responsible to tuning <code>.jobs</code> to <code>/jobs</code> and pass on to the destination URL.
                 </span>
+                <br />
+                <span class="label label-danger en">PARAMETER</span>
+                <span class="label label-danger pt-br">PARÂMETRO</span>
+                <span class="pt-br">
+                    O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
+                <span class="en">
+                    The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex: www.my-domain.com.opts-https.redirect.center.
+                </span>
 
-                <!--
-                - - Veja funcionando:
 
-                $ host jobs.<?php echo $test_domain_origin ?>
-
-                jobs.<?php echo $test_domain_origin ?> is an alias for www.<?php echo $test_domain_destination ?>.opts-slash.jobs.<?php echo $site_domain ?>.
-
-                $ curl -I -s http://jobs.<?php echo $test_domain_origin ?> | grep "HTTP\|location"
-                HTTP/1.1 301 Moved Permanently
-                location: http://www.<?php echo $test_domain_destination ?>/jobs
-                -->
               </div>
             </div>
           </div>
