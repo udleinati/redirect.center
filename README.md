@@ -45,6 +45,8 @@ $ sudo /etc/init.d/redis restart
 ```
 
 ### Environment Variables
+You must change at least the variable SITE_DOMAIN to have your redirect working.
+
 ```sh
 export SITE_NAME='REDIRECT.CENTER'
 export SITE_DOMAIN='redirect.center'
@@ -69,4 +71,11 @@ export GOOGLE_KEYWORDS_VISIBLE='true'
 export GOOGLE_ANALYTICS_CODE='UA-51158860-1'
 
 export CREDIT_VISIBLE='true'
+```
+
+### Last but no least
+Create an * entry in your DNS.
+
+```sh
+*.redirect.center CNAME TO redirect.center
 ```
