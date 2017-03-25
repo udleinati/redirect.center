@@ -38,7 +38,7 @@ $test_domain_origin = getenv("TEST_DOMAIN_ORIGIN") ? getenv("TEST_DOMAIN_ORIGIN"
 $test_domain_destination = getenv("TEST_DOMAIN_DESTINATION") ? getenv("TEST_DOMAIN_DESTINATION") : 'my-other-domain.com';
 
 $github_forkme_visible = getenv("GITHUB_FORKME_VISIBLE") ? getenv("GITHUB_FORKME_VISIBLE") : 'true';
-$github_project_address = getenv("GITHUB_PROJECT_ADDRESS") ? getenv("GITHUB_PROJECT_ADDRESS") : 'udlei/redirect.center';
+$github_project_address = getenv("GITHUB_PROJECT_ADDRESS") ? getenv("GITHUB_PROJECT_ADDRESS") : 'udleinati/redirect.center';
 $github_project_author_email = getenv("GITHUB_PROJECT_AUTHOR_EMAIL") ? getenv("GITHUB_PROJECT_AUTHOR_EMAIL") : 'udlei@nati.biz';
 
 $credit_visible = getenv("CREDIT_VISIBLE") ? getenv("CREDIT_VISIBLE") : 'true';

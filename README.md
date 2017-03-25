@@ -13,7 +13,7 @@ For a simple redirect? No. Any server can run with minimal effort.
 
 ```sh
 $ cd /opt
-$ git clone https://github.com/udlei/redirect.center.git
+$ git clone https://github.com/udleinati/redirect.center.git
 $ sudo yum install php55-pecl-redis
 $ sudo yum install php55
 $ sudo yum install redis
@@ -64,7 +64,7 @@ export COUNTER_REDIS_HOST=127.0.0.1
 export COUNTER_REDIS_PORT=6379
 
 export GITHUB_FORKME_VISIBLE='true'
-export GITHUB_PROJECT_ADDRESS='udlei/redirect.center'
+export GITHUB_PROJECT_ADDRESS='udleinati/redirect.center'
 export GITHUB_PROJECT_AUTHOR_EMAIL='udlei@nati.biz'
 
 export GOOGLE_KEYWORDS_VISIBLE='true'
