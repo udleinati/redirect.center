@@ -362,7 +362,7 @@ $see_too_visible = getenv("SEE_TOO_VISIBLE") ? getenv("SEE_TOO_VISIBLE") : 'true
             <ul class="google-keywords">
                 <li>dns cname redirect, redirect http, redirect url, cname url redirect, domain redirect, http redirect code, redirect host</li>
                 <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
-                <li>redirigida por dns, redireccionamiento de dominio, redirigir cname dns</li>
+                <li>redirecionar por dns, redirecionamiento de dominio, redirecionar cname dns</li>
                 <li>Перенаправление на DNS, домен перенаправления, перенаправлять DNS CNAME</li>
                 <li>إعادة توجيه من قبل نظام أسماء النطاقات، إعادة توجيه المجال توجيه DNS CNAME</li>
                 <li>הפניה על ידי DNS, הפניה תחום, להפנות CNAME DNS</li>
