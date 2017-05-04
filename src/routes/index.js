@@ -6,7 +6,7 @@ export default () => {
   let router = Router()
 
   router.use(fqdn)
-  router.use(redirect)
+  router.use(redirect())
 
   return router
 }

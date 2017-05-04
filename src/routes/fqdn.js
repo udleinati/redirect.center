@@ -4,6 +4,7 @@ import config from '../config'
 
 export default vhost(config.fqdn, (req, res) => {
   const context = {
+    config: config,
     uptime: os.uptime()
   }
 
