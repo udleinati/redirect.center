@@ -24,12 +24,17 @@ export default () => {
     }
 
     const callback = (err, records) => {
-      console.log(err)
       logger.info(`${path} -> CNAME ${targetHost}`)
       countCalls += 1
 
       if (countCalls > 3) {
         return res.status(508).send('Loop Detected')
+      }
+
+      if (err && err.code === 'ENODATA' && !parseDomain(targetHost).subdomain !== 'redirect') {
+        targetHost = `redirect.${targetHost}`
+        logger.info(`${path} -> CNAME pointing to redirect!`)
+        return dns.resolve(targetHost, 'CNAME', callback)
       }
 
       if (!err && records.length > 1) {
@@ -39,12 +44,7 @@ export default () => {
         }
       }
 
-      if (!err && !parseDomain(records[0]) && records[0] === config.publicIP) {
-        const parse = parseDomain(records[0])
-        targetHost = `redirect.${parse.domain}.${parse.tld}`
-        logger.info(`${path} CNAME pointing to redirect!`)
-        return dns.resolve(targetHost, 'CNAME', callback)
-      } else if (!err && !parseDomain(records[0])) {
+      if (!err && !parseDomain(records[0])) {
         err = {
           code: 'NOTADOMAIN',
           message: `The record on the host ${targetHost} is not valid. Found: ${records[0]}`
