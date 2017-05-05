@@ -3,10 +3,14 @@ import parseDomain from 'parse-domain'
 
 import config from '../config'
 import RedirectService from '../services/redirect.service'
+import StatisticService from '../services/statistic.service'
 import LoggerHandler from '../handlers/logger.handler'
 
+/* Router callback */
 export default (req, res) => {
   const logger = LoggerHandler
+  const statisticService = new StatisticService()
+
   const host = req.headers.host.split(':')[0]
   let targetHost = host
   let countCalls = 0
@@ -14,6 +18,7 @@ export default (req, res) => {
   const path = `${host}`
   logger.info(path)
 
+  /* dns.resolve callback */
   const callback = (err, records) => {
     logger.info(`${path} -> CNAME ${targetHost}`)
     countCalls += 1
@@ -22,7 +27,7 @@ export default (req, res) => {
       return res.status(508).send('Loop Detected')
     }
 
-    // console.log(err.code)
+    /* handle errors */
     if (err && err.code === 'ENODATA' && parseDomain(targetHost) &&
       parseDomain(targetHost).subdomain.indexOf('redirect') < 0) {
       targetHost = `redirect.${targetHost}`
@@ -55,8 +60,12 @@ export default (req, res) => {
       return res.status(500).render('error.ejs', context)
     }
 
+    /* prepar to redirect */
     const redirectService = new RedirectService(req, res)
     redirectService.perform(records[0]).then((returns) => {
+      statisticService.put(returns.hostname)
+
+      /* perform redirect */
       const url = `${returns.protocol}://${returns.hostname}${returns.path}`
       logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
       return res.redirect(returns.statusCode, url)

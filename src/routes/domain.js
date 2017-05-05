@@ -2,15 +2,21 @@ import Router from 'express'
 import vhost from 'vhost'
 import os from 'os'
 import config from '../config'
+import StatisticService from '../services/statistic.service'
 
 const router = Router()
+const statisticService = new StatisticService()
 
 router.get('/', (req, res) => {
-  const context = {
-    config: config,
-    uptime: os.uptime()
-  }
-  res.render('index.ejs', context)
+  statisticService.overview().then((statistics) => {
+    const context = {
+      config: config,
+      uptime: os.uptime(),
+      statistics: statistics
+    }
+
+    res.render('index.ejs', context)
+  })
 })
 
 router.get('*', (req, res) => {

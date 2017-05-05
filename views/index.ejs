@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>REDIRECT.CENTER</title>
+  <title><%= config.projectName %></title>
   <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect"/>
   <meta name="author" content="Udlei Nati / udlei@nati.biz">
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
@@ -48,17 +48,21 @@
   <header>
     <div class="container">
       <h1>
-        <a href="/">REDIRECT.CENTER</a>
+        <a href="/"><%= config.projectName %></a>
         <small class="en">Redirect domains using DNS only</small>
         <small class="pt-br">Redirecione domínios usando somente o DNS</small>
       </h1>
 
+      <% if (config.activateUptime == 'true') { %>
       <p><span id="uptime">...</span></p>
+      <% } %>
 
-      <!-- <p class="domains">
-         <span class="en">Last 24h: 1607 domains, 5770 hosts - Since last restart: 1999 domains, 13665 hosts</span>
-         <span class="pt-br">&Uacute;ltimas 24h: 1607 dom&iacute;nios, 5770 hosts - Desde o último restart: 1999 dom&iacute;nios, 13665 hosts</span>
-      </p> -->
+      <% if (config.activateCounter == 'true') { %>
+      <p class="domains">
+        <span class="en">Last 24h: <%= statistics.periodDomains %> domains, <%= statistics.periodHosts %> hosts - Since last restart: <%= statistics.everDomains %> domains, <%= statistics.everHosts %> hosts</span>
+        <span class="pt-br">&Uacute;ltimas 24h: <%= statistics.periodDomains %> dom&iacute;nios, <%= statistics.periodHosts %> hosts - Desde o último restart: <%= statistics.everDomains %> dom&iacute;nios, <%= statistics.everHosts %> hosts</span>
+      </p>
+      <% } %>
 
       <p class="languages">
         <span><a href="javascript:;" class="change-language to-en">English</a> - <a class="change-language to-pt-br" href="javascript:;">Português</a></span>
@@ -274,39 +278,43 @@
 
   <footer>
     <div class="container">
+      <% if (config.githubProjectAddress) { %>
       <p class="pt-br">
-        <span>REDIRECT.CENTER</span> é
-        <a href="https://github.com/udleinati/redirect.center">open source</a>, code contributions,
+        <span><%= config.projectName %></span> é
+        <a href="https://github.com/<%= config.githubProjectAddress %>">open source</a>, code contributions,
         feedback no geral de idéias s&atilde;o muito bem vindas, postar via
-        <a href="https://github.com/udleinati/redirect.center/issues">GitHub issues</a>,
-        <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz).
+        <a href="https://github.com/<%= config.githubProjectAddress %>/issues">GitHub issues</a>,
+        <a href="mailto:<%= config.githubProjectAuthorEmail %>">email</a> (<%= config.githubProjectAuthorEmail %>).
       </p>
       <p class="en">
-        <span>REDIRECT.CENTER</span> is
-        <a href="https://github.com/udleinati/redirect.center">open source</a>, code contributions,
+        <span><%= config.projectName %></span> is
+        <a href="https://github.com/<%= config.githubProjectAddress %>">open source</a>, code contributions,
         general feedback and ideas are greatly appreciated via either
-        the <a href="https://github.com/udleinati/redirect.center/issues">GitHub issues</a>,
-        <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz).
+        the <a href="https://github.com/<%= config.githubProjectAddress %>/issues">GitHub issues</a>,
+        <a href="mailto:<%= config.githubProjectAuthorEmail %>">email</a> (<%= config.githubProjectAuthorEmail %>).
       </p>
-        <ul class="google-keywords">
-          <li>dns cname redirect, redirect http, redirect url, cname url redirect, domain redirect, http redirect code, redirect host</li>
-          <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
-          <li>redirecionar por dns, redirecionamiento de dominio, redirecionar cname dns</li>
-          <li>redirigir mediante DNS, redireccionamiento de dominio, DNS CNAME redirección</li>
-          <li>reindirizzare dal DNS, redireccionamiento dominio, cname reindirizzamento DNS</li>
-          <li>Перенаправление на DNS, домен перенаправления, перенаправлять DNS CNAME</li>
-          <li>إعادة توجيه من قبل نظام أسماء النطاقات، إعادة توجيه المجال توجيه DNS CNAME</li>
-          <li>הפניה על ידי DNS, הפניה תחום, להפנות CNAME DNS</li>
-          <li>डीएनएस, डोमेन अनुप्रेषित द्वारा पुन: निर्देशित DNS CNAME अनुप्रेषित</li>
-          <li>DNS, 도메인 리디렉션으로 리디렉션의 DNS CNAME 리디렉션</li>
-          <li>DNSは、ドメインリダイレクトによってリダイレクト、DNSのCNAMEのリダイレクト</li>
-          <li>通过DNS，域名重定向重定向，重定向DNS CNAME</li>
-          <li>通過DNS，域名重定向重定向，重定向DNS CNAME</li>
-        </ul>
+      <% } %>
+      <ul class="google-keywords">
+        <li>dns cname redirect, redirect http, redirect url, cname url redirect, domain redirect, http redirect code, redirect host</li>
+        <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
+        <li>redirecionar por dns, redirecionamiento de dominio, redirecionar cname dns</li>
+        <li>redirigir mediante DNS, redireccionamiento de dominio, DNS CNAME redirección</li>
+        <li>reindirizzare dal DNS, redireccionamiento dominio, cname reindirizzamento DNS</li>
+        <li>Перенаправление на DNS, домен перенаправления, перенаправлять DNS CNAME</li>
+        <li>إعادة توجيه من قبل نظام أسماء النطاقات، إعادة توجيه المجال توجيه DNS CNAME</li>
+        <li>הפניה על ידי DNS, הפניה תחום, להפנות CNAME DNS</li>
+        <li>डीएनएस, डोमेन अनुप्रेषित द्वारा पुन: निर्देशित DNS CNAME अनुप्रेषित</li>
+        <li>DNS, 도메인 리디렉션으로 리디렉션의 DNS CNAME 리디렉션</li>
+        <li>DNSは、ドメインリダイレクトによってリダイレクト、DNSのCNAMEのリダイレクト</li>
+        <li>通过DNS，域名重定向重定向，重定向DNS CNAME</li>
+        <li>通過DNS，域名重定向重定向，重定向DNS CNAME</li>
+      </ul>
     </div>
   </footer>
 
-  <a href="https://github.com/udleinati/redirect.center"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+  <% if (config.githubProjectAddress) { %>
+  <a href="https://github.com/<%= config.githubProjectAddress %>"><img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/652c5b9acfaddf3a9c326fa6bde407b87f7be0f4/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f6f72616e67655f6666373630302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_orange_ff7600.png"></a>
+  <% } %>
 </body>
 
 <script type="text/javascript">
@@ -339,6 +347,8 @@ $(document).ready(function() {
     }
   });
 });
+
+<% if (config.activateUptime == 'true') { %>
 
 var upSeconds=<%= uptime %>;
 
@@ -380,6 +390,8 @@ function doUptime() {
 
 doUptime();
 
+<% } %>
+
 $('.panel').each(function(index) {
   anchor = $(this).find("a").attr("name");
   text = $(this).find(".panel-heading strong").html();
@@ -388,14 +400,16 @@ $('.panel').each(function(index) {
 
 </script>
 
+<% if (config.googleAnalyticsCode) { %>
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
   })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-  ga('create', 'UA-51158860-1', '<%= config.fqdn %>');
+  ga('create', '<%= config.googleAnalyticsCode %>', '<%= config.fqdn %>');
   ga('send', 'pageview');
 </script>
+<% } %>
 
 </html>
