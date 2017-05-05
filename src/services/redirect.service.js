@@ -37,13 +37,13 @@ export default class RedirectService {
       this.logger.info(`${path} ${hostname} without .opts-https`)
     }
 
-    while ((r = hostname.match(/.opts-slash.(\w+)/))) {
+    while ((r = hostname.match(/.opts-slash.([^.]+)/))) {
       hostname = hostname.replace(`.opts-slash.${r[1]}`, '')
       options.slashs.push(r[1])
       this.logger.info(`${path} ${hostname} without .opts-slash.${r[1]}`)
     }
 
-    while ((r = hostname.match(/.slash.(\w+)/))) {
+    while ((r = hostname.match(/.slash.([^.]+)/))) {
       hostname = hostname.replace(`.opts-slash.${r[1]}`, '')
       options.slashs.push(r[1])
       this.logger.info(`${path} ${hostname} without .slash.${r[1]}`)
