@@ -1,23 +1,37 @@
 import Router from 'express'
 import dns from 'dns'
+import parseDomain from 'parse-domain'
+
 import RedirectService from '../services/redirect.service'
+import LoggerHandler from '../handlers/logger.handler'
 
 export default () => {
-  let router = Router()
+  const router = Router()
+  const logger = LoggerHandler
 
   router.all('*', (req, res) => {
-    const host = req.headers.host.split(':')[0]
-    dns.resolve(host, 'CNAME', (err, records) => {
+    let host = req.headers.host.split(':')[0]
+    let targetHost = host
+    const path = `Host ${host}`
+    logger.info(path)
+
+    host = 'nati.biz'
+    if (!parseDomain(host).subdomain) {
+      logger.info(`${path} A:ROOT DOMAIN`)
+      targetHost = `redirect.${host}`
+    }
+
+    dns.resolve(targetHost, 'CNAME', (err, records) => {
+      logger.info(`Host ${targetHost} resolve CNAME`)
       if (err) console.error(err)
-      // records = ['www.uol.com.br.opts-uri.opts-slash.test.opts-https.opts-statuscode-302.localhost']
+
       const redirectService = new RedirectService(req, res)
       redirectService.perform(records[0]).then((returns) => {
         const url = `${returns.protocol}://${returns.hostname}/${returns.path}`
-        return res.status(returns.statusCode).send(`${returns.protocol}//${url}`)
+        logger.info(`${path} redirect ${returns.statusCode} to ${url}`)
+        return res.status(returns.statusCode).send(url)
       })
     })
-
-    res.status(200).send('Redirect page')
   })
 
   return router

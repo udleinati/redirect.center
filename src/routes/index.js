@@ -1,11 +1,11 @@
 import Router from 'express'
-import fqdn from './fqdn'
+import domain from './domain'
 import redirect from './redirect'
 
 export default () => {
   let router = Router()
 
-  router.use(fqdn)
+  router.use(domain)
   router.use(redirect())
 
   return router
