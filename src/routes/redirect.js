@@ -18,11 +18,6 @@ export default () => {
     const path = `${host}`
     logger.info(path)
 
-    if (parseDomain(host) && !parseDomain(host).subdomain) {
-      logger.info(`${path} A:ROOT DOMAIN`)
-      targetHost = `redirect.${host}`
-    }
-
     const callback = (err, records) => {
       logger.info(`${path} -> CNAME ${targetHost}`)
       countCalls += 1
@@ -68,6 +63,11 @@ export default () => {
         logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
         return res.redirect(returns.statusCode, url)
       })
+    }
+
+    if (parseDomain(host) && !parseDomain(host).subdomain) {
+      logger.info(`${path} A:ROOT DOMAIN`)
+      targetHost = `redirect.${host}`
     }
 
     dns.resolve(targetHost, 'CNAME', callback)

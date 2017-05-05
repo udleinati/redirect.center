@@ -1,3 +1,4 @@
+import Promise from 'es6-promise'
 import config from '../config'
 import LoggerHandler from '../handlers/logger.handler'
 
@@ -57,7 +58,7 @@ export default class RedirectService {
     hostname = hostname.replace(`.${config.fqdn}`, '')
     this.logger.info(`${path} ${hostname} final`)
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
       let path = ''
       if (options.slashs.length >= 1) path += `/${options.slashs.join('/')}`
       if (options.uri === true) path += this.req.originalUrl
