@@ -44,7 +44,7 @@ export default class RedirectService {
     }
 
     while ((r = hostname.match(/.slash.([^.]+)/))) {
-      hostname = hostname.replace(`.opts-slash.${r[1]}`, '')
+      hostname = hostname.replace(`.slash.${r[1]}`, '')
       options.slashs.push(r[1])
       this.logger.info(`${path} ${hostname} without .slash.${r[1]}`)
     }
@@ -61,7 +61,7 @@ export default class RedirectService {
     return new Promise((resolve) => {
       let path = ''
       if (options.slashs.length >= 1) path += `/${options.slashs.join('/')}`
-      if (options.uri === true) path += this.req.originalUrl
+      if (options.uri === true) path += this.req.url
 
       resolve({
         protocol: ((options.https === true) ? 'https' : 'http'),

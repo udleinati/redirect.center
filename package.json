@@ -30,6 +30,7 @@
     "ejs": "^2.5.6",
     "es6-promise": "^4.1.0",
     "express": "^4.15.2",
+    "mock-http": "0.0.10",
     "parse-domain": "^1.1.0",
     "vhost": "^3.0.2",
     "winston": "^2.3.1"
