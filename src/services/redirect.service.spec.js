@@ -1,23 +1,13 @@
-import mockHttp from 'mock-http'
+import mocksHttp from 'node-mocks-http'
 import assert from 'assert'
 import RedirectService from '../services/redirect.service'
 
 import config from '../config.js'
-import index from '../index.js'
 
 describe('./services/redirect.service.js', () => {
-  let server
   const host = 'www.google.com'
-  const req = new mockHttp.Request({ url: '/events?a=1' })
-  const res = new mockHttp.Response({ })
-
-  before(() => {
-    server = index.listen()
-  })
-
-  after(() => {
-    server.close()
-  })
+  const req = mocksHttp.createRequest({ url: '/events?a=1' })
+  const res = mocksHttp.createResponse({ })
 
   it('simplest redirect', (done) => {
     const redirectService = new RedirectService(req, res)
