@@ -50,7 +50,7 @@ export default class RedirectService {
 
     if ((r = hostname.match(/.opts-statuscode-(\d+)/))) {
       hostname = hostname.replace(`.opts-statuscode-${r[1]}`, '')
-      options.status = r[1]
+      if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = r[1]
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 
@@ -58,10 +58,14 @@ export default class RedirectService {
     this.logger.info(`${path} ${hostname} final`)
 
     return new Promise((resolve, reject) => {
+      let path = ''
+      if (options.slashs.length >= 1) path += `/${options.slashs.join('/')}`
+      if (options.uri === true) path += this.req.originalUrl
+
       resolve({
         protocol: ((options.https === true) ? 'https' : 'http'),
         hostname: hostname,
-        path: options.slashs.join('/'),
+        path: path,
         statusCode: options.status
       })
     })

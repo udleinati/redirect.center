@@ -13,7 +13,7 @@ export default () => {
   router.all('*', (req, res) => {
     let host = req.headers.host.split(':')[0]
     let targetHost = host
-    const path = `Host ${host}`
+    const path = `${host}`
     logger.info(path)
 
     if (parseDomain(host) && !parseDomain(host).subdomain) {
@@ -22,7 +22,7 @@ export default () => {
     }
 
     dns.resolve(targetHost, 'CNAME', (err, records) => {
-      logger.info(`Host ${targetHost} resolve CNAME`)
+      logger.info(`${path} -> CNAME ${targetHost}`)
 
       if (!err && records.length > 1) {
         err = {
@@ -45,13 +45,14 @@ export default () => {
           targetHost: targetHost
         }
 
+        logger.info(`${path} ERROR: ${err.message}`)
         return res.status(500).render('error.ejs', context)
       }
 
       const redirectService = new RedirectService(req, res)
       redirectService.perform(records[0]).then((returns) => {
-        const url = `${returns.protocol}://${returns.hostname}/${returns.path}`
-        logger.info(`${path} redirect ${returns.statusCode} to ${url}`)
+        const url = `${returns.protocol}://${returns.hostname}${returns.path}`
+        logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
         return res.redirect(returns.statusCode, url)
       })
     })
