@@ -26,7 +26,8 @@ export default () => {
         return res.status(508).send('Loop Detected')
       }
 
-      if (err && err.code === 'ENODATA' && !parseDomain(targetHost).subdomain !== 'redirect') {
+      if (err && err.code === 'ENODATA' && parseDomain(targetHost) &&
+        !parseDomain(targetHost).subdomain !== 'redirect') {
         targetHost = `redirect.${targetHost}`
         logger.info(`${path} -> CNAME pointing to redirect!`)
         return dns.resolve(targetHost, 'CNAME', callback)
