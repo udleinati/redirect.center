@@ -28,7 +28,7 @@ export default class StatisticService {
     this.redisClient.set(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
     this.redisClient.set(`ever_domains_${parse.domain}.${parse.tld}`, '1')
     this.redisClient.set(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
-    this.redisClient.set(`ever_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+    this.redisClient.set(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
     return true
   }
 
