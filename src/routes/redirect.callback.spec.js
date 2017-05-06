@@ -5,7 +5,7 @@ import dns from 'dns'
 import RedirectCallback from './redirect.callback'
 import config from '../config'
 
-describe.only('./redirect.callback.js', () => {
+describe('./redirect.callback.js', () => {
   let callback, res
 
   beforeEach(() => {

@@ -8,7 +8,7 @@ export default class RedirectService {
     this.req = req
     this.res = res
     this.logger = LoggerHandler
-    this.path = 'RedirectService'
+    this.path = `${this.req.requestId} RedirectService`
     this.logger.info(`${this.path} constructor`)
   }
 

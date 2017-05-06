@@ -12,10 +12,12 @@ export default (req, res) => {
   const statisticService = new StatisticService()
 
   const host = req.headers.host.split(':')[0]
+  const requestId = req.requestId
+
   let targetHost = host
   let countCalls = 0
 
-  const path = `${host}`
+  const path = `${requestId} ${host}`
   logger.info(path)
 
   /* dns.resolve callback */
