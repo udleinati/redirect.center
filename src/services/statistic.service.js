@@ -10,7 +10,7 @@ export default class StatisticService {
   constructor (req, res) {
     if (config.activateCounter !== 'true') return true
 
-    if (!global.redis) {
+    if (!global.redisClient) {
       bluebird.promisifyAll(redis.RedisClient.prototype)
       bluebird.promisifyAll(redis.Multi.prototype)
       global.redisClient = redis.createClient({
