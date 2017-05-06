@@ -45,7 +45,8 @@
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
     "node-mocks-http": "^1.6.1",
-    "nodemon": "^1.11.0"
+    "nodemon": "^1.11.0",
+    "sinon": "^2.2.0"
   },
   "author": "",
   "license": "ISC"
