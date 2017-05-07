@@ -35,7 +35,7 @@ export default class StatisticService {
       const periodDomains = this.redisClient.setAsync(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
       parse = null
 
-      return Promise.all([everHosts, everDomains, periodHosts, periodDomains]).then((result) => {
+      return Promise.all([everHosts, everDomains, periodHosts, periodDomains]).then(() => {
         this.logger.info(`${this.path} put ${hostname}`)
         resolve(true)
       }).catch((err) => {
