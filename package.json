@@ -10,8 +10,8 @@
     "prestart": "npm run -s build",
     "test": "PORT=3001 mocha ./src/**/*.spec.js",
     "eslint": "./node_modules/.bin/eslint src/",
-    "coverage": "PORT=3001 istanbul cover _mocha --report html -- -R spec",
-    "codacy-coverage": "PORT=3001 istanbul cover _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage"
+    "coverage": "PORT=3001 istanbul cover -x **/*.spec.js _mocha --report html -- -R spec",
+    "codacy-coverage": "PORT=3001 istanbul cover -x **/*.spec.js _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage"
   },
   "standard": {
     "globals": [

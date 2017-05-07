@@ -1,11 +1,11 @@
 import Router from 'express'
-import domain from './domain'
+import page from './page'
 import redirect from './redirect'
 
 export default () => {
   let router = Router()
 
-  router.use(domain)
+  router.use(page)
   router.use(redirect())
 
   return router

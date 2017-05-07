@@ -2,7 +2,7 @@ import assert from 'assert'
 import mocksHttp from 'node-mocks-http'
 import sinon from 'sinon'
 import dns from 'dns'
-import RedirectCallback from './redirect.callback'
+import redirectCallback from './redirect.callback'
 import config from '../config'
 
 describe('./redirect.callback.js', () => {
@@ -36,7 +36,7 @@ describe('./redirect.callback.js', () => {
       done()
     })
 
-    RedirectCallback(req, res)
+    redirectCallback(req, res)
   })
 
   it('should return error 500 NOTADOMAIN', (done) => {
@@ -56,7 +56,7 @@ describe('./redirect.callback.js', () => {
       done()
     })
 
-    RedirectCallback(req, res)
+    redirectCallback(req, res)
   })
 
   it('should return error 500 ENODATA', (done) => {
@@ -76,7 +76,7 @@ describe('./redirect.callback.js', () => {
       done()
     })
 
-    RedirectCallback(req, res)
+    redirectCallback(req, res)
   })
 
   it('simple redirect', (done) => {
@@ -95,6 +95,6 @@ describe('./redirect.callback.js', () => {
       done()
     })
 
-    RedirectCallback(req, res)
+    redirectCallback(req, res)
   })
 })

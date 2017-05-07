@@ -1,10 +1,10 @@
 import Router from 'express'
-import RedirectCallback from './redirect.callback'
+import redirectCallback from './redirect.callback'
 
 export default () => {
   const router = Router()
 
-  router.all('*', RedirectCallback)
+  router.all('*', redirectCallback)
 
   return router
 }

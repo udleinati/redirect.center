@@ -12,4 +12,5 @@ before(() => {
 
 after(() => {
   LoggerHandler.prototype.info.restore()
+  redis.createClient.restore()
 })

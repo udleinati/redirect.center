@@ -1,12 +1,9 @@
-import Router from 'express'
-import vhost from 'vhost'
 import os from 'os'
-import config from '../config'
 import StatisticService from '../services/statistic.service'
+import config from '../config'
 
-const router = Router()
-
-router.get('/', (req, res) => {
+/* Router callback */
+const getPublicPage = (req, res) => {
   new StatisticService(req).overview().then((statistics) => {
     res.render('index.ejs', {
       config: config,
@@ -14,10 +11,10 @@ router.get('/', (req, res) => {
       statistics: statistics
     })
   })
-})
+}
 
-router.get('*', (req, res) => {
+const allPageNotFound = (req, res) => {
   res.status(404).send('Not Found')
-})
+}
 
-export default vhost(config.fqdn, router)
+export { getPublicPage, allPageNotFound }

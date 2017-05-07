@@ -1,3 +1,4 @@
+// when access /%
 export default (req, res, next) => {
   let err = null
   try {
