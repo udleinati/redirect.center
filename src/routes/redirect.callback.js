@@ -65,7 +65,7 @@ export default (req, res) => {
     /* prepar to redirect */
     const redirectService = new RedirectService(req)
     redirectService.perform(records[0]).then((returns) => {
-      statisticService.put(returns.hostname)
+      statisticService.put(targetHost)
 
       /* perform redirect */
       const url = `${returns.protocol}://${returns.hostname}${returns.path}`
