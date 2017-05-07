@@ -8,16 +8,12 @@ import LoggerHandler from '../handlers/logger.handler'
 
 /* Router callback */
 export default (req, res) => {
-  const logger = LoggerHandler
-  const statisticService = new StatisticService(req)
+  const logger = new LoggerHandler()
 
-  const host = req.headers.host.split(':')[0]
-  const requestId = req.requestId
-
-  let targetHost = host
+  let targetHost = req.headers.host.split(':')[0]
   let countCalls = 0
 
-  const path = `${requestId} ${host}`
+  const path = `${req.requestId} ${targetHost}`
   logger.info(path)
 
   /* dns.resolve callback */
@@ -26,6 +22,7 @@ export default (req, res) => {
     countCalls += 1
 
     if (countCalls > 3) {
+      countCalls = null
       return res.status(508).send('Loop Detected')
     }
 
@@ -52,31 +49,36 @@ export default (req, res) => {
     }
 
     if (err) {
-      const context = {
+      logger.info(`${path} ERROR: ${err.message}`)
+
+      return res.status(500).render('error.ejs', {
         config: config,
         err: err,
         targetHost: targetHost
-      }
-
-      logger.info(`${path} ERROR: ${err.message}`)
-      return res.status(500).render('error.ejs', context)
+      })
     }
 
     /* prepar to redirect */
-    const redirectService = new RedirectService(req)
-    redirectService.perform(records[0]).then((returns) => {
-      statisticService.put(targetHost)
+    // const redirectService = new RedirectService(req)
+    new RedirectService(req).perform(records[0]).then((returns) => {
+      new StatisticService(req).put(targetHost)
 
       /* perform redirect */
       const url = `${returns.protocol}://${returns.hostname}${returns.path}`
       logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
+
+      /* Helping Garbage Collection */
+      targetHost = null
+      countCalls = null
+
+      /* Redirecting */
       return res.redirect(returns.statusCode, url)
     })
   }
 
-  if (parseDomain(host) && !parseDomain(host).subdomain) {
+  if (parseDomain(targetHost) && !parseDomain(targetHost).subdomain) {
     logger.info(`${path} A:ROOT DOMAIN`)
-    targetHost = `redirect.${host}`
+    targetHost = `redirect.${targetHost}`
   }
 
   dns.resolve(targetHost, 'CNAME', callback)

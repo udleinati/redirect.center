@@ -7,16 +7,12 @@ import StatisticService from '../services/statistic.service'
 const router = Router()
 
 router.get('/', (req, res) => {
-  const statisticService = new StatisticService(req)
-
-  statisticService.overview().then((statistics) => {
-    const context = {
+  new StatisticService(req).overview().then((statistics) => {
+    res.render('index.ejs', {
       config: config,
       uptime: os.uptime(),
       statistics: statistics
-    }
-
-    res.render('index.ejs', context)
+    })
   })
 })
 

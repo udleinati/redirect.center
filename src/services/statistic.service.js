@@ -25,11 +25,12 @@ export default class StatisticService {
   put (hostname) {
     if (config.activateCounter !== 'true') return true
 
-    const parse = parseDomain(hostname)
+    let parse = parseDomain(hostname)
     this.redisClient.set(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
     this.redisClient.set(`ever_domains_${parse.domain}.${parse.tld}`, '1')
     this.redisClient.set(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
     this.redisClient.set(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+    parse = null
     return true
   }
 
