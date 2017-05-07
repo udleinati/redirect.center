@@ -39,7 +39,7 @@ export default class StatisticService {
         this.logger.info(`${this.path} put ${hostname}`)
         resolve(true)
       }).catch((err) => {
-        this.logger.info(`${this.path} overview catch ${err.message}`)
+        this.logger.error(`${this.path} overview catch ${err.message}`)
         reject(err)
       })
     })
@@ -63,7 +63,7 @@ export default class StatisticService {
           periodDomains: result[3]
         })
       }).catch((err) => {
-        this.logger.info(`${this.path} overview catch ${err.message}`)
+        this.logger.error(`${this.path} overview catch ${err.message}`)
         reject(err)
       })
     })
