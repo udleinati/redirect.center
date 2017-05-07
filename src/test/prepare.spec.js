@@ -6,7 +6,7 @@ before(() => {
   sinon.stub(LoggerHandler.prototype, 'info')
   sinon.stub(redis, 'createClient').returns({
     send_commandAsync: () => { return 1 },
-    set: () => { return true }
+    setAsync: () => { return 'OK' }
   })
 })
 

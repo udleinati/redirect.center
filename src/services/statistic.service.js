@@ -29,13 +29,19 @@ export default class StatisticService {
       if (config.activateCounter !== 'true') return true
 
       let parse = parseDomain(hostname)
-      this.redisClient.set(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
-      this.redisClient.set(`ever_domains_${parse.domain}.${parse.tld}`, '1')
-      this.redisClient.set(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
-      this.redisClient.set(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+      const everHosts = this.redisClient.setAsync(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
+      const everDomains = this.redisClient.setAsync(`ever_domains_${parse.domain}.${parse.tld}`, '1')
+      const periodHosts = this.redisClient.setAsync(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+      const periodDomains = this.redisClient.setAsync(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
       parse = null
-      this.logger.info(`${this.path} put ${hostname}`)
-      resolve(true)
+
+      return Promise.all([everHosts, everDomains, periodHosts, periodDomains]).then((result) => {
+        this.logger.info(`${this.path} put ${hostname}`)
+        resolve(true)
+      }).catch((err) => {
+        this.logger.info(`${this.path} overview catch ${err.message}`)
+        reject(err)
+      })
     })
   }
 
