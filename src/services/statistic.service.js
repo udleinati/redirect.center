@@ -3,7 +3,7 @@ import parseDomain from 'parse-domain'
 import redis from 'redis'
 import bluebird from 'bluebird'
 import config from '../config'
-// import LoggerHandler from '../handlers/logger.handler'
+import LoggerHandler from '../handlers/logger.handler'
 
 export default class StatisticService {
 
@@ -20,6 +20,8 @@ export default class StatisticService {
     }
     this.redisClient = global.redisClient
     this.req = req
+    this.logger = new LoggerHandler()
+    this.path = `${this.req.requestId} StatisticService`
   }
 
   put (hostname) {
@@ -32,6 +34,7 @@ export default class StatisticService {
       this.redisClient.set(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
       this.redisClient.set(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
       parse = null
+      this.logger.info(`${this.path} put ${hostname}`)
       resolve(true)
     })
   }
@@ -46,6 +49,7 @@ export default class StatisticService {
       const periodDomains = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "24h_domains_*"))', 0])
 
       return Promise.all([everHosts, everDomains, periodHosts, periodDomains]).then((result) => {
+        this.logger.info(`${this.path} overview then`)
         resolve({
           everHosts: result[0],
           everDomains: result[1],
@@ -53,6 +57,7 @@ export default class StatisticService {
           periodDomains: result[3]
         })
       }).catch((err) => {
+        this.logger.info(`${this.path} overview catch ${err.message}`)
         reject(err)
       })
     })

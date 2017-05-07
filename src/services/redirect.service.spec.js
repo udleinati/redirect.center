@@ -10,7 +10,7 @@ describe('./services/redirect.service.js', () => {
   const res = mocksHttp.createResponse({ })
 
   it('simplest redirect', (done) => {
-    const redirectService = new RedirectService(req, res)
+    const redirectService = new RedirectService(req)
     const targetHost = `${host}.${config.fqdn}`
 
     redirectService.perform(targetHost).then((result) => {
@@ -25,7 +25,7 @@ describe('./services/redirect.service.js', () => {
   })
 
   it('using .opts-uri.', (done) => {
-    const redirectService = new RedirectService(req, res)
+    const redirectService = new RedirectService(req)
     const targetHost = `${host}.opts-uri.${config.fqdn}`
 
     redirectService.perform(targetHost).then((result) => {
