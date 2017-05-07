@@ -7,7 +7,7 @@ import config from '../config'
 
 export default class StatisticService {
 
-  constructor (req, res) {
+  constructor (req) {
     if (config.activateCounter !== 'true') return true
 
     if (!global.redisClient) {
@@ -19,6 +19,7 @@ export default class StatisticService {
       })
     }
     this.redisClient = global.redisClient
+    this.req = req
   }
 
   put (hostname) {

@@ -9,7 +9,7 @@ import LoggerHandler from '../handlers/logger.handler'
 /* Router callback */
 export default (req, res) => {
   const logger = LoggerHandler
-  const statisticService = new StatisticService()
+  const statisticService = new StatisticService(req)
 
   const host = req.headers.host.split(':')[0]
   const requestId = req.requestId
@@ -63,7 +63,7 @@ export default (req, res) => {
     }
 
     /* prepar to redirect */
-    const redirectService = new RedirectService(req, res)
+    const redirectService = new RedirectService(req)
     redirectService.perform(records[0]).then((returns) => {
       statisticService.put(returns.hostname)
 

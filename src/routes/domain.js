@@ -5,9 +5,10 @@ import config from '../config'
 import StatisticService from '../services/statistic.service'
 
 const router = Router()
-const statisticService = new StatisticService()
 
 router.get('/', (req, res) => {
+  const statisticService = new StatisticService(req)
+
   statisticService.overview().then((statistics) => {
     const context = {
       config: config,

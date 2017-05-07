@@ -4,9 +4,8 @@ import LoggerHandler from '../handlers/logger.handler'
 
 export default class RedirectService {
 
-  constructor (req, res) {
+  constructor (req) {
     this.req = req
-    this.res = res
     this.logger = LoggerHandler
     this.path = `${this.req.requestId} RedirectService`
     this.logger.info(`${this.path} constructor`)
