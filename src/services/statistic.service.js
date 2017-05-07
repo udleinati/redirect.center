@@ -23,15 +23,17 @@ export default class StatisticService {
   }
 
   put (hostname) {
-    if (config.activateCounter !== 'true') return true
+    return new Promise((resolve, reject) => {
+      if (config.activateCounter !== 'true') return true
 
-    let parse = parseDomain(hostname)
-    this.redisClient.set(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
-    this.redisClient.set(`ever_domains_${parse.domain}.${parse.tld}`, '1')
-    this.redisClient.set(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
-    this.redisClient.set(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
-    parse = null
-    return true
+      let parse = parseDomain(hostname)
+      this.redisClient.set(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
+      this.redisClient.set(`ever_domains_${parse.domain}.${parse.tld}`, '1')
+      this.redisClient.set(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+      this.redisClient.set(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+      parse = null
+      resolve(true)
+    })
   }
 
   overview () {
