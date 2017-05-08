@@ -11,7 +11,6 @@ export default (req, res) => {
   const logger = new LoggerHandler()
 
   let targetHost = req.headers.host.split(':')[0]
-  let countCalls = 0
 
   const path = `${req.requestId} ${targetHost}`
   logger.info(path)
@@ -19,12 +18,6 @@ export default (req, res) => {
   /* dns.resolve callback */
   const callback = (err, records) => {
     logger.info(`${path} -> CNAME ${targetHost}`)
-    countCalls += 1
-
-    if (countCalls > 3) {
-      countCalls = null
-      return res.status(508).send('Loop Detected')
-    }
 
     /* handle errors */
     if (err && err.code === 'ENODATA' && parseDomain(targetHost) &&
@@ -69,7 +62,6 @@ export default (req, res) => {
 
       /* Helping Garbage Collection */
       targetHost = null
-      countCalls = null
 
       /* Redirecting */
       return res.redirect(returns.statusCode, url)

@@ -4,10 +4,16 @@ import LoggerHandler from '../handlers/logger.handler'
 describe('./handlers/logger.handler.js', () => {
   before(() => {
     LoggerHandler.prototype.info.restore()
+    LoggerHandler.prototype.warn.restore()
+    LoggerHandler.prototype.error.restore()
+    LoggerHandler.prototype.debug.restore()
   })
 
   after(() => {
     sinon.stub(LoggerHandler.prototype, 'info')
+    sinon.stub(LoggerHandler.prototype, 'warn')
+    sinon.stub(LoggerHandler.prototype, 'error')
+    sinon.stub(LoggerHandler.prototype, 'debug')
   })
 
   it('info error warn debug', (done) => {

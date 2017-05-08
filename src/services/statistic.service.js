@@ -8,7 +8,7 @@ import LoggerHandler from '../handlers/logger.handler'
 export default class StatisticService {
 
   constructor (req) {
-    if (config.activateCounter !== 'true') return true
+    if (config.activateCounter !== 'true') return
 
     if (!global.redisClient) {
       bluebird.promisifyAll(redis.RedisClient.prototype)
@@ -26,7 +26,7 @@ export default class StatisticService {
 
   put (hostname) {
     return new Promise((resolve, reject) => {
-      if (config.activateCounter !== 'true') return true
+      if (config.activateCounter !== 'true') return resolve(true)
 
       let parse = parseDomain(hostname)
       const everHosts = this.redisClient.setAsync(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
@@ -47,7 +47,7 @@ export default class StatisticService {
 
   overview () {
     return new Promise((resolve, reject) => {
-      if (config.activateCounter !== 'true') resolve()
+      if (config.activateCounter !== 'true') resolve({})
 
       const everHosts = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "ever_hosts_*"))', 0])
       const everDomains = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "ever_domains_*"))', 0])
