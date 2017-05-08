@@ -1,8 +1,8 @@
 import assert from 'assert'
 import mocksHttp from 'node-mocks-http'
-import preventDecodeError from './prevent-decode-error'
+import missingHostHeader from './missing-host-header'
 
-describe('./middlewares/prevent-decode-error.js', () => {
+describe('./middlewares/add-request-id.js', () => {
   let res
 
   beforeEach(() => {
@@ -13,25 +13,27 @@ describe('./middlewares/prevent-decode-error.js', () => {
 
   it('success', (done) => {
     const req = mocksHttp.createRequest({
+      headers: { host: 'localhost' },
       url: '/'
     })
 
-    preventDecodeError(req, res, () => {
+    missingHostHeader(req, res, () => {
+      assert.equal(req.headers.host, 'localhost')
       done()
     })
   })
 
   it('should expect error', (done) => {
     const req = mocksHttp.createRequest({
-      url: '/%'
+      url: '/'
     })
 
     res.on('end', () => {
       assert.equal(res.statusCode, 500)
-      assert.equal(res._getData(), 'URI malformed')
+      assert.equal(res._getData(), 'Missing Host Header')
       done()
     })
 
-    preventDecodeError(req, res, null)
+    missingHostHeader(req, res, null)
   })
 })
