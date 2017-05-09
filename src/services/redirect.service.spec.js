@@ -114,15 +114,30 @@ describe('./services/redirect.service.js', () => {
     })
   })
 
-  it('using mixed options', (done) => {
+  it('using mixed options 1', (done) => {
     const redirectService = new RedirectService(req, res)
-    const targetHost = `${host}.opts-uri.opts-slash.abc.opts-slash.def.opts-https.${config.fqdn}`
+    const targetHost = `${host}.opts-uri.opts-slash.abc.opts-slash.def.co.uk.opts-https.${config.fqdn}`
 
     redirectService.perform(targetHost).then((result) => {
       assert.equal(result.protocol, 'https')
       assert.equal(result.hostname, host)
-      assert.equal(result.path, '/abc/def/events?a=1')
+      assert.equal(result.path, '/abc/def.co.uk/events?a=1')
       assert.equal(result.statusCode, 301)
+      done()
+    }).catch((err) => {
+      done(err)
+    })
+  })
+
+  it('using mixed options 2', (done) => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}.slash.my-site.info.opts-slash.abc.it.opts-statuscode-302.${config.fqdn}`
+
+    redirectService.perform(targetHost).then((result) => {
+      assert.equal(result.protocol, 'http')
+      assert.equal(result.hostname, host)
+      assert.equal(result.path, '/abc.it/my-site.info')
+      assert.equal(result.statusCode, 302)
       done()
     }).catch((err) => {
       done(err)
