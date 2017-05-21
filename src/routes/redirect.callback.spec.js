@@ -83,11 +83,59 @@ describe('./redirect.callback.js', () => {
     const req = mocksHttp.createRequest({
       url: '/',
       headers: {
+        host: 'www.test.com'
+      }
+    })
+
+    callback.callsFake((host, type, cb) => {
+      cb(null, [ `www.google.com.${config.fqdn}` ])
+    })
+
+    res.on('end', () => {
+      assert.equal(res.statusCode, 301)
+      assert.equal(res._getRedirectUrl(), 'http://www.google.com')
+      done()
+    })
+
+    redirectCallback(req, res)
+  })
+
+  it('domain to redirect', (done) => {
+    const req = mocksHttp.createRequest({
+      url: '/',
+      headers: {
         host: 'test.com'
       }
     })
 
-    callback.yields(null, [ `www.google.com.${config.fqdn}` ])
+    callback.callsFake((host, type, cb) => {
+      if (host === 'test.com') {
+        cb({ code: 'ENODATA' }, null)
+      } else if (host === 'redirect.test.com') {
+        cb(null, [ `www.google.com.${config.fqdn}` ])
+      }
+    })
+
+    res.on('end', () => {
+      assert.equal(res.statusCode, 301)
+      assert.equal(res._getRedirectUrl(), 'http://www.google.com')
+      done()
+    })
+
+    redirectCallback(req, res)
+  })
+
+  it('domain returns CNAME', (done) => {
+    const req = mocksHttp.createRequest({
+      url: '/',
+      headers: {
+        host: 'test.com'
+      }
+    })
+
+    callback.callsFake((host, type, cb) => {
+      cb(null, [ `www.google.com.${config.fqdn}` ])
+    })
 
     res.on('end', () => {
       assert.equal(res.statusCode, 301)

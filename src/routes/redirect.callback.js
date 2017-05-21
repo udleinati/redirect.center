@@ -52,7 +52,6 @@ export default (req, res) => {
     }
 
     /* prepar to redirect */
-    // const redirectService = new RedirectService(req)
     new RedirectService(req).perform(records[0]).then((returns) => {
       new StatisticService(req).put(targetHost)
 
@@ -66,11 +65,6 @@ export default (req, res) => {
       /* Redirecting */
       return res.redirect(returns.statusCode, url)
     })
-  }
-
-  if (parseDomain(targetHost) && !parseDomain(targetHost).subdomain) {
-    logger.info(`${path} A:ROOT DOMAIN`)
-    targetHost = `redirect.${targetHost}`
   }
 
   dns.resolve(targetHost, 'CNAME', callback)
