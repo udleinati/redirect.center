@@ -70,6 +70,9 @@
     </div>
   </header>
     <div id="content" class="container">
+      <% if (config.alertMessage) { %>
+      <div class="alert alert-danger" role="alert"><%- config.alertMessage %></div>
+      <% } %>
       <br />
       <p class="lead">
         <span class="en">What do you want to do?</span>

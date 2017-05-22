@@ -10,7 +10,8 @@ const config = {
   'redisPort': process.env.REDIS_PORT || '6379',
   'githubProjectAddress': process.env.GITHUB_PROJECT_ADDRESS || 'udleinati/redirect.center',
   'githubProjectAuthorEmail': process.env.GITHUB_PROJECT_AUTHOR_EMAIL || 'udlei@nati.biz',
-  'googleAnalyticsCode': process.env.GOOGLE_ANALYTICS_CODE || 'UA-51158860-1'
+  'googleAnalyticsCode': process.env.GOOGLE_ANALYTICS_CODE || 'UA-51158860-1',
+  'alertMessage': process.env.ALERT_MESSAGE || ''
 }
 
 export default config
