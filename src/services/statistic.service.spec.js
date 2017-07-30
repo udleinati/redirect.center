@@ -1,4 +1,3 @@
-import Promise from 'es6-promise'
 import mocksHttp from 'node-mocks-http'
 import assert from 'assert'
 import sinon from 'sinon'

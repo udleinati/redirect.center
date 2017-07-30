@@ -4,36 +4,40 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon -w src --exec \"babel-node src --presets es2015,stage-0\"",
-    "build": "babel src -s -D -d dist --presets es2015,stage-0",
+    "dev": "nodemon -w src --exec \"babel-node src\"",
+    "build": "babel src -s -D -d dist",
     "start": "node dist",
     "prestart": "npm run -s build",
-    "test": "PORT=3001 mocha ./src/**/*.spec.js",
+    "test": "npm run eslint ; PORT=3001 nyc mocha",
     "eslint": "./node_modules/.bin/eslint src/",
-    "coverage": "PORT=3001 istanbul cover -x **/*.spec.js _mocha --report html -- -R spec",
-    "codacy-coverage": "PORT=3001 istanbul cover -x **/*.spec.js _mocha --report lcovonly -- -R spec && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage"
+    "coverage": "PORT=3001 nyc --reporter html npm test",
+    "codacy-coverage": "PORT=3001 nyc --reporter lcovonly npm test && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage",
+    "pm2-start": "npm run build > /dev/null ; pm2 start -s --name redirect-center dist/index.js > /dev/null",
+    "pm2-status": "pm2 status",
+    "pm2-log": "pm2 log --raw redirect-center",
+    "pm2-stop": "pm2 stop redirect-center; pm2 delete redirect-center"
   },
-  "standard": {
-    "globals": [
-      "describe",
-      "it",
-      "before",
-      "beforeEach",
-      "after",
-      "afterEach"
-    ]
+  "nyc": {
+    "include": [
+      "src/**/*.js"
+    ],
+    "exclude": [
+      "src/**/*.spec.js",
+      "src/**/*.mock.js"
+    ],
+    "all": true
   },
   "dependencies": {
     "babel-cli": "^6.24.0",
     "babel-core": "^6.24.0",
     "babel-preset-es2015": "^6.24.0",
-    "babel-preset-stage-0": "^6.22.0",
     "bluebird": "^3.5.0",
     "cuid": "^1.3.8",
     "ejs": "^2.5.6",
-    "es6-promise": "^4.1.0",
     "express": "^4.15.2",
+    "nyc": "^11.1.0",
     "parse-domain": "^1.1.0",
+    "pm2": "^2.6.1",
     "redis": "^2.7.1",
     "vhost": "^3.0.2",
     "winston": "^2.3.1"
@@ -44,7 +48,6 @@
     "chai-json-schema": "^1.4.0",
     "codacy-coverage": "^2.0.2",
     "eslint": "^3.19.0",
-    "istanbul": "^1.1.0-alpha.1",
     "mocha": "^3.2.0",
     "mocha-lcov-reporter": "^1.3.0",
     "node-mocks-http": "^1.6.1",

@@ -4,7 +4,7 @@ import winston from 'winston'
 // logger handler
 export default class LoggerHandler {
 
-  constructor () {
+  constructor() {
     if (!global.logger) {
       global.logger = new (winston.Logger)({
         level: config.loggerLevel,
@@ -17,19 +17,19 @@ export default class LoggerHandler {
     this.logger = global.logger
   }
 
-  info (message, parameters) {
+  info(message, parameters) {
     this.logger.info(message, parameters)
   }
 
-  error (message, parameters) {
+  error(message, parameters) {
     this.logger.error(message, parameters)
   }
 
-  warn (message, parameters) {
+  warn(message, parameters) {
     this.logger.warn(message, parameters)
   }
 
-  debug (message, parameters) {
+  debug(message, parameters) {
     this.logger.debug(message, parameters)
   }
 

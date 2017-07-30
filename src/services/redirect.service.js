@@ -1,17 +1,16 @@
-import Promise from 'es6-promise'
 import config from '../config'
 import LoggerHandler from '../handlers/logger.handler'
 
 export default class RedirectService {
 
-  constructor (req) {
+  constructor(req) {
     this.req = req
     this.logger = new LoggerHandler()
     this.path = `${this.req.requestId} RedirectService`
     this.logger.info(`${this.path} constructor`)
   }
 
-  perform (hostname) {
+  perform(hostname) {
     const path = `${this.path} perform`
     this.logger.info(`${path} ${hostname}`)
 

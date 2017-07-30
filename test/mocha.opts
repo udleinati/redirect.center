@@ -1,4 +1,4 @@
-src
+./src/**/*.spec.js
 --timeout 15000
 --compilers js:babel-core/register
 --recursive

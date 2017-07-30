@@ -1,15 +1,25 @@
 {
   "extends": "eslint:recommended",
   "parserOptions": {
-    "ecmaVersion": 7,
+    "ecmaVersion": 8,
     "sourceType": "module"
   },
   "env": {
     "node": true,
-    "mocha": true
+    "mocha": true,
+    "es6": true
   },
   "rules": {
     "no-console": 0,
-    "no-unused-vars": 1
+    "no-unused-vars": 1,
+    "no-multi-spaces": 1,
+    "no-var": 1,
+    "arrow-spacing": 1,
+    "space-before-function-paren": ["warn", "never"],
+    "space-infix-ops": 1,
+    "space-in-parens": ["warn", "never"],
+    "space-before-blocks": 1,
+    "no-spaced-func": 1,
+    "eqeqeq": 1
   }
 }

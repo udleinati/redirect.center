@@ -1,4 +1,3 @@
-import Promise from 'es6-promise'
 import parseDomain from 'parse-domain'
 import redis from 'redis'
 import bluebird from 'bluebird'
@@ -7,7 +6,7 @@ import LoggerHandler from '../handlers/logger.handler'
 
 export default class StatisticService {
 
-  constructor (req) {
+  constructor(req) {
     if (config.activateCounter !== 'true') return
 
     if (!global.redisClient) {
@@ -24,7 +23,7 @@ export default class StatisticService {
     this.path = `${this.req.requestId} StatisticService`
   }
 
-  put (hostname) {
+  put(hostname) {
     return new Promise((resolve, reject) => {
       if (config.activateCounter !== 'true') return resolve(true)
 
@@ -45,7 +44,7 @@ export default class StatisticService {
     })
   }
 
-  overview () {
+  overview() {
     return new Promise((resolve, reject) => {
       if (config.activateCounter !== 'true') resolve({})
 
