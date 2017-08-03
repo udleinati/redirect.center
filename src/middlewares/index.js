@@ -4,7 +4,7 @@ import addRequestId from './add-request-id'
 import missingHostHeader from './missing-host-header'
 
 export default () => {
-  let router = Router()
+  const router = Router()
 
   router.use(preventDecodeError)
   router.use(missingHostHeader)

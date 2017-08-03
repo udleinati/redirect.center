@@ -26,8 +26,7 @@ export PUBLIC_IP=54.84.55.102
 ### How do I run in production?
 
 ```sh
-$ npm install pm2 babel-cli -g
-$ pm2 start --interpreter babel-node src/index.js
+$ npm run pm2-start
 ```
 
 ### Last but no least
