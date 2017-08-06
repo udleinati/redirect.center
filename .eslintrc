@@ -1,10 +1,6 @@
 {
   "extends": [
-    "eslint:recommended",
-    "plugin:security/recommended"
-  ],
-  "plugins": [
-    "security"
+    "standard"
   ],
   "parserOptions": {
     "ecmaVersion": 8,
@@ -16,19 +12,8 @@
     "es6": true
   },
   "rules": {
-    "no-console": 0,
-    "no-unused-vars": "warn",
-    "no-multi-spaces": "warn",
     "no-var": "warn",
-    "arrow-spacing": "warn",
     "space-before-function-paren": ["warn", "never"],
-    "space-infix-ops": "warn",
-    "space-in-parens": ["warn", "never"],
-    "space-before-blocks": "warn",
-    "no-spaced-func": "warn",
-    "eqeqeq": "warn",
-    "prefer-const": "warn",
-    "no-path-concat": "warn",
-    "quotes": [error, single, {avoidEscape: true}]
+    "standard/no-callback-literal": 0
   }
 }

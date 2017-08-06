@@ -2,7 +2,6 @@ import config from '../config'
 import LoggerHandler from '../handlers/logger.handler'
 
 export default class RedirectService {
-
   constructor(req) {
     this.req = req
     this.logger = new LoggerHandler()

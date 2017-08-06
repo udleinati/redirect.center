@@ -3,7 +3,6 @@ import winston from 'winston'
 
 // logger handler
 export default class LoggerHandler {
-
   constructor() {
     if (!global.logger) {
       global.logger = new (winston.Logger)({
@@ -32,5 +31,4 @@ export default class LoggerHandler {
   debug(message, parameters) {
     this.logger.debug(message, parameters)
   }
-
 }

@@ -5,7 +5,6 @@ import config from '../config'
 import LoggerHandler from '../handlers/logger.handler'
 
 export default class StatisticService {
-
   constructor(req) {
     if (config.activateCounter !== 'true') return
 
