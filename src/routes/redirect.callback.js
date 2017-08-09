@@ -52,19 +52,18 @@ export default (req, res) => {
     }
 
     /* prepar to redirect */
-    new RedirectService(req).perform(records[0]).then((returns) => {
-      new StatisticService(req).put(targetHost)
+    const returns = new RedirectService(req).perform(records[0])
+    new StatisticService(req).put(targetHost)
 
-      /* perform redirect */
-      const url = `${returns.protocol}://${returns.hostname}${returns.path}`
-      logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
+    /* perform redirect */
+    const url = `${returns.protocol}://${returns.hostname}${returns.path}`
+    logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
 
-      /* Helping Garbage Collection */
-      targetHost = null
+    /* Helping Garbage Collection */
+    targetHost = null
 
-      /* Redirecting */
-      return res.redirect(returns.statusCode, url)
-    })
+    /* Redirecting */
+    return res.redirect(returns.statusCode, url)
   }
 
   dns.resolve(targetHost, 'CNAME', callback)

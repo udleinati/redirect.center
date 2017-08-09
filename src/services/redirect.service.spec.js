@@ -13,134 +13,107 @@ describe('./services/redirect.service.js', () => {
     const redirectService = new RedirectService(req)
     const targetHost = `${host}.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using .opts-uri.', (done) => {
     const redirectService = new RedirectService(req)
     const targetHost = `${host}.opts-uri.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '/events?a=1')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/events?a=1')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using .opts-https.', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-https.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'https')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'https')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using .opts-slash.', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-slash.d1.opts-slash.d-1-2.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '/d1/d-1-2')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/d1/d-1-2')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using .slash.', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.slash.d1.slash.d-1-2.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '/d1/d-1-2')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/d1/d-1-2')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using .opts-statuscode-302.', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-statuscode-302.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '')
-      assert.equal(result.statusCode, 302)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '')
+    assert.equal(result.statusCode, 302)
+    done()
   })
 
   it('using .opts-statuscode-0. - should fail', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-statuscode-0.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using mixed options 1', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-uri.opts-slash.abc.opts-slash.def.co.uk.opts-https.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'https')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '/abc/def.co.uk/events?a=1')
-      assert.equal(result.statusCode, 301)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'https')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/abc/def.co.uk/events?a=1')
+    assert.equal(result.statusCode, 301)
+    done()
   })
 
   it('using mixed options 2', (done) => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.slash.my-site.info.opts-slash.abc.it.opts-statuscode-302.${config.fqdn}`
 
-    redirectService.perform(targetHost).then((result) => {
-      assert.equal(result.protocol, 'http')
-      assert.equal(result.hostname, host)
-      assert.equal(result.path, '/abc.it/my-site.info')
-      assert.equal(result.statusCode, 302)
-      done()
-    }).catch((err) => {
-      done(err)
-    })
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/abc.it/my-site.info')
+    assert.equal(result.statusCode, 302)
+    done()
   })
 })

@@ -56,17 +56,15 @@ export default class RedirectService {
 
     this.logger.info(`${path} ${hostname} final`)
 
-    return new Promise((resolve) => {
-      let path = ''
-      if (options.slashs.length >= 1) path += `/${options.slashs.join('/')}`
-      if (options.uri === true) path += this.req.url
+    let urlPath = ''
+    if (options.slashs.length >= 1) urlPath += `/${options.slashs.join('/')}`
+    if (options.uri === true) urlPath += this.req.url
 
-      resolve({
-        protocol: ((options.https === true) ? 'https' : 'http'),
-        hostname: hostname,
-        path: path,
-        statusCode: options.status
-      })
-    })
+    return {
+      protocol: ((options.https === true) ? 'https' : 'http'),
+      hostname: hostname,
+      path: urlPath,
+      statusCode: options.status
+    }
   }
 }

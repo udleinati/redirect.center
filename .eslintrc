@@ -13,6 +13,7 @@
   },
   "rules": {
     "no-var": "warn",
+    "prefer-const": "error",
     "space-before-function-paren": ["warn", "never"],
     "standard/no-callback-literal": 0
   }
