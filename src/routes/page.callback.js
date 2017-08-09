@@ -1,10 +1,11 @@
-import os from 'os'
-import StatisticService from '../services/statistic.service'
-import config from '../config'
+const os = require('os')
+const StatisticService = require('../services/statistic.service')
+const config = require('../config')
 
 /* Router callback */
-const getPublicPage = async (req, res) => {
+exports.getPublicPage = async(req, res) => {
   const statistics = await new StatisticService(req).overview()
+
   return res.render('index.ejs', {
     config: config,
     uptime: os.uptime(),
@@ -12,8 +13,6 @@ const getPublicPage = async (req, res) => {
   })
 }
 
-const allPageNotFound = (req, res) => {
+exports.allPageNotFound = (req, res) => {
   return res.status(404).send('Not Found')
 }
-
-export { getPublicPage, allPageNotFound }

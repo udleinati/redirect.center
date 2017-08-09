@@ -1,13 +1,13 @@
-import dns from 'dns'
-import parseDomain from 'parse-domain'
+const dns = require('dns')
+const parseDomain = require('parse-domain')
 
-import config from '../config'
-import RedirectService from '../services/redirect.service'
-import StatisticService from '../services/statistic.service'
-import LoggerHandler from '../handlers/logger.handler'
+const config = require('../config')
+const RedirectService = require('../services/redirect.service')
+const StatisticService = require('../services/statistic.service')
+const LoggerHandler = require('../handlers/logger.handler')
 
 /* Router callback */
-export default (req, res) => {
+module.exports = (req, res) => {
   const logger = new LoggerHandler()
 
   let targetHost = req.headers.host.split(':')[0]

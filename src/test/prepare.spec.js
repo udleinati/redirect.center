@@ -1,6 +1,6 @@
-import sinon from 'sinon'
-import LoggerHandler from '../handlers/logger.handler'
-import redis from 'redis'
+const sinon = require('sinon')
+const LoggerHandler = require('../handlers/logger.handler')
+const redis = require('redis')
 
 before(() => {
   sinon.stub(LoggerHandler.prototype, 'info')

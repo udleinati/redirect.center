@@ -1,9 +1,9 @@
-import Router from 'express'
-import preventDecodeError from './prevent-decode-error'
-import addRequestId from './add-request-id'
-import missingHostHeader from './missing-host-header'
+const Router = require('express')
+const preventDecodeError = require('./prevent-decode-error')
+const addRequestId = require('./add-request-id')
+const missingHostHeader = require('./missing-host-header')
 
-export default () => {
+module.exports = () => {
   const router = Router()
 
   router.use(preventDecodeError)

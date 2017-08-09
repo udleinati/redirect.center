@@ -1,7 +1,7 @@
-import express from 'express'
-import middlewares from './middlewares'
-import routes from './routes'
-import config from './config'
+const express = require('express')
+const middlewares = require('./middlewares')
+const routes = require('./routes')
+const config = require('./config')
 
 const app = exports.app = express()
 app.set('view engine', 'ejs')

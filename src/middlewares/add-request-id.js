@@ -1,6 +1,6 @@
-import cuid from 'cuid'
+const cuid = require('cuid')
 
-export default (req, res, next) => {
+module.exports = (req, res, next) => {
   req.requestId = cuid()
   next()
 }

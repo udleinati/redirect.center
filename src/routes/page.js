@@ -1,11 +1,12 @@
-import Router from 'express'
-import vhost from 'vhost'
-import config from '../config'
-import { getPublicPage, allPageNotFound } from './page.callback'
+const Router = require('express')
+const vhost = require('vhost')
+const config = require('../config')
+const { getPublicPage, allPageNotFound } = require('./page.callback')
 
-const router = Router()
+module.exports = () => {
+  const router = Router()
 
-router.get('/', getPublicPage)
-router.all('*', allPageNotFound)
-
-export default vhost(config.fqdn, router)
+  router.get('/', getPublicPage)
+  router.all('*', allPageNotFound)
+  return vhost(config.fqdn, router)
+}

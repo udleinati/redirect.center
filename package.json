@@ -2,20 +2,18 @@
   "name": "redirect.center",
   "version": "2.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/index.js",
   "scripts": {
-    "dev": "nodemon -w src --exec \"babel-node src\"",
-    "build": "babel src -s -D -d dist",
-    "start": "node dist",
-    "prestart": "npm run -s build",
-    "test": "npm run eslint ; PORT=3001 nyc mocha",
-    "eslint": "./node_modules/.bin/eslint src/",
+    "dev": "nodemon -w src",
+    "start": "node src",
+    "test": "npm run eslint && PORT=3001 nyc mocha",
+    "eslint": "eslint src/",
     "coverage": "PORT=3001 nyc --reporter html npm test",
-    "codacy-coverage": "PORT=3001 nyc --reporter lcovonly npm test && cat ./coverage/lcov.info | ./node_modules/.bin/codacy-coverage && rm -rf ./coverage",
-    "pm2-start": "npm run build > /dev/null ; pm2 start --name redirect-center dist/index.js",
+    "codacy-coverage": "PORT=3001 nyc --reporter lcovonly npm test && cat ./coverage/lcov.info | codacy-coverage && rm -rf ./coverage",
+    "pm2-start": "pm2 start --name redirect-center src/index.js",
     "pm2-status": "pm2 status",
     "pm2-log": "pm2 log --raw redirect-center",
-    "pm2-stop": "pm2 stop redirect-center; pm2 delete redirect-center"
+    "pm2-stop": "pm2 stop redirect-center && pm2 delete redirect-center"
   },
   "nyc": {
     "include": [
@@ -28,9 +26,6 @@
     "all": true
   },
   "dependencies": {
-    "babel-cli": "^6.24.0",
-    "babel-core": "^6.24.0",
-    "babel-preset-es2015": "^6.24.0",
     "bluebird": "^3.5.0",
     "cuid": "^1.3.8",
     "ejs": "^2.5.6",

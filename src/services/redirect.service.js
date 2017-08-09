@@ -1,7 +1,7 @@
-import config from '../config'
-import LoggerHandler from '../handlers/logger.handler'
+const config = require('../config')
+const LoggerHandler = require('../handlers/logger.handler')
 
-export default class RedirectService {
+module.exports = class RedirectService {
   constructor(req) {
     this.req = req
     this.logger = new LoggerHandler()

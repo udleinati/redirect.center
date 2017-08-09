@@ -1,5 +1,5 @@
-import sinon from 'sinon'
-import LoggerHandler from '../handlers/logger.handler'
+const sinon = require('sinon')
+const LoggerHandler = require('../handlers/logger.handler')
 
 describe('./handlers/logger.handler.js', () => {
   before(() => {

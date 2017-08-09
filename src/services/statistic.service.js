@@ -1,10 +1,10 @@
-import parseDomain from 'parse-domain'
-import redis from 'redis'
-import bluebird from 'bluebird'
-import config from '../config'
-import LoggerHandler from '../handlers/logger.handler'
+const parseDomain = require('parse-domain')
+const redis = require('redis')
+const bluebird = require('bluebird')
+const config = require('../config')
+const LoggerHandler = require('../handlers/logger.handler')
 
-export default class StatisticService {
+module.exports = class StatisticService {
   constructor(req) {
     if (config.activateCounter !== 'true') return
 

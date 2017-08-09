@@ -1,7 +1,7 @@
-import Router from 'express'
-import redirectCallback from './redirect.callback'
+const Router = require('express')
+const redirectCallback = require('./redirect.callback')
 
-export default () => {
+module.exports = () => {
   const router = Router()
 
   router.all('*', redirectCallback)

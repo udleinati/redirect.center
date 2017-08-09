@@ -1,8 +1,8 @@
-import mocksHttp from 'node-mocks-http'
-import assert from 'assert'
-import RedirectService from '../services/redirect.service'
+const mocksHttp = require('node-mocks-http')
+const assert = require('assert')
+const RedirectService = require('../services/redirect.service')
 
-import config from '../config.js'
+const config = require('../config.js')
 
 describe('./services/redirect.service.js', () => {
   const host = 'www.google.com'

@@ -1,8 +1,8 @@
-import mocksHttp from 'node-mocks-http'
-import assert from 'assert'
-import sinon from 'sinon'
-import StatisticService from './statistic.service'
-import config from '../config'
+const mocksHttp = require('node-mocks-http')
+const assert = require('assert')
+const sinon = require('sinon')
+const StatisticService = require('./statistic.service')
+const config = require('../config')
 
 describe('./services/statistic.service.js', () => {
   const req = mocksHttp.createRequest()

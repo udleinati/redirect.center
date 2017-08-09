@@ -1,4 +1,4 @@
-import index from '../index'
+const index = require('../index')
 
 describe('./index.js', () => {
   let server

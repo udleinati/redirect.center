@@ -1,4 +1,4 @@
-const config = {
+module.exports = {
   'publicIP': process.env.PUBLIC_IP || '127.0.0.1',
   'port': process.env.PORT || 3000,
   'fqdn': process.env.FQDN || 'localhost.com',
@@ -13,5 +13,3 @@ const config = {
   'googleAnalyticsCode': process.env.GOOGLE_ANALYTICS_CODE || 'UA-51158860-1',
   'alertMessage': process.env.ALERT_MESSAGE || ''
 }
-
-export default config

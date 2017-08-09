@@ -1,5 +1,5 @@
 // when access /%
-export default (req, res, next) => {
+module.exports = (req, res, next) => {
   let err = null
   try {
     decodeURIComponent(req.path)

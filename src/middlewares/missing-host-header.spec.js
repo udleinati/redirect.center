@@ -1,6 +1,6 @@
-import assert from 'assert'
-import mocksHttp from 'node-mocks-http'
-import missingHostHeader from './missing-host-header'
+const assert = require('assert')
+const mocksHttp = require('node-mocks-http')
+const missingHostHeader = require('./missing-host-header')
 
 describe('./middlewares/add-request-id.js', () => {
   let res

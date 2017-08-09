@@ -1,11 +1,11 @@
-import Router from 'express'
-import page from './page'
-import redirect from './redirect'
+const Router = require('express')
+const page = require('./page')
+const redirect = require('./redirect')
 
-export default () => {
+module.exports = () => {
   const router = Router()
 
-  router.use(page)
+  router.use(page())
   router.use(redirect())
 
   return router

@@ -1,6 +1,6 @@
-import assert from 'assert'
-import mocksHttp from 'node-mocks-http'
-import { getPublicPage, allPageNotFound } from './page.callback'
+const assert = require('assert')
+const mocksHttp = require('node-mocks-http')
+const { getPublicPage, allPageNotFound } = require('./page.callback')
 
 describe('./page.callback.js', () => {
   let res

@@ -1,8 +1,8 @@
-import config from '../config'
-import winston from 'winston'
+const config = require('../config')
+const winston = require('winston')
 
 // logger handler
-export default class LoggerHandler {
+module.exports = class LoggerHandler {
   constructor() {
     if (!global.logger) {
       global.logger = new (winston.Logger)({

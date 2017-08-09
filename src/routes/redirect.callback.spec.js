@@ -1,9 +1,9 @@
-import assert from 'assert'
-import mocksHttp from 'node-mocks-http'
-import sinon from 'sinon'
-import dns from 'dns'
-import redirectCallback from './redirect.callback'
-import config from '../config'
+const assert = require('assert')
+const mocksHttp = require('node-mocks-http')
+const sinon = require('sinon')
+const dns = require('dns')
+const redirectCallback = require('./redirect.callback')
+const config = require('../config')
 
 describe('./redirect.callback.js', () => {
   let callback, res

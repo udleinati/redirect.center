@@ -1,6 +1,6 @@
-import assert from 'assert'
-import mocksHttp from 'node-mocks-http'
-import addRequestId from './add-request-id'
+const assert = require('assert')
+const mocksHttp = require('node-mocks-http')
+const addRequestId = require('./add-request-id')
 
 describe('./middlewares/add-request-id.js', () => {
   let res

@@ -1,6 +1,6 @@
-import assert from 'assert'
-import mocksHttp from 'node-mocks-http'
-import preventDecodeError from './prevent-decode-error'
+const assert = require('assert')
+const mocksHttp = require('node-mocks-http')
+const preventDecodeError = require('./prevent-decode-error')
 
 describe('./middlewares/prevent-decode-error.js', () => {
   let res
