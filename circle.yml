@@ -2,7 +2,7 @@ machine:
   services:
     - docker
   node:
-    version: 7.6.0
+    version: 8.3.0
 test:
   post:
     - npm run codacy-coverage

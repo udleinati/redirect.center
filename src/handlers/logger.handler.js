@@ -1,15 +1,12 @@
+const bunyan = require('bunyan')
 const config = require('../config')
-const winston = require('winston')
 
 // logger handler
 module.exports = class LoggerHandler {
   constructor() {
     if (!global.logger) {
-      global.logger = new (winston.Logger)({
-        level: config.loggerLevel,
-        transports: [
-          new (winston.transports.Console)({ colorize: true })
-        ]
+      global.logger = bunyan.createLogger({
+        name: config.projectName.toLowerCase()
       })
     }
 
@@ -17,18 +14,26 @@ module.exports = class LoggerHandler {
   }
 
   info(message, parameters) {
-    this.logger.info(message, parameters)
+    let params = null
+    if (params) params = { params: parameters }
+    this.logger.info(params, message)
   }
 
   error(message, parameters) {
-    this.logger.error(message, parameters)
+    let params = null
+    if (params) params = { params: parameters }
+    this.logger.error(params, message)
   }
 
   warn(message, parameters) {
-    this.logger.warn(message, parameters)
+    let params = null
+    if (params) params = { params: parameters }
+    this.logger.warn(params, message)
   }
 
   debug(message, parameters) {
-    this.logger.debug(message, parameters)
+    let params = null
+    if (params) params = { params: parameters }
+    this.logger.debug(params, message)
   }
 }
