@@ -16,7 +16,7 @@ describe('./handlers/logger.handler.js', () => {
     sinon.stub(LoggerHandler.prototype, 'debug')
   })
 
-  it('info error warn debug', (done) => {
+  it('info error warn debug', () => {
     const logger = new LoggerHandler()
 
     logger.info('info')
@@ -30,7 +30,5 @@ describe('./handlers/logger.handler.js', () => {
 
     logger.debug('debug')
     logger.debug('debug', { param1: 'a', param2: 'b' })
-
-    done()
   })
 })

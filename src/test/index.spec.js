@@ -3,13 +3,11 @@ const index = require('../index')
 describe('./index.js', () => {
   let server
 
-  it('start service', (done) => {
+  it('start service', () => {
     server = index.listen()
-    done()
   })
 
-  it('stop service', (done) => {
+  it('stop service', () => {
     server.close()
-    done()
   })
 })
