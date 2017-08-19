@@ -53,4 +53,5 @@ jspm_packages
 # Vim
 *.swp
 
-# End of https://www.gitignore.io/api/node
+# Others
+package-lock.json
