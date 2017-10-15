@@ -38,7 +38,7 @@ module.exports = class RedirectService {
 
     if ((r = hostname.match(/.opts-statuscode-(\d+)/))) {
       hostname = hostname.replace(`.opts-statuscode-${r[1]}`, '')
-      if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = r[1]
+      if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 

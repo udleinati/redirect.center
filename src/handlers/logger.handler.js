@@ -6,7 +6,8 @@ module.exports = class LoggerHandler {
   constructor() {
     if (!global.logger) {
       global.logger = bunyan.createLogger({
-        name: config.projectName.toLowerCase()
+        name: config.projectName.toLowerCase(),
+        level: config.loggerLevel
       })
     }
 
