@@ -26,14 +26,13 @@ module.exports = class StatisticService {
     if (config.activateCounter !== 'true') return true
 
     let parse = parseDomain(hostname)
-    const everHosts = this.redisClient.setAsync(`ever_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1')
     const everDomains = this.redisClient.setAsync(`ever_domains_${parse.domain}.${parse.tld}`, '1')
     const periodHosts = this.redisClient.setAsync(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
     const periodDomains = this.redisClient.setAsync(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
     parse = null
 
     try {
-      await Promise.all([everHosts, everDomains, periodHosts, periodDomains])
+      await Promise.all([everDomains, periodHosts, periodDomains])
       this.logger.info(`${this.path} put ${hostname}`)
       return true
     } catch (err) {
@@ -45,19 +44,17 @@ module.exports = class StatisticService {
   async overview() {
     if (config.activateCounter !== 'true') return {}
 
-    const everHosts = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "ever_hosts_*"))', 0])
     const everDomains = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "ever_domains_*"))', 0])
     const periodHosts = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "24h_hosts_*"))', 0])
     const periodDomains = this.redisClient.send_commandAsync('eval', ['return table.getn(redis.call("keys", "24h_domains_*"))', 0])
 
     try {
-      const result = await Promise.all([everHosts, everDomains, periodHosts, periodDomains])
+      const result = await Promise.all([everDomains, periodHosts, periodDomains])
       this.logger.info(`${this.path} overview then`)
       return {
-        everHosts: result[0],
-        everDomains: result[1],
-        periodHosts: result[2],
-        periodDomains: result[3]
+        everDomains: result[0],
+        periodHosts: result[1],
+        periodDomains: result[2]
       }
     } catch (err) {
       this.logger.error(`${this.path} overview catch ${err.message}`)
