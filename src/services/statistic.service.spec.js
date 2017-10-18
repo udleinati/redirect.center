@@ -9,7 +9,6 @@ describe('./services/statistic.service.js', () => {
 
   it('receive overview', async() => {
     const result = await new StatisticService(req).overview()
-    assert.equal(result.everHosts, 1)
     assert.equal(result.everDomains, 1)
     assert.equal(result.periodHosts, 1)
     assert.equal(result.periodDomains, 1)
