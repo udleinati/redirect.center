@@ -42,7 +42,7 @@ module.exports = class RedirectService {
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 
-    while ((r = hostname.match(/(\.(?:opts-slash)\.)(.*?)(?:(?:\.(?:opts-slash|slash)\.)|$)/))) {
+    while ((r = hostname.match(/(\.(?:opts-slash)\.)(.*?)(?:(?:\.(?:opts-slash|slash)\.?)|$)/))) {
       hostname = hostname.replace(`.opts-slash.${r[2]}`, '')
       options.slashs.push(r[2])
       this.logger.info(`${path} ${hostname} without .opts-slash.${r[2]}`)
@@ -52,6 +52,12 @@ module.exports = class RedirectService {
       hostname = hostname.replace(`.slash.${r[2]}`, '')
       options.slashs.push(r[2])
       this.logger.info(`${path} ${hostname} without .slash.${r[2]}`)
+    }
+
+    if ((r = hostname.match(/.opts-slash/))) {
+      hostname = hostname.replace('.opts-slash', '')
+      options.slashs.push('')
+      this.logger.info(`${path} ${hostname} add final slash`)
     }
 
     this.logger.info(`${path} ${hostname} final`)

@@ -42,7 +42,7 @@ describe('./services/redirect.service.js', () => {
     assert.equal(result.statusCode, 301)
   })
 
-  it('using .opts-slash.', () => {
+  it('using .opts-slash. 1', () => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-slash.d1.opts-slash.d-1-2.${config.fqdn}`
 
@@ -53,7 +53,18 @@ describe('./services/redirect.service.js', () => {
     assert.equal(result.statusCode, 301)
   })
 
-  it('using .slash.', () => {
+  it('using .opts-slash. 2', () => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}.opts-slash.dd1.opts-slash.dd-11-22.opts-slash.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/dd1/dd-11-22/')
+    assert.equal(result.statusCode, 301)
+  })
+
+  it('using .slash. 1', () => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.slash.d1.slash.d-1-2.${config.fqdn}`
 
