@@ -1,4 +1,5 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/abc13f71309e44cab6779b079ca2e5e0)](https://www.codacy.com/app/udlei/redirect.center?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=udleinati/redirect.center&amp;utm_campaign=Badge_Grade) [![Codacy Badge](https://api.codacy.com/project/badge/Coverage/abc13f71309e44cab6779b079ca2e5e0)](https://www.codacy.com/app/udlei/redirect.center?utm_source=github.com&utm_medium=referral&utm_content=udleinati/redirect.center&utm_campaign=Badge_Coverage) [![CircleCI](https://circleci.com/gh/udleinati/redirect.center.svg?style=svg)](https://circleci.com/gh/udleinati/redirect.center) [![dependencies Status](https://david-dm.org/udleinati/redirect.center/status.svg)](https://david-dm.org/udleinati/redirect.center) [![devDependencies Status](https://david-dm.org/udleinati/redirect.center/dev-status.svg)](https://david-dm.org/udleinati/redirect.center?type=dev)
+[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
 [![Backers on Open Collective](https://opencollective.com/redirectcenter/backers/badge.svg)](#backers)
  [![Sponsors on Open Collective](https://opencollective.com/redirectcenter/sponsors/badge.svg)](#sponsors) 
 
@@ -41,7 +42,12 @@ Create an * entry in your DNS.
 ## Contributors
 
 This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
-<a href="https://github.com/undefined/undefinedgraphs/contributors"><img src="https://opencollective.com/redirectcenter/contributors.svg?width=890&button=false" /></a>
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore -->
+| [<img src="https://avatars0.githubusercontent.com/u/302277?v=4" width="100px;"/><br /><sub><b>Udlei Nati</b></sub>](https://github.com/udleinati)<br />[💻](https://github.com/udleinati/redirect.center/commits?author=udleinati "Code") [📖](https://github.com/udleinati/redirect.center/commits?author=udleinati "Documentation") |
+| :---: |
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 
 ## Backers
