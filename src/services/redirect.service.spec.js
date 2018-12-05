@@ -6,8 +6,10 @@ const config = require('../config.js')
 
 describe('./services/redirect.service.js', () => {
   const host = 'www.google.com'
-  const req = mocksHttp.createRequest({ url: '/events?a=1' })
-  const res = mocksHttp.createResponse({ })
+  const req = mocksHttp.createRequest({
+    url: '/events?a=1'
+  })
+  const res = mocksHttp.createResponse({})
 
   it('simplest redirect', () => {
     const redirectService = new RedirectService(req)

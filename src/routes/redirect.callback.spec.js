@@ -67,7 +67,10 @@ describe('./redirect.callback.js', () => {
       }
     })
 
-    callback.yields({ code: 'ENODATA', message: 'ENODATA' }, null)
+    callback.yields({
+      code: 'ENODATA',
+      message: 'ENODATA'
+    }, null)
 
     res.on('render', () => {
       const context = res._getRenderData()
@@ -88,7 +91,7 @@ describe('./redirect.callback.js', () => {
     })
 
     callback.callsFake((host, type, cb) => {
-      cb(null, [ `www.google.com.${config.fqdn}` ])
+      cb(null, [`www.google.com.${config.fqdn}`])
     })
 
     res.on('end', () => {
@@ -110,9 +113,11 @@ describe('./redirect.callback.js', () => {
 
     callback.callsFake((host, type, cb) => {
       if (host === 'test.com') {
-        cb({ code: 'ENODATA' }, null)
+        cb({
+          code: 'ENODATA'
+        }, null)
       } else if (host === 'redirect.test.com') {
-        cb(null, [ `www.google.com.${config.fqdn}` ])
+        cb(null, [`www.google.com.${config.fqdn}`])
       }
     })
 
@@ -134,7 +139,7 @@ describe('./redirect.callback.js', () => {
     })
 
     callback.callsFake((host, type, cb) => {
-      cb(null, [ `www.google.com.${config.fqdn}` ])
+      cb(null, [`www.google.com.${config.fqdn}`])
     })
 
     res.on('end', () => {

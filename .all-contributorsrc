@@ -37,7 +37,8 @@
       "profile": "http://matheu.srv.br",
       "contributions": [
         "code",
-        "doc"
+        "doc",
+        "plugin"
       ]
     }
   ]
