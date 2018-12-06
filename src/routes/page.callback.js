@@ -3,7 +3,7 @@ const StatisticService = require('../services/statistic.service')
 const config = require('../config')
 
 /* Router callback */
-exports.getPublicPage = async(req, res) => {
+exports.getPublicPage = async (req, res) => {
   const statistics = await new StatisticService(req).overview()
 
   return res.render('index.ejs', {
