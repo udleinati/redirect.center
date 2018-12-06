@@ -1,7 +1,10 @@
 {
   "name": "redirect.center",
+  "description": "Redirect domains using DNS only",
   "version": "2.0.0",
-  "description": "",
+  "repository": "git@github.com:udleinati/redirect.center.git",
+  "author": "Udlei Nati <udlei@protonmail.ch>",
+  "license": "ISC",
   "main": "src/index.js",
   "scripts": {
     "dev": "nodemon -w src",
@@ -14,7 +17,9 @@
     "pm2-status": "pm2 status",
     "pm2-log": "pm2 log --raw redirect-center",
     "pm2-stop": "pm2 stop redirect-center && pm2 delete redirect-center",
-    "postinstall": "opencollective-postinstall"
+    "postinstall": "opencollective-postinstall",
+    "add-contributor": "all-contributors add",
+    "generate-contributors": "all-contributors generate"
   },
   "nyc": {
     "include": [
@@ -40,8 +45,9 @@
     "opencollective": "^1.0.3"
   },
   "devDependencies": {
+    "all-contributors-cli": "^5.4.1",
     "chai": "^4.1.1",
-    "chai-http": "^3.0.0",
+    "chai-http": "^4.2.0",
     "chai-json-schema": "^1.4.0",
     "codacy-coverage": "^2.0.2",
     "eslint": "^4.4.1",
@@ -57,8 +63,10 @@
     "nyc": "^11.1.0",
     "sinon": "^4.0.1"
   },
-  "author": "Udlei Nati <udlei@protonmail.ch>",
-  "license": "ISC",
+  "engines": {
+    "node": ">=8",
+    "npm": ">=6"
+  },
   "collective": {
     "type": "opencollective",
     "url": "https://opencollective.com/redirectcenter"

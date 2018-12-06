@@ -13,7 +13,9 @@ describe('./middlewares/add-request-id.js', () => {
 
   it('success', (done) => {
     const req = mocksHttp.createRequest({
-      headers: { host: 'localhost' },
+      headers: {
+        host: 'localhost'
+      },
       url: '/'
     })
 

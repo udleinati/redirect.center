@@ -1,0 +1,45 @@
+{
+  "projectName": "redirect.center",
+  "projectOwner": "udleinati",
+  "repoType": "github",
+  "repoHost": "https://github.com",
+  "files": [
+    "README.md"
+  ],
+  "imageSize": 100,
+  "commit": false,
+  "contributors": [
+    {
+      "login": "udleinati",
+      "name": "Udlei Nati",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/302277?v=4",
+      "profile": "https://github.com/udleinati",
+      "contributions": [
+        "code",
+        "doc",
+        "ideas",
+        "infra"
+      ]
+    },
+    {
+      "login": "monkeywithacupcake",
+      "name": "jess",
+      "avatar_url": "https://avatars3.githubusercontent.com/u/7316730?v=4",
+      "profile": "http://jessachandler.com",
+      "contributions": [
+        "code"
+      ]
+    },
+    {
+      "login": "MatheusRV",
+      "name": "Matheus Rocha Vieira",
+      "avatar_url": "https://avatars0.githubusercontent.com/u/23284276?v=4",
+      "profile": "http://matheu.srv.br",
+      "contributions": [
+        "code",
+        "doc",
+        "plugin"
+      ]
+    }
+  ]
+}
