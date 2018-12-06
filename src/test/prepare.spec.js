@@ -8,12 +8,8 @@ before(() => {
   sinon.stub(LoggerHandler.prototype, 'error')
   sinon.stub(LoggerHandler.prototype, 'debug')
   sinon.stub(redis, 'createClient').returns({
-    send_commandAsync: () => {
-      return 1
-    },
-    setAsync: () => {
-      return 'OK'
-    }
+    send_commandAsync: () => { return 1 },
+    setAsync: () => { return 'OK' }
   })
 })
 

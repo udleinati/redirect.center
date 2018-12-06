@@ -20,27 +20,15 @@ describe('./handlers/logger.handler.js', () => {
     const logger = new LoggerHandler()
 
     logger.info('info')
-    logger.info('info', {
-      param1: 'a',
-      param2: 'b'
-    })
+    logger.info('info', { param1: 'a', param2: 'b' })
 
     logger.error('error')
-    logger.error('error', {
-      param1: 'a',
-      param2: 'b'
-    })
+    logger.error('error', { param1: 'a', param2: 'b' })
 
     logger.warn('warn')
-    logger.warn('warn', {
-      param1: 'a',
-      param2: 'b'
-    })
+    logger.warn('warn', { param1: 'a', param2: 'b' })
 
     logger.debug('debug')
-    logger.debug('debug', {
-      param1: 'a',
-      param2: 'b'
-    })
+    logger.debug('debug', { param1: 'a', param2: 'b' })
   })
 })
