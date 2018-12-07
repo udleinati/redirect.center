@@ -1,8 +1,18 @@
-<html><head><title>An error was found</title></head><body><pre>
+<html>
+
+<head>
+  <title>An error was found</title>
+</head>
+
+<body>
+  <pre>
 Something is wrong on your host: <%= targetHost %>
 
 Error message:
 <%= err.message %>
 
 <a href='http://<%= config.fqdn %>'><%= config.fqdn %></a>
-</pre></body></html>
+</pre>
+</body>
+
+</html>
