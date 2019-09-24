@@ -7,10 +7,11 @@ WORKDIR /app
 
 COPY package.json ./
 #COPY package-lock.json ./
-COPY ./src ./src/
-COPY ./views ./views/
 
 RUN npm install
+
+COPY ./src ./src/
+COPY ./views ./views/
 
 # https://medium.com/@mccode/processes-in-containers-should-not-run-as-root-2feae3f0df3b
 RUN groupadd -g 999 appuser && \
