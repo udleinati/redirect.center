@@ -11,7 +11,7 @@ app.use(routes())
 
 const listen = exports.listen = () => {
   return app.listen(config.port, () => {
-    console.log(`App listening on port ${config.port}!`)
+    console.log(`Example app listening on port ${config.port}!`)
   })
 }
 
