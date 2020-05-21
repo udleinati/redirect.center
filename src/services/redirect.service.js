@@ -17,7 +17,8 @@ module.exports = class RedirectService {
       uri: false,
       https: false,
       slashs: [],
-      status: 301
+      status: 301,
+      queries: [],
     }
 
     let r
@@ -42,6 +43,16 @@ module.exports = class RedirectService {
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 
+    while ((r = hostname.match(/(\.(?:opts-query)\.)(.*?)(?:(?:\.(?:opts-eq|eq)\.?)(.*?))?(?:(?:\.|$))/))) {
+      hostname = hostname.replace(r[0], '')
+      if (r[3]) {
+        options.queries.push(`${r[2]}=${r[3]}`)
+      } else {
+        options.queries.push(`${r[2]}`)
+      }
+      this.logger.info(`${path} ${hostname} without ${r[0]}`)
+    }
+
     while ((r = hostname.match(/(\.(?:opts-slash)\.)(.*?)(?:(?:\.(?:opts-slash|slash)\.?)|$)/))) {
       hostname = hostname.replace(`.opts-slash.${r[2]}`, '')
       options.slashs.push(r[2])
@@ -54,6 +65,7 @@ module.exports = class RedirectService {
       this.logger.info(`${path} ${hostname} without .slash.${r[2]}`)
     }
 
+
     if ((r = hostname.match(/.opts-slash/))) {
       hostname = hostname.replace('.opts-slash', '')
       options.slashs.push('')
@@ -64,6 +76,7 @@ module.exports = class RedirectService {
 
     let urlPath = ''
     if (options.slashs.length >= 1) urlPath += `/${options.slashs.join('/')}`
+    if (options.queries.length >= 1) urlPath += `?${options.queries.join('&')}`
     if (options.uri === true) urlPath += this.req.url
 
     return {
