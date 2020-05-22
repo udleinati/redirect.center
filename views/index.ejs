@@ -11,6 +11,7 @@
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
   <style>
     body { background-color: #F8F8F8; }
 
@@ -267,7 +268,7 @@
               <span class="glyphicon glyphicon-share-alt"></span>
               <span class="pt-br">Redirecionar <code class="test_origin">http://jobs.my-domain.com</code> para <code
                   class="test_destination">http://www.my-domain.com/jobs</code></span>
-              <span class="en">Redirect <code class="test_origin">http://jobs.my-domain.com</code> to <code class="test_destination">http://www.my-domain.com/jobs</code></span>
+              <span class="en">Redirect <code class="test_origin">http://jobs.my-domain.com</code> to <code class="test_destination">http://www.my-domain.com/jobs?id=1</code></span>
             </a>
           </h4>
         </div>
@@ -283,7 +284,7 @@
                   <div class="row">
                     <div class="col-xs-3">Host Record: <strong>jobs</strong></div>
                     <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                    <div class="col-xs-7">To: <strong>www.my-domain.com.opts-slash.jobs.<%= config.fqdn %></strong></div>
+                    <div class="col-xs-7">To: <strong>www.my-domain.com.opts-slash.jobs.opts-query.id.opts-eq.1.<%= config.fqdn %></strong></div>
                   </div>
                 </div>
               </div>
@@ -310,6 +311,32 @@
               The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex:
               www.my-domain.com.opts-https.<%= config.fqdn %>.
             </span>
+            <br />
+            <span class="label label-danger en">PARAMETER</span>
+            <span class="en mb-15">
+              The <code>.opts-query.&lt;key&gt;opts-eq.&lt;value&gt;</code> parameter is responsible to turning query params of <code>?&lt;key&gt;=&lt;value&gt;</code> to canonical domain name. 
+            </span>
+            <br />
+            <br />
+
+            <span class="en">
+              You can use the following form to convert your URLs to value for CNAME field in your DNS zone settings.
+            </span>
+            <form>
+              <div class="col-12">
+                <div class="form-group">
+                  <input class="form-control" placeholder="URL including proto, e.g. http://jobs.my-domain.com/?id=1" aria-label="URL including proto, e.g. http://jobs.my-domain.com/?id=1" type="url" class="form-control" id="url"/>
+                </div>
+                <div class="form-group">
+                  <div class="input-group">
+                  <input type="text" class="form-control" id="cname" readonly />
+                  <div class="input-group-btn">
+                    <button class="btn btn-default" type="button" id="copyCNAME" data-clipboard-target="#cname">Copy</button>
+                  </div>
+                  </div>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       </div>
@@ -448,6 +475,38 @@
   });
 
 </script>
+
+  <script>
+    $(document).ready(function() {
+      new ClipboardJS('#copyCNAME');
+
+      let input = document.querySelector('#url');
+      let cname = document.querySelector('#cname');
+
+      input.addEventListener('input', function(event) {
+        cname.value = tranformURLtoCNAME(event.currentTarget.value);
+      });
+
+      function tranformURLtoCNAME(urlStr) {
+        if (!urlStr) return '';
+        let url;
+
+        try {
+          url = new URL(urlStr);
+        } catch(e) {
+          return '';
+        }
+
+        return url.hostname
+          + url.pathname.replace(/\//g, '.opts-slash.').replace(/([^.])$/, '$1.')
+          + Array.from(new URLSearchParams(url.search).entries())
+            .map(([key, value]) => `opts-query.${key}.` + (value ? `opts-eq.${value}.` : ''))
+            .join('')
+          + (url.protocol === 'https:' ? 'opts-https.' : '')
+          + '<%= config.fqdn %>.'
+      }
+    });
+  </script>
 
 <% if (config.googleAnalyticsCode) { %>
 <script>
