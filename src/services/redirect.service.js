@@ -18,7 +18,7 @@ module.exports = class RedirectService {
       https: false,
       slashs: [],
       status: 301,
-      queries: [],
+      queries: []
     }
 
     let r
@@ -64,7 +64,6 @@ module.exports = class RedirectService {
       options.slashs.push(r[2])
       this.logger.info(`${path} ${hostname} without .slash.${r[2]}`)
     }
-
 
     if ((r = hostname.match(/.opts-slash/))) {
       hostname = hostname.replace('.opts-slash', '')
