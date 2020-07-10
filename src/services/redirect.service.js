@@ -16,10 +16,9 @@ module.exports = class RedirectService {
     const options = {
       uri: false,
       https: false,
-      status: 301
+      status: 301,
+      port: 0
     }
-
-    let r
 
     if (hostname.match(/\.(opts-|_)uri/)) {
       hostname = hostname.replace(/\.(opts-|_)uri/g, '')
@@ -33,10 +32,18 @@ module.exports = class RedirectService {
       this.logger.info(`${path} ${hostname} without .opts-https`)
     }
 
-    if ((r = hostname.match(/\.(?:opts-|_)s(tatus)?c(ode)?-(\d+)/))) {
+    let r
+    if ((r = hostname.match(/\.(?:opts-|_)s(?:tatus)?c(?:ode)?-(\d+)/))) {
       hostname = hostname.replace(/\.(opts-|_)s(tatus)?c(ode)?-(\d+)/g, '')
       if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
+    }
+
+    let p
+    if ((p = hostname.match(/\.(?:opts-|_)p(?:or)?t-(\d+)/))) {
+      hostname = hostname.replace(/\.(opts-|_)p(or)?t-(\d+)/g, '')
+      options.port = parseInt(p[1])
+      this.logger.info(`${path} ${hostname} without .opts-port-${p[1]}`)
     }
 
     hostname = hostname.replace(`.${config.fqdn}`, '')
@@ -52,7 +59,7 @@ module.exports = class RedirectService {
 
     const url = new URL(((options.https === true) ? 'https' : 'http') + '://' + hostname)
 
-    hostname = url.hostname
+    hostname = url.hostname + ((options.port) ? ':' + options.port : '')
     let urlPath = url.pathname + url.search + url.hash
     if (options.uri === true) urlPath += this.req.url.replace(/^\/+/, '')
 

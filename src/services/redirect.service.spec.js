@@ -88,6 +88,17 @@ describe('./services/redirect.service.js', () => {
     assert.equal(result.statusCode, 301)
   })
 
+  it('using .opts-port-8080.', () => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}.opts-port-8080.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host + ':8080')
+    assert.equal(result.path, '/')
+    assert.equal(result.statusCode, 301)
+  })
+
   it('using .opts-statuscode-302.', () => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-statuscode-302.${config.fqdn}`

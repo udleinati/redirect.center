@@ -511,6 +511,7 @@
             .replace(/\.\./g, '.')
             .replace(/([^.])$/, '$1.')
           + (url.protocol === 'https:' ? '_https.' : '')
+          + (url.port ? '_pt-' + url.port + '.' : '')
           + '<%= config.fqdn %>.'
       }
     });
