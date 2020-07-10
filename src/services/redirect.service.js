@@ -23,12 +23,13 @@ module.exports = class RedirectService {
 
     hostname = hostname.replace(`.${config.fqdn}`, '')
       .replace(/\.?opts-slash\.?/g, '/')
-      .replace(/\.?opts-query\.?/g, '?')
+      .replace(/\.?opts-query\.?/, '?')
+      .replace(/\.?opts-query\.?/g, '&')
       .replace(/\.?opts-eq\.?/g, '=')
-      .replace(/\.?opts-dot\.?/g, '.')
       .replace(/\.?opts-plus\.?/g, '+')
       .replace(/\.?opts-percent\.?/g, '%')
       .replace(/\.?opts-hash\.?/g, '#')
+      .replace(/\.?opts-dot\.?/g, '.')
 
     if (hostname.indexOf('.opts-uri') >= 0) {
       hostname = hostname.replace('.opts-uri', '')

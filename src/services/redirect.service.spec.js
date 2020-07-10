@@ -66,6 +66,17 @@ describe('./services/redirect.service.js', () => {
     assert.equal(result.statusCode, 301)
   })
 
+  it('using special characters', () => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}.opts-slash.dd1.opts-slash.d-1+2.opts-dot.htm.opts-slash.opts-query.q1.opts-eq.1.opts-plus.1.opts-query.q2.opts-eq.opts-percent.2e.opts-dot.opts-hash.h.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/dd1/d-1+2.htm/?q1=1+1&q2=%2e.#h')
+    assert.equal(result.statusCode, 301)
+  })
+
   it('using .opts-statuscode-302.', () => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-statuscode-302.${config.fqdn}`
