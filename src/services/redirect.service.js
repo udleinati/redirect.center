@@ -16,14 +16,19 @@ module.exports = class RedirectService {
     const options = {
       uri: false,
       https: false,
-      slashs: [],
-      status: 301,
-      queries: []
+      status: 301
     }
 
     let r
 
     hostname = hostname.replace(`.${config.fqdn}`, '')
+      .replace(/\.?opts-slash\.?/g, '/')
+      .replace(/\.?opts-query\.?/g, '?')
+      .replace(/\.?opts-eq\.?/g, '=')
+      .replace(/\.?opts-dot\.?/g, '.')
+      .replace(/\.?opts-plus\.?/g, '+')
+      .replace(/\.?opts-percent\.?/g, '%')
+      .replace(/\.?opts-hash\.?/g, '#')
 
     if (hostname.indexOf('.opts-uri') >= 0) {
       hostname = hostname.replace('.opts-uri', '')
@@ -43,39 +48,13 @@ module.exports = class RedirectService {
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 
-    while ((r = hostname.match(/(\.(?:opts-query)\.)(.*?)(?:(?:\.(?:opts-eq|eq)\.?)(.*?))?(?:(?:\.|$))/))) {
-      hostname = hostname.replace(r[0], '')
-      if (r[3]) {
-        options.queries.push(`${r[2]}=${r[3]}`)
-      } else {
-        options.queries.push(`${r[2]}`)
-      }
-      this.logger.info(`${path} ${hostname} without ${r[0]}`)
-    }
-
-    while ((r = hostname.match(/(\.(?:opts-slash)\.)(.*?)(?:(?:\.(?:opts-slash|slash)\.?)|$)/))) {
-      hostname = hostname.replace(`.opts-slash.${r[2]}`, '')
-      options.slashs.push(r[2])
-      this.logger.info(`${path} ${hostname} without .opts-slash.${r[2]}`)
-    }
-
-    while ((r = hostname.match(/(\.(?:slash)\.)(.*?)(?:(?:\.(?:slash)\.)|$)/))) {
-      hostname = hostname.replace(`.slash.${r[2]}`, '')
-      options.slashs.push(r[2])
-      this.logger.info(`${path} ${hostname} without .slash.${r[2]}`)
-    }
-
-    if ((r = hostname.match(/.opts-slash/))) {
-      hostname = hostname.replace('.opts-slash', '')
-      options.slashs.push('')
-      this.logger.info(`${path} ${hostname} add final slash`)
-    }
-
     this.logger.info(`${path} ${hostname} final`)
 
     let urlPath = ''
-    if (options.slashs.length >= 1) urlPath += `/${options.slashs.join('/')}`
-    if (options.queries.length >= 1) urlPath += `?${options.queries.join('&')}`
+    if (hostname.indexOf('/') >= 0) {
+      urlPath = hostname.substring(hostname.indexOf('/'))
+      hostname = hostname.substring(0, hostname.indexOf('/'))
+    }
     if (options.uri === true) urlPath += this.req.url
 
     return {

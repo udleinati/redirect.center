@@ -498,10 +498,16 @@
         }
 
         return url.hostname
-          + url.pathname.replace(/\//g, '.opts-slash.').replace(/([^.])$/, '$1.')
-          + Array.from(new URLSearchParams(url.search).entries())
-            .map(([key, value]) => `opts-query.${key}.` + (value ? `opts-eq.${value}.` : ''))
-            .join('')
+          + (url.pathname + url.search + url.hash)
+            .replace(/\./g, '.opts-dot.')
+            .replace(/\//g, '.opts-slash.')
+            .replace(/\?/g, '.opts-query.')
+            .replace(/=/g, '.opts-eq.')
+            .replace(/\+/g, '.opts-plus.')
+            .replace(/%/g, '.opts-percent.')
+            .replace(/#/g, '.opts-hash.')
+            .replace(/\.\./g, '.')
+            .replace(/([^.])$/, '$1.')
           + (url.protocol === 'https:' ? 'opts-https.' : '')
           + '<%= config.fqdn %>.'
       }
