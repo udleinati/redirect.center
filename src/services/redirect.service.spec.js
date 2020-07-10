@@ -18,7 +18,7 @@ describe('./services/redirect.service.js', () => {
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'http')
     assert.equal(result.hostname, host)
-    assert.equal(result.path, '')
+    assert.equal(result.path, '/')
     assert.equal(result.statusCode, 301)
   })
 
@@ -40,7 +40,7 @@ describe('./services/redirect.service.js', () => {
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'https')
     assert.equal(result.hostname, host)
-    assert.equal(result.path, '')
+    assert.equal(result.path, '/')
     assert.equal(result.statusCode, 301)
   })
 
@@ -68,12 +68,23 @@ describe('./services/redirect.service.js', () => {
 
   it('using special characters', () => {
     const redirectService = new RedirectService(req, res)
-    const targetHost = `${host}.opts-slash.dd1.opts-slash.d-1+2.opts-dot.htm.opts-slash.opts-query.q1.opts-eq.1.opts-plus.1.opts-query.q2.opts-eq.opts-percent.2e.opts-dot.opts-hash.h.${config.fqdn}`
+    const targetHost = `${host}.opts-slash.a.opts-dot.htm.opts-slash.opts-query.q1.opts-eq.1.opts-plus.1.opts-query.q2.opts-eq.opts-percent.2e.opts-colon.opts-dot.opts-hash.h.${config.fqdn}`
 
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'http')
     assert.equal(result.hostname, host)
-    assert.equal(result.path, '/dd1/d-1+2.htm/?q1=1+1&q2=%2e.#h')
+    assert.equal(result.path, '/a.htm/?q1=1+1&q2=%2e:.#h')
+    assert.equal(result.statusCode, 301)
+  })
+
+  it('using brief special characters', () => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}._s.a._d.htm._s._q.q1._eq.1._p.1._q.q2._eq._pc.2e._c._d._h.h.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/a.htm/?q1=1+1&q2=%2e:.#h')
     assert.equal(result.statusCode, 301)
   })
 
@@ -84,7 +95,7 @@ describe('./services/redirect.service.js', () => {
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'http')
     assert.equal(result.hostname, host)
-    assert.equal(result.path, '')
+    assert.equal(result.path, '/')
     assert.equal(result.statusCode, 302)
   })
 
@@ -95,7 +106,7 @@ describe('./services/redirect.service.js', () => {
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'http')
     assert.equal(result.hostname, host)
-    assert.equal(result.path, '')
+    assert.equal(result.path, '/')
     assert.equal(result.statusCode, 301)
   })
 })

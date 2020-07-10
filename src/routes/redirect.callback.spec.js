@@ -96,7 +96,7 @@ describe('./redirect.callback.js', () => {
 
     res.on('end', () => {
       assert.equal(res.statusCode, 301)
-      assert.equal(res._getRedirectUrl(), 'http://www.google.com')
+      assert.equal(res._getRedirectUrl(), 'http://www.google.com/')
       done()
     })
 
@@ -123,7 +123,7 @@ describe('./redirect.callback.js', () => {
 
     res.on('end', () => {
       assert.equal(res.statusCode, 301)
-      assert.equal(res._getRedirectUrl(), 'http://www.google.com')
+      assert.equal(res._getRedirectUrl(), 'http://www.google.com/')
       done()
     })
 
@@ -144,7 +144,7 @@ describe('./redirect.callback.js', () => {
 
     res.on('end', () => {
       assert.equal(res.statusCode, 301)
-      assert.equal(res._getRedirectUrl(), 'http://www.google.com')
+      assert.equal(res._getRedirectUrl(), 'http://www.google.com/')
       done()
     })
 

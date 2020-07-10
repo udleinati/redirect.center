@@ -499,17 +499,18 @@
 
         return url.hostname
           + (url.pathname + url.search + url.hash)
-            .replace(/\./g, '.opts-dot.')
-            .replace(/\//g, '.opts-slash.')
-            .replace(/\?/g, '.opts-query.')
-            .replace(/&/g, '.opts-query.')
-            .replace(/=/g, '.opts-eq.')
-            .replace(/\+/g, '.opts-plus.')
-            .replace(/%/g, '.opts-percent.')
-            .replace(/#/g, '.opts-hash.')
+            .replace(/\./g, '._d.')
+            .replace(/\//g, '._s.')
+            .replace(/\?/g, '._q.')
+            .replace(/&/g, '._q.')
+            .replace(/=/g, '._eq.')
+            .replace(/\+/g, '._p.')
+            .replace(/%/g, '._pc.')
+            .replace(/:/g, '._c.')
+            .replace(/#/g, '._h.')
             .replace(/\.\./g, '.')
             .replace(/([^.])$/, '$1.')
-          + (url.protocol === 'https:' ? 'opts-https.' : '')
+          + (url.protocol === 'https:' ? '_https.' : '')
           + '<%= config.fqdn %>.'
       }
     });

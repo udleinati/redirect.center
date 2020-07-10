@@ -21,42 +21,42 @@ module.exports = class RedirectService {
 
     let r
 
-    hostname = hostname.replace(`.${config.fqdn}`, '')
-      .replace(/\.?opts-slash\.?/g, '/')
-      .replace(/\.?opts-query\.?/, '?')
-      .replace(/\.?opts-query\.?/g, '&')
-      .replace(/\.?opts-eq\.?/g, '=')
-      .replace(/\.?opts-plus\.?/g, '+')
-      .replace(/\.?opts-percent\.?/g, '%')
-      .replace(/\.?opts-hash\.?/g, '#')
-      .replace(/\.?opts-dot\.?/g, '.')
-
-    if (hostname.indexOf('.opts-uri') >= 0) {
-      hostname = hostname.replace('.opts-uri', '')
+    if (hostname.match(/\.(opts-|_)uri/)) {
+      hostname = hostname.replace(/\.(opts-|_)uri/g, '')
       options.uri = true
       this.logger.info(`${path} ${hostname} without .opts-uri`)
     }
 
-    if (hostname.indexOf('.opts-https') >= 0) {
-      hostname = hostname.replace('.opts-https', '')
+    if (hostname.match(/\.(opts-|_)https/)) {
+      hostname = hostname.replace(/\.(opts-|_)https/g, '')
       options.https = true
       this.logger.info(`${path} ${hostname} without .opts-https`)
     }
 
-    if ((r = hostname.match(/.opts-statuscode-(\d+)/))) {
-      hostname = hostname.replace(`.opts-statuscode-${r[1]}`, '')
+    if ((r = hostname.match(/\.(?:opts-|_)s(tatus)?c(ode)?-(\d+)/))) {
+      hostname = hostname.replace(/\.(opts-|_)s(tatus)?c(ode)?-(\d+)/g, '')
       if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 
-    this.logger.info(`${path} ${hostname} final`)
+    hostname = hostname.replace(`.${config.fqdn}`, '')
+      .replace(/\.(opts-|_)s(lash)?(\.(?!(opts-|_)))?/g, '/')
+      .replace(/\.(opts-|_)q(uery)?(\.(?!(opts-|_)))?/, '?')
+      .replace(/\.(opts-|_)q(uery)?(\.(?!(opts-|_)))?/g, '&')
+      .replace(/\.(opts-|_)eq(\.(?!(opts-|_)))?/g, '=')
+      .replace(/\.(opts-|_)p(er)?c(ent)?(\.(?!(opts-|_)))?/g, '%')
+      .replace(/\.(opts-|_)p(lus)?(\.(?!(opts-|_)))?/g, '+')
+      .replace(/\.(opts-|_)c(olon)?(\.(?!(opts-|_)))?/g, ':')
+      .replace(/\.(opts-|_)h(ash)?(\.(?!(opts-|_)))?/g, '#')
+      .replace(/\.(opts-|_)d(ot)?\.?/g, '.')
 
-    let urlPath = ''
-    if (hostname.indexOf('/') >= 0) {
-      urlPath = hostname.substring(hostname.indexOf('/'))
-      hostname = hostname.substring(0, hostname.indexOf('/'))
-    }
-    if (options.uri === true) urlPath += this.req.url
+    const url = new URL(((options.https === true) ? 'https' : 'http') + '://' + hostname)
+
+    hostname = url.hostname
+    let urlPath = url.pathname + url.search + url.hash
+    if (options.uri === true) urlPath += this.req.url.replace(/^\/+/, '')
+
+    this.logger.info(`${path} ${hostname} final`)
 
     return {
       protocol: ((options.https === true) ? 'https' : 'http'),
