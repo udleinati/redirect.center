@@ -43,7 +43,7 @@ module.exports = class RedirectService {
       .replace(/\.(opts-|_)s(lash)?(\.(?!(opts-|_)))?/g, '/')
       .replace(/\.(opts-|_)q(uery)?(\.(?!(opts-|_)))?/, '?')
       .replace(/\.(opts-|_)q(uery)?(\.(?!(opts-|_)))?/g, '&')
-      .replace(/\.(opts-|_)eq(\.(?!(opts-|_)))?/g, '=')
+      .replace(/\.(opts-|_)eq?(\.(?!(opts-|_)))?/g, '=')
       .replace(/\.(opts-|_)p(er)?c(ent)?(\.(?!(opts-|_)))?/g, '%')
       .replace(/\.(opts-|_)p(lus)?(\.(?!(opts-|_)))?/g, '+')
       .replace(/\.(opts-|_)c(olon)?(\.(?!(opts-|_)))?/g, ':')

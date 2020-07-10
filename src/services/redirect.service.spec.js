@@ -79,7 +79,7 @@ describe('./services/redirect.service.js', () => {
 
   it('using brief special characters', () => {
     const redirectService = new RedirectService(req, res)
-    const targetHost = `${host}._s.a._d.htm._s._q.q1._eq.1._p.1._q.q2._eq._pc.2e._c._d._h.h.${config.fqdn}`
+    const targetHost = `${host}._s.a._d.htm._s._q.q1._e.1._p.1._q.q2._e._pc.2e._c._d._h.h.${config.fqdn}`
 
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'http')
