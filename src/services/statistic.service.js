@@ -1,4 +1,4 @@
-const parseDomain = require('parse-domain')
+const { parseDomain } = require('parse-domain')
 const redis = require('redis')
 const bluebird = require('bluebird')
 const config = require('../config')
@@ -26,9 +26,9 @@ module.exports = class StatisticService {
     if (config.activateCounter !== 'true') return true
 
     let parse = parseDomain(hostname)
-    const everDomains = this.redisClient.setAsync(`ever_domains_${parse.domain}.${parse.tld}`, '1')
-    const periodHosts = this.redisClient.setAsync(`24h_hosts_${parse.subdomain}.${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
-    const periodDomains = this.redisClient.setAsync(`24h_domains_${parse.domain}.${parse.tld}`, '1', 'EX', 86400)
+    const everDomains = this.redisClient.setAsync(`ever_domains_${parse.domain}.${parse.topLevelDomains}`, '1')
+    const periodHosts = this.redisClient.setAsync(`24h_hosts_${parse.subDomains}.${parse.domain}.${parse.topLevelDomains}`, '1', 'EX', 86400)
+    const periodDomains = this.redisClient.setAsync(`24h_domains_${parse.domain}.${parse.topLevelDomains}`, '1', 'EX', 86400)
     parse = null
 
     try {

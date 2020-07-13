@@ -1,5 +1,5 @@
 const dns = require('dns')
-const parseDomain = require('parse-domain')
+const { parseDomain, ParseResultType } = require('parse-domain')
 
 const config = require('../config')
 const RedirectService = require('../services/redirect.service')
@@ -20,8 +20,9 @@ module.exports = (req, res) => {
     logger.info(`${path} -> CNAME ${targetHost}`)
 
     /* handle errors */
-    if (err && err.code === 'ENODATA' && parseDomain(targetHost) &&
-      parseDomain(targetHost).subdomain.indexOf('redirect') < 0) {
+    if (err && err.code === 'ENODATA' &&
+      [ParseResultType.Reserved, ParseResultType.Listed, ParseResultType.NotListed].includes(parseDomain(targetHost).type) &&
+      parseDomain(targetHost).subDomains.indexOf('redirect') < 0) {
       targetHost = `redirect.${targetHost}`
       logger.info(`${path} -> CNAME pointing to redirect!`)
       return dns.resolve(targetHost, 'CNAME', callback)
@@ -34,7 +35,7 @@ module.exports = (req, res) => {
       }
     }
 
-    if (!err && !parseDomain(records[0])) {
+    if (!err && ![ParseResultType.Reserved, ParseResultType.Listed, ParseResultType.NotListed].includes(parseDomain(records[0]).type)) {
       err = {
         code: 'NOTADOMAIN',
         message: `The record on the host ${targetHost} is not valid. Found: ${records[0]}`
