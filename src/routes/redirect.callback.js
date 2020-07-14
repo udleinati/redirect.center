@@ -42,29 +42,36 @@ module.exports = (req, res) => {
       }
     }
 
-    if (err) {
-      logger.info(`${path} ERROR: ${err.message}`)
+    /* prepar to redirect */
+    if (!err) {
+      const returns = new RedirectService(req).perform(records[0])
+      if (returns.statusCode === 500) {
+        err = {
+          code: 'PARSEERROR',
+          message: `The record on the host ${targetHost} was not interpreted as a valid URL: ${returns.hostname}`
+        }
+      } else {
+        new StatisticService(req).put(targetHost)
 
-      return res.status(500).render('error.ejs', {
-        config: config,
-        err: err,
-        targetHost: targetHost
-      })
+        /* perform redirect */
+        const url = `${returns.protocol}://${returns.hostname}${returns.path}`
+        logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
+
+        /* Helping Garbage Collection */
+        targetHost = null
+
+        /* Redirecting */
+        return res.redirect(returns.statusCode, url)
+      }
     }
 
-    /* prepar to redirect */
-    const returns = new RedirectService(req).perform(records[0])
-    new StatisticService(req).put(targetHost)
+    logger.info(`${path} ERROR: ${err.message}`)
 
-    /* perform redirect */
-    const url = `${returns.protocol}://${returns.hostname}${returns.path}`
-    logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
-
-    /* Helping Garbage Collection */
-    targetHost = null
-
-    /* Redirecting */
-    return res.redirect(returns.statusCode, url)
+    return res.status(500).render('error.ejs', {
+      config: config,
+      err: err,
+      targetHost: targetHost
+    })
   }
 
   dns.resolve(targetHost, 'CNAME', callback)

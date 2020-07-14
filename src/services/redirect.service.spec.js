@@ -13,11 +13,11 @@ describe('./services/redirect.service.js', () => {
 
   it('invalid url', () => {
     const redirectService = new RedirectService(req)
-    const targetHost = `.opts-slash.${config.fqdn}`
+    const targetHost = `invalid.opts-percent.${config.fqdn}`
 
     const result = redirectService.perform(targetHost)
     assert.equal(result.protocol, 'http')
-    assert.equal(result.hostname, '/')
+    assert.equal(result.hostname, 'invalid%')
     assert.equal(result.path, '')
     assert.equal(result.statusCode, 500)
   })

@@ -82,6 +82,26 @@ describe('./redirect.callback.js', () => {
     redirectCallback(req, res)
   })
 
+  it('should return error 500 PARSEERROR', (done) => {
+    const req = mocksHttp.createRequest({
+      url: '/',
+      headers: {
+        host: 'www.test.com'
+      }
+    })
+
+    callback.yields(null, [`invalid.opts-percent.${config.fqdn}`])
+
+    res.on('render', () => {
+      const context = res._getRenderData()
+      assert.equal(res.statusCode, 500)
+      assert.equal(context.err.code, 'PARSEERROR')
+      done()
+    })
+
+    redirectCallback(req, res)
+  })
+
   it('simple redirect', (done) => {
     const req = mocksHttp.createRequest({
       url: '/',
