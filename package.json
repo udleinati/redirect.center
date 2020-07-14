@@ -59,7 +59,7 @@
     "sinon": "^9.0.2"
   },
   "engines": {
-    "node": ">=8",
+    "node": ">=10",
     "npm": ">=6"
   },
   "collective": {
