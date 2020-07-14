@@ -50,7 +50,19 @@ module.exports = class RedirectService {
 
     hostname = labels.join('')
 
-    const url = new URL((options.https ? 'https' : 'http') + '://' + hostname)
+    this.logger.info(`${path} ${hostname} without .opts`)
+
+    let url
+    try {
+      url = new URL((options.https ? 'https' : 'http') + '://' + hostname)
+    } catch (e) {
+      return {
+        protocol: (options.https ? 'https' : 'http'),
+        hostname: hostname,
+        path: '',
+        statusCode: 500
+      }
+    }
 
     hostname = url.hostname + (options.port > 0 && options.port <= 65535 ? ':' + options.port : '')
     let urlPath = url.pathname + url.search + url.hash

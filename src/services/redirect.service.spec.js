@@ -11,6 +11,17 @@ describe('./services/redirect.service.js', () => {
   })
   const res = mocksHttp.createResponse({})
 
+  it('invalid url', () => {
+    const redirectService = new RedirectService(req)
+    const targetHost = `.opts-slash.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, '/')
+    assert.equal(result.path, '')
+    assert.equal(result.statusCode, 500)
+  })
+
   it('simplest redirect', () => {
     const redirectService = new RedirectService(req)
     const targetHost = `${host}.${config.fqdn}`
