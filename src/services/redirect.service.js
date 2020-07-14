@@ -20,53 +20,60 @@ module.exports = class RedirectService {
       port: 0
     }
 
-    if (hostname.match(/\.(opts-|_)uri/)) {
-      hostname = hostname.replace(/\.(opts-|_)uri/g, '')
-      options.uri = true
-      this.logger.info(`${path} ${hostname} without .opts-uri`)
-    }
+    let labels = hostname.replace(`.${config.fqdn}`, '').split('.')
 
-    if (hostname.match(/\.(opts-|_)https/)) {
-      hostname = hostname.replace(/\.(opts-|_)https/g, '')
-      options.https = true
-      this.logger.info(`${path} ${hostname} without .opts-https`)
-    }
+    let tok = true
+    let query = false
+    labels = labels.map(function(label) {
+      let r
+      let p
+      const delim = tok ? '' : '.'
+      tok = true
+      switch (true) {
+        case !!label.match(/^(opts-|_)uri$/):
+          options.uri = true
+          return ''
+        case !!label.match(/^(opts-|_)https$/):
+          options.https = true
+          return ''
+        case !!(r = label.match(/^(?:opts-|_)s(?:tatus)?c(?:ode)?-(\d+)$/)):
+          if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
+          return ''
+        case !!(p = label.match(/^(?:opts-|_)p(?:or)?t-(\d+)$/)):
+          if ((parseInt(p[1]) > 0 && parseInt(p[1]) <= 65535)) options.port = parseInt(p[1])
+          return ''
+        case !!label.match(/^(opts-|_)s(lash)?$/): return '/'
+        case !!label.match(/^(opts-|_)q(uery)?$/):
+          if (query) {
+            return '&'
+          } else {
+            query = true
+            return '?'
+          }
+        case !!label.match(/^(opts-|_)eq?$/): return '='
+        case !!label.match(/^(opts-|_)p(er)?c(ent)?$/): return '%'
+        case !!label.match(/^(opts-|_)p(lus)?$/): return '+'
+        case !!label.match(/^(opts-|_)c(olon)?$/): return ':'
+        case !!label.match(/^(opts-|_)h(ash)?$/): return '#'
+        case !!label.match(/^(opts-|_)d(ot)?$/): return '.'
+        default:
+          tok = false
+          return delim + label
+      }
+    })
 
-    let r
-    if ((r = hostname.match(/\.(?:opts-|_)s(?:tatus)?c(?:ode)?-(\d+)/))) {
-      hostname = hostname.replace(/\.(opts-|_)s(tatus)?c(ode)?-(\d+)/g, '')
-      if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
-      this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
-    }
+    hostname = labels.join('')
 
-    let p
-    if ((p = hostname.match(/\.(?:opts-|_)p(?:or)?t-(\d+)/))) {
-      hostname = hostname.replace(/\.(opts-|_)p(or)?t-(\d+)/g, '')
-      options.port = parseInt(p[1])
-      this.logger.info(`${path} ${hostname} without .opts-port-${p[1]}`)
-    }
+    const url = new URL((options.https ? 'https' : 'http') + '://' + hostname)
 
-    hostname = hostname.replace(`.${config.fqdn}`, '')
-      .replace(/\.(opts-|_)s(lash)?(\.(?!(opts-|_)))?/g, '/')
-      .replace(/\.(opts-|_)q(uery)?(\.(?!(opts-|_)))?/, '?')
-      .replace(/\.(opts-|_)q(uery)?(\.(?!(opts-|_)))?/g, '&')
-      .replace(/\.(opts-|_)eq?(\.(?!(opts-|_)))?/g, '=')
-      .replace(/\.(opts-|_)p(er)?c(ent)?(\.(?!(opts-|_)))?/g, '%')
-      .replace(/\.(opts-|_)p(lus)?(\.(?!(opts-|_)))?/g, '+')
-      .replace(/\.(opts-|_)c(olon)?(\.(?!(opts-|_)))?/g, ':')
-      .replace(/\.(opts-|_)h(ash)?(\.(?!(opts-|_)))?/g, '#')
-      .replace(/\.(opts-|_)d(ot)?\.?/g, '.')
-
-    const url = new URL(((options.https === true) ? 'https' : 'http') + '://' + hostname)
-
-    hostname = url.hostname + ((options.port) ? ':' + options.port : '')
+    hostname = url.hostname + (options.port ? ':' + options.port : '')
     let urlPath = url.pathname + url.search + url.hash
-    if (options.uri === true) urlPath += this.req.url.replace(/^\/+/, '')
+    if (options.uri) urlPath += this.req.url.replace(/^\/+/, '')
 
     this.logger.info(`${path} ${hostname} final`)
 
     return {
-      protocol: ((options.https === true) ? 'https' : 'http'),
+      protocol: (options.https ? 'https' : 'http'),
       hostname: hostname,
       path: urlPath,
       statusCode: options.status
