@@ -23,33 +23,19 @@ module.exports = class RedirectService {
     let labels = hostname.replace(`.${config.fqdn}`, '').split('.')
 
     let tok = true
-    let query = false
+    let query = true
     labels = labels.map(function(label) {
       let r
       let p
       const delim = tok ? '' : '.'
       tok = true
       switch (true) {
-        case !!label.match(/^(opts-|_)uri$/):
-          options.uri = true
-          return ''
-        case !!label.match(/^(opts-|_)https$/):
-          options.https = true
-          return ''
-        case !!(r = label.match(/^(?:opts-|_)s(?:tatus)?c(?:ode)?-(\d+)$/)):
-          if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
-          return ''
-        case !!(p = label.match(/^(?:opts-|_)p(?:or)?t-(\d+)$/)):
-          if ((parseInt(p[1]) > 0 && parseInt(p[1]) <= 65535)) options.port = parseInt(p[1])
-          return ''
+        case !!label.match(/^(opts-|_)uri$/): options.uri = true; return ''
+        case !!label.match(/^(opts-|_)https$/): options.https = true; return ''
+        case !!(r = label.match(/^(?:opts-|_)s(?:tatus)?c(?:ode)?-(\d+)$/)): options.status = parseInt(r[1]); return ''
+        case !!(p = label.match(/^(?:opts-|_)p(?:or)?t-(\d+)$/)): options.port = parseInt(p[1]); return ''
         case !!label.match(/^(opts-|_)s(lash)?$/): return '/'
-        case !!label.match(/^(opts-|_)q(uery)?$/):
-          if (query) {
-            return '&'
-          } else {
-            query = true
-            return '?'
-          }
+        case !!label.match(/^(opts-|_)q(uery)?$/): return (query && !(query = false)) ? '?' : '&'
         case !!label.match(/^(opts-|_)eq?$/): return '='
         case !!label.match(/^(opts-|_)p(er)?c(ent)?$/): return '%'
         case !!label.match(/^(opts-|_)p(lus)?$/): return '+'
@@ -66,7 +52,7 @@ module.exports = class RedirectService {
 
     const url = new URL((options.https ? 'https' : 'http') + '://' + hostname)
 
-    hostname = url.hostname + (options.port ? ':' + options.port : '')
+    hostname = url.hostname + (options.port > 0 && options.port <= 65535 ? ':' + options.port : '')
     let urlPath = url.pathname + url.search + url.hash
     if (options.uri) urlPath += this.req.url.replace(/^\/+/, '')
 
@@ -76,7 +62,7 @@ module.exports = class RedirectService {
       protocol: (options.https ? 'https' : 'http'),
       hostname: hostname,
       path: urlPath,
-      statusCode: options.status
+      statusCode: (options.status >= 300 && options.status <= 399 ? options.status : 301)
     }
   }
 }

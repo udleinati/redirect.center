@@ -66,6 +66,28 @@ describe('./services/redirect.service.js', () => {
     assert.equal(result.statusCode, 301)
   })
 
+  it('using .opts-query.', () => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}.opts-query.q1.opts-eq.1.opts-query.q2.opts-eq.2.opts-query.q3.opts-eq.3.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/?q1=1&q2=2&q3=3')
+    assert.equal(result.statusCode, 301)
+  })
+
+  it('using .opts-hash.', () => {
+    const redirectService = new RedirectService(req, res)
+    const targetHost = `${host}.opts-hash.fragment.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'http')
+    assert.equal(result.hostname, host)
+    assert.equal(result.path, '/#fragment')
+    assert.equal(result.statusCode, 301)
+  })
+
   it('using special characters', () => {
     const redirectService = new RedirectService(req, res)
     const targetHost = `${host}.opts-slash.a.opts-dot.htm.opts-slash.opts-query.q1.opts-eq.1.opts-plus.1.opts-query.q2.opts-eq.opts-percent.2e.opts-colon.opts-dot.opts-hash.h.${config.fqdn}`
