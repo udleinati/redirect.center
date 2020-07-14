@@ -21,6 +21,17 @@ describe('./services/redirect.service.js', () => {
     assert.equal(result.path, '')
     assert.equal(result.statusCode, 500)
   })
+  
+  it('invalid https url', () => {
+    const redirectService = new RedirectService(req)
+    const targetHost = `invalid.opts-percent.opts-https.${config.fqdn}`
+
+    const result = redirectService.perform(targetHost)
+    assert.equal(result.protocol, 'https')
+    assert.equal(result.hostname, 'invalid%')
+    assert.equal(result.path, '')
+    assert.equal(result.statusCode, 500)
+  })
 
   it('simplest redirect', () => {
     const redirectService = new RedirectService(req)
