@@ -12,14 +12,12 @@
     "test": "npm run eslint && PORT=3001 nyc mocha --timeout 15000 --recursive --bail ./src/**/*.spec.js",
     "eslint": "eslint src/",
     "coverage": "PORT=3001 nyc --reporter html npm test",
-    "codacy-coverage": "PORT=3001 nyc --reporter lcovonly npm test && cat ./coverage/lcov.info | codacy-coverage && rm -rf ./coverage",
+    "codacy-coverage": "PORT=3001 nyc --reporter lcovonly npm test && cat ./coverage/lcov.info | bash <(curl -Ls https://coverage.codacy.com/get.sh) && rm -rf ./coverage",
     "pm2-start": "pm2 start --name redirect-center src/index.js",
     "pm2-status": "pm2 status",
     "pm2-log": "pm2 log --raw redirect-center",
     "pm2-stop": "pm2 stop redirect-center && pm2 delete redirect-center",
-    "postinstall": "opencollective-postinstall",
-    "add-contributor": "all-contributors add",
-    "generate-contributors": "all-contributors generate"
+    "postinstall": "opencollective-postinstall"
   },
   "nyc": {
     "include": [
@@ -41,15 +39,12 @@
     "parse-domain": "^3.0.2",
     "pm2": "^4.4.0",
     "redis": "^3.0.2",
-    "vhost": "^3.0.2",
-    "opencollective": "^1.0.3"
+    "vhost": "^3.0.2"
   },
   "devDependencies": {
-    "all-contributors-cli": "^6.16.1",
     "chai": "^4.2.0",
     "chai-http": "^4.3.0",
     "chai-json-schema": "^1.5.1",
-    "codacy-coverage": "^3.4.0",
     "eslint": "^7.4.0",
     "eslint-config-standard": "^14.1.1",
     "eslint-plugin-import": "^2.22.0",
