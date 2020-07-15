@@ -314,7 +314,7 @@
             <br />
             <span class="label label-danger en">PARAMETER</span>
             <span class="en mb-15">
-              The <code>.opts-query.&lt;key&gt;opts-eq.&lt;value&gt;</code> parameter is responsible to turning query params of <code>?&lt;key&gt;=&lt;value&gt;</code> to canonical domain name. 
+              The <code>.opts-query.&lt;key&gt;opts-eq.&lt;value&gt;</code> parameter is responsible to turning query params of <code>?&lt;key&gt;=&lt;value&gt;</code> to canonical domain name.
             </span>
             <br />
             <br />
@@ -332,6 +332,14 @@
                   <input type="text" class="form-control" id="cname" readonly />
                   <div class="input-group-btn">
                     <button class="btn btn-default" type="button" id="copyCNAME" data-clipboard-target="#cname">Copy</button>
+                  </div>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <div class="input-group">
+                  <input type="text" class="form-control" id="shortcname" readonly />
+                  <div class="input-group-btn">
+                    <button class="btn btn-default" type="button" id="copySHORTCNAME" data-clipboard-target="#shortcname">Copy</button>
                   </div>
                   </div>
                 </div>
@@ -479,15 +487,18 @@
   <script>
     $(document).ready(function() {
       new ClipboardJS('#copyCNAME');
+      new ClipboardJS('#copySHORTCNAME');
 
       let input = document.querySelector('#url');
       let cname = document.querySelector('#cname');
+      let shortcname = document.querySelector('#shortcname');
 
       input.addEventListener('input', function(event) {
         cname.value = tranformURLtoCNAME(event.currentTarget.value);
+        shortcname.value = tranformURLtoCNAME(event.currentTarget.value, true);
       });
 
-      function tranformURLtoCNAME(urlStr) {
+      function tranformURLtoCNAME(urlStr, brief) {
         if (!urlStr) return '';
         let url;
 
@@ -497,7 +508,7 @@
           return '';
         }
 
-        return url.hostname
+        if (brief) return url.hostname
           + (url.pathname + url.search + url.hash)
             .replace(/\./g, '._d.')
             .replace(/\//g, '._s.')
@@ -512,6 +523,23 @@
             .replace(/([^.])$/, '$1.')
           + (url.protocol === 'https:' ? '_https.' : '')
           + (url.port ? '_pt-' + url.port + '.' : '')
+          + '<%= config.fqdn %>.'
+
+        return url.hostname
+          + (url.pathname + url.search + url.hash)
+            .replace(/\./g, '.opts-dot.')
+            .replace(/\//g, '.opts-slash.')
+            .replace(/\?/g, '.opts-query.')
+            .replace(/&/g, '.opts-query.')
+            .replace(/=/g, '._opts-eq.')
+            .replace(/\+/g, '.opts-plus.')
+            .replace(/%/g, '..opts-percent.')
+            .replace(/:/g, '.opts-colon.')
+            .replace(/#/g, '.opts-hash.')
+            .replace(/\.\./g, '.')
+            .replace(/([^.])$/, '$1.')
+          + (url.protocol === 'https:' ? '_https.' : '')
+          + (url.port ? 'opts-port-' + url.port + '.' : '')
           + '<%= config.fqdn %>.'
       }
     });
