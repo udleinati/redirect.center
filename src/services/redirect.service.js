@@ -16,74 +16,65 @@ module.exports = class RedirectService {
     const options = {
       uri: false,
       https: false,
-      slashs: [],
       status: 301,
-      queries: [],
+      port: 0
     }
 
-    let r
+    let labels = hostname.replace(`.${config.fqdn}`, '').split('.')
 
-    hostname = hostname.replace(`.${config.fqdn}`, '')
-
-    if (hostname.indexOf('.opts-uri') >= 0) {
-      hostname = hostname.replace('.opts-uri', '')
-      options.uri = true
-      this.logger.info(`${path} ${hostname} without .opts-uri`)
-    }
-
-    if (hostname.indexOf('.opts-https') >= 0) {
-      hostname = hostname.replace('.opts-https', '')
-      options.https = true
-      this.logger.info(`${path} ${hostname} without .opts-https`)
-    }
-
-    if ((r = hostname.match(/.opts-statuscode-(\d+)/))) {
-      hostname = hostname.replace(`.opts-statuscode-${r[1]}`, '')
-      if ((parseInt(r[1]) >= 300 && parseInt(r[1]) <= 399)) options.status = parseInt(r[1])
-      this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
-    }
-
-    while ((r = hostname.match(/(\.(?:opts-query)\.)(.*?)(?:(?:\.(?:opts-eq|eq)\.?)(.*?))?(?:(?:\.|$))/))) {
-      hostname = hostname.replace(r[0], '')
-      if (r[3]) {
-        options.queries.push(`${r[2]}=${r[3]}`)
-      } else {
-        options.queries.push(`${r[2]}`)
+    let tok = true
+    let query = true
+    labels = labels.map(function(label) {
+      let r
+      let p
+      const delim = tok ? '' : '.'
+      tok = true
+      switch (true) {
+        case !!label.match(/^(opts-|_)uri$/): options.uri = true; return ''
+        case !!label.match(/^(opts-|_)https$/): options.https = true; return ''
+        case !!(r = label.match(/^(?:opts-|_)s(?:tatus)?c(?:ode)?-(\d+)$/)): options.status = parseInt(r[1]); return ''
+        case !!(p = label.match(/^(?:opts-|_)p(?:or)?t-(\d+)$/)): options.port = parseInt(p[1]); return ''
+        case !!label.match(/^(opts-|_)s(lash)?$/): return '/'
+        case !!label.match(/^(opts-|_)q(uery)?$/): return (query && !(query = false)) ? '?' : '&'
+        case !!label.match(/^(opts-|_)eq?$/): return '='
+        case !!label.match(/^(opts-|_)p(er)?c(ent)?$/): return '%'
+        case !!label.match(/^(opts-|_)p(lus)?$/): return '+'
+        case !!label.match(/^(opts-|_)c(olon)?$/): return ':'
+        case !!label.match(/^(opts-|_)h(ash)?$/): return '#'
+        case !!label.match(/^(opts-|_)d(ot)?$/): return '.'
+        default:
+          tok = false
+          return delim + label
       }
-      this.logger.info(`${path} ${hostname} without ${r[0]}`)
+    })
+
+    hostname = labels.join('')
+
+    this.logger.info(`${path} ${hostname} without .opts`)
+
+    let url
+    try {
+      url = new URL((options.https ? 'https' : 'http') + '://' + hostname)
+    } catch (e) {
+      return {
+        protocol: (options.https ? 'https' : 'http'),
+        hostname: hostname,
+        path: '',
+        statusCode: 500
+      }
     }
 
-    while ((r = hostname.match(/(\.(?:opts-slash)\.)(.*?)(?:(?:\.(?:opts-slash|slash)\.?)|$)/))) {
-      hostname = hostname.replace(`.opts-slash.${r[2]}`, '')
-      options.slashs.push(r[2])
-      this.logger.info(`${path} ${hostname} without .opts-slash.${r[2]}`)
-    }
-
-    while ((r = hostname.match(/(\.(?:slash)\.)(.*?)(?:(?:\.(?:slash)\.)|$)/))) {
-      hostname = hostname.replace(`.slash.${r[2]}`, '')
-      options.slashs.push(r[2])
-      this.logger.info(`${path} ${hostname} without .slash.${r[2]}`)
-    }
-
-
-    if ((r = hostname.match(/.opts-slash/))) {
-      hostname = hostname.replace('.opts-slash', '')
-      options.slashs.push('')
-      this.logger.info(`${path} ${hostname} add final slash`)
-    }
+    hostname = url.hostname + (options.port > 0 && options.port <= 65535 ? ':' + options.port : '')
+    let urlPath = url.pathname + url.search + url.hash
+    if (options.uri) urlPath += this.req.url.replace(/^\/+/, '')
 
     this.logger.info(`${path} ${hostname} final`)
 
-    let urlPath = ''
-    if (options.slashs.length >= 1) urlPath += `/${options.slashs.join('/')}`
-    if (options.queries.length >= 1) urlPath += `?${options.queries.join('&')}`
-    if (options.uri === true) urlPath += this.req.url
-
     return {
-      protocol: ((options.https === true) ? 'https' : 'http'),
+      protocol: (options.https ? 'https' : 'http'),
       hostname: hostname,
       path: urlPath,
-      statusCode: options.status
+      statusCode: (options.status >= 300 && options.status <= 399 ? options.status : 301)
     }
   }
 }

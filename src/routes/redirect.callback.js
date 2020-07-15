@@ -1,5 +1,5 @@
 const dns = require('dns')
-const parseDomain = require('parse-domain')
+const { parseDomain, ParseResultType } = require('parse-domain')
 
 const config = require('../config')
 const RedirectService = require('../services/redirect.service')
@@ -20,8 +20,9 @@ module.exports = (req, res) => {
     logger.info(`${path} -> CNAME ${targetHost}`)
 
     /* handle errors */
-    if (err && err.code === 'ENODATA' && parseDomain(targetHost) &&
-      parseDomain(targetHost).subdomain.indexOf('redirect') < 0) {
+    if (err && err.code === 'ENODATA' &&
+      [ParseResultType.Reserved, ParseResultType.Listed, ParseResultType.NotListed].includes(parseDomain(targetHost).type) &&
+      parseDomain(targetHost).subDomains.indexOf('redirect') < 0) {
       targetHost = `redirect.${targetHost}`
       logger.info(`${path} -> CNAME pointing to redirect!`)
       return dns.resolve(targetHost, 'CNAME', callback)
@@ -34,36 +35,43 @@ module.exports = (req, res) => {
       }
     }
 
-    if (!err && !parseDomain(records[0])) {
+    if (!err && ![ParseResultType.Reserved, ParseResultType.Listed, ParseResultType.NotListed].includes(parseDomain(records[0]).type)) {
       err = {
         code: 'NOTADOMAIN',
         message: `The record on the host ${targetHost} is not valid. Found: ${records[0]}`
       }
     }
 
-    if (err) {
-      logger.info(`${path} ERROR: ${err.message}`)
+    /* prepar to redirect */
+    if (!err) {
+      const returns = new RedirectService(req).perform(records[0])
+      if (returns.statusCode === 500) {
+        err = {
+          code: 'PARSEERROR',
+          message: `The record on the host ${targetHost} was not interpreted as a valid URL: ${returns.hostname}`
+        }
+      } else {
+        new StatisticService(req).put(targetHost)
 
-      return res.status(500).render('error.ejs', {
-        config: config,
-        err: err,
-        targetHost: targetHost
-      })
+        /* perform redirect */
+        const url = `${returns.protocol}://${returns.hostname}${returns.path}`
+        logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
+
+        /* Helping Garbage Collection */
+        targetHost = null
+
+        /* Redirecting */
+        return res.redirect(returns.statusCode, url)
+      }
     }
 
-    /* prepar to redirect */
-    const returns = new RedirectService(req).perform(records[0])
-    new StatisticService(req).put(targetHost)
+    logger.info(`${path} ERROR: ${err.message}`)
 
-    /* perform redirect */
-    const url = `${returns.protocol}://${returns.hostname}${returns.path}`
-    logger.info(`${path} REDIRECT ${returns.statusCode} TO ${url}`)
-
-    /* Helping Garbage Collection */
-    targetHost = null
-
-    /* Redirecting */
-    return res.redirect(returns.statusCode, url)
+    return res.status(500).render('error.ejs', {
+      config: config,
+      err: err,
+      targetHost: targetHost
+    })
   }
 
   dns.resolve(targetHost, 'CNAME', callback)

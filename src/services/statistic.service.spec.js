@@ -61,7 +61,7 @@ describe('./services/statistic.service.js', () => {
 
   it('statistic disabled - overview', async() => {
     config.activateCounter = 'false'
-    const result = new StatisticService(req).overview('www.google.com')
+    const result = await new StatisticService(req).overview('www.google.com')
     assert.deepEqual(result, {})
     config.activeCounter = 'true'
   })
