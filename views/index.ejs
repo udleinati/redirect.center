@@ -12,6 +12,7 @@
   <script src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.4/clipboard.min.js"></script>
+  <script src="https://unpkg.com/base32.js@0.1.0/dist/base32.min.js"></script>
   <style>
     body { background-color: #F8F8F8; }
 
@@ -313,8 +314,17 @@
             </span>
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="en mb-15">
-              The <code>.opts-query.&lt;key&gt;opts-eq.&lt;value&gt;</code> parameter is responsible to turning query params of <code>?&lt;key&gt;=&lt;value&gt;</code> to canonical domain name. 
+            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="en">
+              The <code>.opts-query.&lt;base32-encoded-query&gt;</code> parameter is responsible to turning query params
+              of <code>?&lt;query&gt;</code> to canonical domain name. You have to encode your query using RFC 4648 Base32
+              encoding and remove all trailing <code>=</code> characters. You can use the converter below to do that.
+            </span>
+            <span class="pt-br">
+              O parâmetro <code>.opts-query.&lt;base32-encoded-query&gt;</code> é responsável por transformar os parâmetros
+              de consulta <code>?&lt;query&gt;</code> em um nome de domínio canônico. Você deve codificar sua consulta usando
+              a codificação RFC 4648 Base32 e remover todos os caracteres <code>=</code> que aparecem no final da linha.
+              Você pode usar o conversor abaixo para fazer isso.
             </span>
             <br />
             <br />
@@ -499,9 +509,9 @@
 
         return url.hostname
           + url.pathname.replace(/\//g, '.opts-slash.').replace(/([^.])$/, '$1.')
-          + Array.from(new URLSearchParams(url.search).entries())
-            .map(([key, value]) => `opts-query.${key}.` + (value ? `opts-eq.${value}.` : ''))
-            .join('')
+          + (url.search
+            ? `opts-query.${base32.encode(new TextEncoder().encode(url.search.slice(1)), { type: 'rfc4648', lc: true })}.` 
+            : '')
           + (url.protocol === 'https:' ? 'opts-https.' : '')
           + '<%= config.fqdn %>.'
       }

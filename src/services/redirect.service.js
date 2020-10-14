@@ -1,5 +1,6 @@
 const config = require('../config')
 const LoggerHandler = require('../handlers/logger.handler')
+const base32 = require('base32.js')
 
 module.exports = class RedirectService {
   constructor(req) {
@@ -18,7 +19,7 @@ module.exports = class RedirectService {
       https: false,
       slashs: [],
       status: 301,
-      queries: [],
+      query: '',
     }
 
     let r
@@ -43,13 +44,10 @@ module.exports = class RedirectService {
       this.logger.info(`${path} ${hostname} without .opts-statuscode-${r[1]}`)
     }
 
-    while ((r = hostname.match(/(\.(?:opts-query)\.)(.*?)(?:(?:\.(?:opts-eq|eq)\.?)(.*?))?(?:(?:\.|$))/))) {
+    if ((r = hostname.match(/(\.(?:opts-query)\.)(.*?)(?:(?:\.|$))/))) {
       hostname = hostname.replace(r[0], '')
-      if (r[3]) {
-        options.queries.push(`${r[2]}=${r[3]}`)
-      } else {
-        options.queries.push(`${r[2]}`)
-      }
+      options.query = base32.decode(r[2])
+
       this.logger.info(`${path} ${hostname} without ${r[0]}`)
     }
 
@@ -76,7 +74,7 @@ module.exports = class RedirectService {
 
     let urlPath = ''
     if (options.slashs.length >= 1) urlPath += `/${options.slashs.join('/')}`
-    if (options.queries.length >= 1) urlPath += `?${options.queries.join('&')}`
+    if (options.query.length >= 1) urlPath += `?${options.query}`
     if (options.uri === true) urlPath += this.req.url
 
     return {
