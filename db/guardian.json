@@ -1,0 +1,7 @@
+{
+  "denyFqdn": [
+    "www.uol.com.br",
+    "www.smartlook.com",
+    "www.google.com"
+  ]
+}

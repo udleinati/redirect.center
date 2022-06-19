@@ -1,75 +1,84 @@
 {
   "name": "redirect.center",
-  "description": "Redirect domains using DNS only",
-  "version": "2.0.0",
-  "repository": "git@github.com:udleinati/redirect.center.git",
-  "author": "Udlei Nati <udlei@protonmail.ch>",
-  "license": "ISC",
-  "main": "src/index.js",
+  "version": "0.0.1",
+  "description": "",
+  "author": "",
+  "private": true,
+  "license": "UNLICENSED",
   "scripts": {
-    "dev": "nodemon -w src",
-    "start": "node src",
-    "test": "npm run eslint && PORT=3001 nyc mocha",
-    "eslint": "eslint src/",
-    "coverage": "PORT=3001 nyc --reporter html npm test",
-    "codacy-coverage": "PORT=3001 nyc --reporter lcovonly npm test && cat ./coverage/lcov.info | codacy-coverage && rm -rf ./coverage",
-    "pm2-start": "pm2 start --name redirect-center src/index.js",
-    "pm2-status": "pm2 status",
-    "pm2-log": "pm2 log --raw redirect-center",
-    "pm2-stop": "pm2 stop redirect-center && pm2 delete redirect-center",
-    "postinstall": "opencollective-postinstall",
-    "add-contributor": "all-contributors add",
-    "generate-contributors": "all-contributors generate"
-  },
-  "nyc": {
-    "include": [
-      "src/**/*.js"
-    ],
-    "exclude": [
-      "src/**/*.spec.js",
-      "src/**/*.mock.js"
-    ],
-    "all": true
+    "prebuild": "rimraf dist",
+    "build": "nest build",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
+    "start": "nest start",
+    "start:dev": "nest start --watch",
+    "start:dev:pretty": "nest start --watch | pino-pretty -l -i pid,time,hostname,context,name -o '{context} {message}'",
+    "start:debug": "nest start --debug --watch",
+    "start:prod": "node dist/main",
+    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "test": "jest --config ./test/jest.json",
+    "test:watch": "jest --config ./test/jest.json --watch --detectOpenHandles",
+    "test:cov": "jest --coverage",
+    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@nestjs/common": "^8.0.0",
+    "@nestjs/config": "^2.1.0",
+    "@nestjs/core": "^8.0.0",
+    "@nestjs/platform-express": "^8.0.0",
     "base32.js": "^0.1.0",
-    "bluebird": "^3.5.0",
-    "bunyan": "^1.8.12",
-    "cuid": "^1.3.8",
-    "ejs": "^2.5.6",
-    "express": "^4.15.2",
-    "opencollective": "^1.0.3",
-    "opencollective-postinstall": "^2.0.0",
-    "parse-domain": "^1.1.0",
-    "pm2": "^2.6.1",
-    "redis": "^2.7.1",
-    "vhost": "^3.0.2"
+    "fast-case": "^1.7.0",
+    "handlebars": "^4.7.7",
+    "hbs": "^4.2.0",
+    "nestjs-pino": "^2.6.0",
+    "node-json-db": "^1.5.0",
+    "parse-domain": "^5.0.0",
+    "point-of-view": "^5.3.0",
+    "reflect-metadata": "^0.1.13",
+    "rimraf": "^3.0.2",
+    "rxjs": "^7.2.0"
   },
   "devDependencies": {
-    "all-contributors-cli": "^5.4.1",
-    "chai": "^4.1.1",
-    "chai-http": "^4.2.0",
-    "chai-json-schema": "^1.4.0",
-    "codacy-coverage": "^2.0.2",
-    "eslint": "^4.4.1",
-    "eslint-config-standard": "^10.2.1",
-    "eslint-plugin-import": "^2.7.0",
-    "eslint-plugin-node": "^5.1.1",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "mocha": "^4.0.1",
-    "mocha-lcov-reporter": "^1.3.0",
-    "node-mocks-http": "^1.6.1",
-    "nodemon": "^1.11.0",
-    "nyc": "^11.1.0",
-    "sinon": "^4.0.1"
+    "@nestjs/cli": "^8.0.0",
+    "@nestjs/schematics": "^8.0.0",
+    "@nestjs/testing": "^8.0.0",
+    "@types/express": "^4.17.13",
+    "@types/jest": "27.5.0",
+    "@types/node": "^16.0.0",
+    "@types/supertest": "^2.0.11",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "eslint": "^8.0.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "jest": "28.0.3",
+    "pino-pretty": "^8.0.0",
+    "prettier": "^2.3.2",
+    "source-map-support": "^0.5.20",
+    "supertest": "^6.1.3",
+    "ts-auto-mock": "^3.6.2",
+    "ts-jest": "28.0.1",
+    "ts-loader": "^9.2.3",
+    "ts-node": "^10.0.0",
+    "tsconfig-paths": "4.0.0",
+    "ttypescript": "^1.5.13",
+    "typescript": "^4.3.5"
   },
-  "engines": {
-    "node": ">=8",
-    "npm": ">=6"
-  },
-  "collective": {
-    "type": "opencollective",
-    "url": "https://opencollective.com/redirectcenter"
+  "jest": {
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "rootDir": "src",
+    "testRegex": ".*\\.spec\\.ts$",
+    "transform": {
+      "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "../coverage",
+    "testEnvironment": "node"
   }
 }

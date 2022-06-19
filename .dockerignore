@@ -1,12 +1,12 @@
 # compiled output
 /dist
 /node_modules
+.npmrc
 
 # Logs
 logs
 *.log
 npm-debug.log*
-pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
@@ -33,3 +33,11 @@ lerna-debug.log*
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+
+# Telepresence
+telepresence.log
+
+# Environment
+.env
+.env.production
+.env.devqa

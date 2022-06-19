@@ -1,0 +1,16 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleDirectories": ["node_modules", "<rootDir>"],
+  "modulePaths": ["<rootDir>/src"],
+  "globals": {
+    "ts-jest": {
+      "compiler": "ttypescript"
+    }
+  }
+}

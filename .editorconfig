@@ -1,6 +1,3 @@
-; EditorConfig file: http://EditorConfig.org
-; Install the "EditorConfig" plugin into your editor to use
-
 root = true
 
 [*]
