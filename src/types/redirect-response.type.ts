@@ -14,8 +14,5 @@ export class RedirectResponse {
     if (destination.port && destination.port > 0 && destination.port <= 65535) this.url += `:${destination.port}`;
     if (destination.pathnames.length) this.url += destination.pathnames.join('');
     if (destination.queries.length >= 1) this.url += `?${destination.queries.join('&')}`;
-
-    console.log(destination);
-    console.log(this.url);
   }
 }
