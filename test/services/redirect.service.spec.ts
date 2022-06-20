@@ -171,7 +171,7 @@ describe('RedirectService', () => {
       });
     });
 
-    it.only('opts-query 2', () => {
+    it('opts-query 2', () => {
       const raw = 'www.youtube.com.opts-query-IFXFS---.redirect.center';
       const response = service.parseDestination(raw, '/any?any=true');
       expect(response).toEqual({
@@ -193,6 +193,18 @@ describe('RedirectService', () => {
         host: 'www.youtube.com',
         queries: [],
         port: 8080,
+      });
+    });
+
+    it('mix 1', () => {
+      const raw = '127.0.0.1.opts-slash.opts-query.ifqueysdmm.opts-https.redirect.center';
+      const response = service.parseDestination(raw, '/any?any=true');
+      expect(response).toEqual({
+        protocol: 'https',
+        pathnames: ['/'],
+        status: 301,
+        host: '127.0.0.1',
+        queries: ['AaBbCc'],
       });
     });
   });

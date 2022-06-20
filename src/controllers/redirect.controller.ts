@@ -24,7 +24,7 @@ export class RedirectController {
   @Get('*')
   @Redirect()
   async redirect(@Headers('host') host: string, @Req() req: Request) {
-    host = host.split(':')[0];
+    host = host.includes(':') ? host.split(':')[0] : host || 'undefined';
 
     /* source guardian */
     if (this.guardian.isDenied(host)) throw new ForbiddenException();

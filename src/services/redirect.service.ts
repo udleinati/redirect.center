@@ -75,18 +75,6 @@ export class RedirectService {
 
     let r;
 
-    /* This while must exists because .opt-slash contains a . after the parameter */
-    while ((r = raw.match(/\.(?:opts-|_|)slash\.([^\.]+)/)) || (r = raw.match(/\.(?:opts-|_|)slash/))) {
-      raw = raw.replace(r[0], '');
-
-      if (r && r[1]) {
-        destination.pathnames.push(`/${r[1]}`);
-      } else {
-        destination.pathnames.push('/');
-      }
-    }
-
-    /* Other options doesn't have ., so we can split it */
     let labels = raw.split('.');
 
     labels = labels.map(label => {
@@ -103,11 +91,6 @@ export class RedirectService {
           destination.port = parseInt(r[1]);
           return '';
         }
-        case !!(r = label.match(/^(?:opts-|_)(?:query|base32)[\.\-](.*)$/)): {
-          r[1] = r[1].replace(/-/g, '=');
-          destination.queries.push(Buffer.from(base32.decode(r[1])).toString());
-          return '';
-        }
         case !!label.match(/^(opts-|_)uri$/): {
           if (parsedUrl.query) destination.queries.push(parsedUrl.query);
           if (parsedUrl.pathname) destination.pathnames.push(parsedUrl.pathname);
@@ -119,6 +102,37 @@ export class RedirectService {
     });
 
     raw = labels.filter(e => e).join('.');
+
+    /* * * This while must exists because .opt-slash contains a . after the parameter * * */
+    /* opts-query */
+    {
+      const queries = [];
+
+      while ((r = raw.match(/\.(?:opts-|_|)(?:query|base32)[\.\-]([^\.]+)/))) {
+        raw = raw.replace(r[0], '');
+        r[1] = r[1].replace(/-/g, '=');
+        queries.push(Buffer.from(base32.decode(r[1])).toString());
+      }
+
+      destination.queries = [...queries, ...destination.queries];
+    }
+
+    /* opts-slash */
+    {
+      const pathnames = [];
+
+      while ((r = raw.match(/\.(?:opts-|_|)slash[\.\-]([^\.]+)/)) || (r = raw.match(/\.(?:opts-|_|)slash/))) {
+        raw = raw.replace(r[0], '');
+
+        if (r && r[1]) {
+          pathnames.push(`/${r[1]}`);
+        } else {
+          pathnames.push('/');
+        }
+      }
+
+      destination.pathnames = [...pathnames, ...destination.pathnames];
+    }
 
     destination.host = raw;
 

@@ -70,7 +70,7 @@ export class StatisticService {
     return entry;
   }
 
-  summary() {
+  overview() {
     const dayBefore = new Date();
     dayBefore.setDate(dayBefore.getDate() - 1);
     let domains = {};
