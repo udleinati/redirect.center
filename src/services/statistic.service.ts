@@ -73,7 +73,11 @@ export class StatisticService {
   summary() {
     const dayBefore = new Date();
     dayBefore.setDate(dayBefore.getDate() - 1);
-    const domains = this.db.getData('/domain');
+    let domains = {};
+
+    try {
+      domains = this.db.getData('/domain');
+    } catch (e) {}
 
     return {
       periodDomains: Object.keys(domains).filter(e => domains[e].lastTime >= dayBefore.toISOString()).length,
