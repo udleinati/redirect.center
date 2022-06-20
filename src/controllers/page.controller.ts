@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { StatisticService } from 'src/services';
 import * as os from 'os';
 
-@Controller({ host: 'localhost' })
+@Controller({ host: process.env.FQDN || 'localhost' })
 export class PageController {
   constructor(private readonly config: ConfigService, private readonly statistic: StatisticService) {}
 

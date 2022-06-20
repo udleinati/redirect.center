@@ -1,5 +1,5 @@
 export const appConfig = (): AppConfig => ({
-  fqdn: process.env.FQDN || 'redirect.center',
+  fqdn: process.env.FQDN || 'localhost',
   entryIp: process.env.ENTRY_IP || '127.0.0.1',
   port: Number(process.env.PORT) || 3000,
   environment: process.env.ENVIRONMENT || 'dev1',
