@@ -8,11 +8,14 @@ import {
   Req,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { GuardianService, RedirectService, StatisticService } from 'src/services';
+import { RedirectResponse } from 'src/types';
 
 @Controller()
 export class RedirectController {
   constructor(
+    @InjectPinoLogger(RedirectController.name) private readonly logger: PinoLogger,
     private readonly service: RedirectService,
     private readonly guardian: GuardianService,
     private readonly statistic: StatisticService,
@@ -27,7 +30,7 @@ export class RedirectController {
     if (this.guardian.isDenied(host)) throw new ForbiddenException();
 
     /* redirect rules */
-    let redirect;
+    let redirect: RedirectResponse;
 
     try {
       redirect = await this.service.resolveDnsAndRedirect(host, req.url);
@@ -40,6 +43,9 @@ export class RedirectController {
 
     /* statistics */
     this.statistic.write(host);
+
+    /* log */
+    this.logger.info(`${host}${req.url} -> ${redirect.status} ${redirect.url}`);
 
     return redirect;
   }
