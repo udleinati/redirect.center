@@ -6,4 +6,5 @@ export class Destination {
   pathnames: string[] = [];
   queries: string[] = [];
   status: HttpStatus = 301;
+  port: number;
 }

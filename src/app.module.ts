@@ -3,7 +3,7 @@ import { LoggerModule, PinoLogger } from 'nestjs-pino';
 import { ConfigModule, ConfigService, registerAs } from '@nestjs/config';
 import { appConfig } from './configs';
 import { decamelizeKeys } from 'fast-case';
-import { sleep } from './functions';
+import { sleep } from './helpers';
 import { PageController } from './controllers/page.controller';
 import { RedirectController } from './controllers/redirect.controller';
 import { GuardianService, RedirectService, StatisticService } from './services';

@@ -1,4 +1,12 @@
-import { Controller, ForbiddenException, Get, Headers, Redirect, Req } from '@nestjs/common';
+import {
+  Controller,
+  ForbiddenException,
+  Get,
+  Headers,
+  InternalServerErrorException,
+  Redirect,
+  Req,
+} from '@nestjs/common';
 import { Request } from 'express';
 import { GuardianService, RedirectService, StatisticService } from 'src/services';
 
@@ -19,7 +27,13 @@ export class RedirectController {
     if (this.guardian.isDenied(host)) throw new ForbiddenException();
 
     /* redirect rules */
-    const redirect = await this.service.resolveDnsAndRedirect(host, req.url);
+    let redirect;
+
+    try {
+      redirect = await this.service.resolveDnsAndRedirect(host, req.url);
+    } catch (err) {
+      throw new InternalServerErrorException(`${err.code}: ${err.message}`);
+    }
 
     /* destination gaurdian */
     if (this.guardian.isDenied(redirect.fqdn)) throw new ForbiddenException();

@@ -1,16 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import * as dns from 'node:dns';
-import { promisify } from 'node:util';
+import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import * as url from 'url';
 import * as base32 from 'base32.js';
 import { ConfigService } from '@nestjs/config';
 import { Destination, RedirectResponse } from '../types';
+import { parseDomain, ParseResultType } from 'parse-domain';
+import { dnsResolveCname } from '../helpers';
 
 @Injectable()
 export class RedirectService {
   fqdn = this.configService.get('app.fqdn');
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    @InjectPinoLogger(RedirectService.name) private readonly logger: PinoLogger,
+    private readonly configService: ConfigService,
+  ) {}
 
   async resolveDnsAndRedirect(host: string, reqUrl: string): Promise<RedirectResponse> {
     const raw = await this.resolveDns(host);
@@ -25,8 +29,41 @@ export class RedirectService {
   }
 
   async resolveDns(host: string): Promise<string> {
-    const pDnsResolveCname = promisify(dns.resolveCname);
-    const resolved = await pDnsResolveCname(host);
+    const parsedHost = parseDomain(host) as any;
+
+    let resolved;
+
+    try {
+      resolved = await dnsResolveCname(host);
+
+      if (resolved.length > 1) {
+        const error = new Error(`More than one record on the host ${host}.`) as any;
+        error.code = 'MORETHANONE';
+        throw error;
+      } else if (
+        ![ParseResultType.Reserved, ParseResultType.Listed, ParseResultType.NotListed].includes(
+          parseDomain(resolved[0]).type,
+        )
+      ) {
+        const error = new Error(`The record on the host ${host} is not valid.`) as any;
+        error.code = 'NOTADOMAIN';
+        throw error;
+      }
+    } catch (err) {
+      if (
+        err.code === 'ENODATA' &&
+        !parsedHost.subDomains.includes('redirect') && [
+          ParseResultType.Reserved,
+          ParseResultType.Listed,
+          ParseResultType.NotListed,
+        ]
+      ) {
+        return this.resolveDns(`redirect.${host}`);
+      }
+
+      throw err;
+    }
+
     return resolved[0];
   }
 
@@ -36,41 +73,51 @@ export class RedirectService {
     const parsedUrl = url.parse(reqUrl);
     raw = raw.replace(`.${this.fqdn}`, '');
 
-    if (raw.includes('.opts-https')) {
-      raw = raw.replace('.opts-https', '');
-      destination.protocol = 'https';
-    }
+    let r;
 
-    const queryRegex = new RegExp(/(\.(?:opts-query)\.)(.*?)(?:(?:\.|$))/);
-    if (raw.match(queryRegex)) {
-      const r = raw.match(queryRegex);
-      if (r && r[0]) raw = raw.replace(r[0], '');
-      if (r && r[2]) destination.queries.push(Buffer.from(base32.decode(r[2])).toString());
-    }
+    /* This while must exists because .opt-slash contains a . after the parameter */
+    while ((r = raw.match(/\.(?:opts-|_|)slash\.([^\.]+)/)) || (r = raw.match(/\.(?:opts-|_|)slash/))) {
+      raw = raw.replace(r[0], '');
 
-    const statusCodeRegex = new RegExp(/.opts-statuscode-(301|302|307|308)/);
-    if (raw.match(statusCodeRegex)) {
-      const r = raw.match(statusCodeRegex);
       if (r && r[1]) {
-        raw = raw.replace(`.opts-statuscode-${r[1]}`, '');
-        destination.status = parseInt(r[1]);
+        destination.pathnames.push(`/${r[1]}`);
+      } else {
+        destination.pathnames.push('/');
       }
     }
 
-    const slashRegex = new RegExp(/(\.(?:opts-slash)\.)(.*?)(?:(?:\.(?:opts-slash|slash)\.?)|$)/);
-    while (raw.match(slashRegex)) {
-      const r = raw.match(slashRegex);
-      if (r && r[2]) {
-        raw = raw.replace(`.opts-slash.${r[2]}`, '');
-        destination.pathnames.push(`/${r[2]}`);
-      }
-    }
+    /* Other options doesn't have ., so we can split it */
+    let labels = raw.split('.');
 
-    if (raw.includes('.opts-uri')) {
-      raw = raw.replace('.opts-uri', '');
-      destination.pathnames.push(parsedUrl.pathname);
-      destination.queries.push(parsedUrl.query);
-    }
+    labels = labels.map(label => {
+      switch (true) {
+        case !!label.match(/^(opts-|_)https$/): {
+          destination.protocol = 'https';
+          return '';
+        }
+        case !!(r = label.match(/^(?:opts-|_)statuscode-(301|302|307|308)$/)): {
+          destination.status = parseInt(r[1]);
+          return '';
+        }
+        case !!(r = label.match(/^(?:opts-|_)port-(\d+)$/)): {
+          destination.port = parseInt(r[1]);
+          return '';
+        }
+        case !!(r = label.match(/^(?:opts-|_)query[\.\-](.*)$/)): {
+          destination.queries.push(Buffer.from(base32.decode(r[1])).toString());
+          return '';
+        }
+        case !!label.match(/^(opts-|_)uri$/): {
+          if (parsedUrl.query) destination.queries.push(parsedUrl.query);
+          if (parsedUrl.pathname) destination.pathnames.push(parsedUrl.pathname);
+          return '';
+        }
+        default:
+          return label;
+      }
+    });
+
+    raw = labels.filter(e => e).join('.');
 
     destination.host = raw;
 

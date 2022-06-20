@@ -34,10 +34,8 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Telepresence
-telepresence.log
-
 # Environment
-.env
-.env.production
-.env.devqa
+.env*
+
+# Db
+db/*.json
