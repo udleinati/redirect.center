@@ -171,7 +171,19 @@ describe('RedirectService', () => {
       });
     });
 
-    it('opts-port-8080', () => {
+    it.only('opts-query 2', () => {
+      const raw = 'www.youtube.com.opts-query-IFXFS---.redirect.center';
+      const response = service.parseDestination(raw, '/any?any=true');
+      expect(response).toEqual({
+        protocol: 'http',
+        pathnames: [],
+        status: 301,
+        host: 'www.youtube.com',
+        queries: ['AnY'],
+      });
+    });
+
+    it('opts-port', () => {
       const raw = 'www.youtube.com.opts-port-8080.redirect.center';
       const response = service.parseDestination(raw, '/any?any=true');
       expect(response).toEqual({

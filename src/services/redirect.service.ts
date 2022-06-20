@@ -103,7 +103,8 @@ export class RedirectService {
           destination.port = parseInt(r[1]);
           return '';
         }
-        case !!(r = label.match(/^(?:opts-|_)query[\.\-](.*)$/)): {
+        case !!(r = label.match(/^(?:opts-|_)(?:query|base32)[\.\-](.*)$/)): {
+          r[1] = r[1].replace(/-/g, '=');
           destination.queries.push(Buffer.from(base32.decode(r[1])).toString());
           return '';
         }
