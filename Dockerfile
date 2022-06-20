@@ -1,26 +1,25 @@
-FROM node:lts-buster-slim
-ENV NODE_ENV production
-
-RUN npm install pm2 -g
+FROM node:18 AS base
 
 WORKDIR /app
 
-COPY package.json ./
-#COPY package-lock.json ./
+COPY package*.json ./
 
-RUN npm install
+RUN npm ci
 
-COPY ./src ./src/
-COPY ./views ./views/
+COPY . .
 
-# https://medium.com/@mccode/processes-in-containers-should-not-run-as-root-2feae3f0df3b
-RUN groupadd -g 999 appuser && \
-    useradd -r -u 999 -g appuser appuser && \
-    mkdir -p /home/appuser && \
-    chown -R appuser:appuser /home/appuser
-USER appuser
+RUN npm run build
 
-ENV PORT 3000
-EXPOSE 3000
-CMD [ "pm2-runtime", "src/index.js" ]
+FROM node:18 AS production
 
+WORKDIR /app
+
+COPY --from=base /app/package*.json ./
+
+RUN npm ci --omit=dev
+
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/views ./views
+COPY --from=base /app/db ./db
+
+CMD npm run start:prod

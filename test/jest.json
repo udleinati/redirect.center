@@ -1,0 +1,26 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": "../",
+  "testEnvironment": "node",
+  "testRegex": "test/.*\\.spec.ts$",
+  "transform": {
+    "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "collectCoverage": false,
+  "collectCoverageFrom": ["src/**/*.ts"],
+  "coverageThreshold": {
+    "global": {
+      "statements": 0,
+      "lines": 0,
+      "branches": 0,
+      "functions": 0
+    }
+  },
+  "moduleDirectories": ["node_modules", "<rootDir>"],
+  "modulePaths": ["<rootDir>/src"],
+  "globals": {
+    "ts-jest": {
+      "compiler": "ttypescript"
+    }
+  }
+}
