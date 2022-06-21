@@ -207,5 +207,29 @@ describe('RedirectService', () => {
         queries: ['AaBbCc'],
       });
     });
+
+    it('mix 2', () => {
+      const raw = '127.0.0.1.opts-path-ifqueysdmm.opts-https.redirect.center';
+      const response = service.parseDestination(raw, '/any?any=true');
+      expect(response).toEqual({
+        protocol: 'https',
+        pathnames: ['AaBbCc'],
+        status: 301,
+        host: '127.0.0.1',
+        queries: [],
+      });
+    });
+
+    it('mix 3', () => {
+      const raw = 'www.test.com.opts-slash.xmart.opts-slash.xmart.dll.opts-https.redirect.center';
+      const response = service.parseDestination(raw, '/any?any=true');
+      expect(response).toEqual({
+        protocol: 'https',
+        pathnames: ['/xmart', '/xmart.dll'],
+        status: 301,
+        host: 'www.test.com',
+        queries: [],
+      });
+    });
   });
 });

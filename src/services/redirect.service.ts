@@ -83,6 +83,11 @@ export class RedirectService {
           destination.protocol = 'https';
           return '';
         }
+        case !!(r = label.match(/^(?:opts-|_)(?:path)-(.*)$/)): {
+          r[1] = r[1].replace(/-/g, '=');
+          destination.pathnames.push(Buffer.from(base32.decode(r[1])).toString());
+          return '';
+        }
         case !!(r = label.match(/^(?:opts-|_)statuscode-(301|302|307|308)$/)): {
           destination.status = parseInt(r[1]);
           return '';
@@ -108,7 +113,7 @@ export class RedirectService {
     {
       const queries = [];
 
-      while ((r = raw.match(/\.(?:opts-|_|)(?:query|base32)[\.\-]([^\.]+)/))) {
+      while ((r = raw.match(/\.(?:opts-|_|)(?:query)[\.\-]([^\.]+)/))) {
         raw = raw.replace(r[0], '');
         r[1] = r[1].replace(/-/g, '=');
         queries.push(Buffer.from(base32.decode(r[1])).toString());
@@ -121,12 +126,16 @@ export class RedirectService {
     {
       const pathnames = [];
 
-      while ((r = raw.match(/\.(?:opts-|_|)slash[\.\-]([^\.]+)/)) || (r = raw.match(/\.(?:opts-|_|)slash/))) {
-        raw = raw.replace(r[0], '');
-
-        if (r && r[1]) {
-          pathnames.push(`/${r[1]}`);
+      // while ((r = raw.match(/\.(?:opts-|_|)slash[\.\-](.*)/)) || )) {
+      while (
+        (r = raw.match(/(\.(?:opts-|_|)slash\.)(.*?)(?:(?:(?:.opts-slash|.slash|_slash))|$)/)) ||
+        (r = raw.match(/\.(?:opts-|_|)slash/))
+      ) {
+        if (r && r[2]) {
+          raw = raw.replace(`${r[1]}${r[2]}`, '');
+          pathnames.push(`/${r[2]}`);
         } else {
+          raw = raw.replace(r[0], '');
           pathnames.push('/');
         }
       }
