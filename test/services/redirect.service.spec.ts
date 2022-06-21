@@ -231,5 +231,29 @@ describe('RedirectService', () => {
         queries: [],
       });
     });
+
+    it('mix 4', () => {
+      const raw = 'www.google.com.opts-path-f52gk43u.opts-query-mfrggplemvta.opts-https.redirect.center';
+      const response = service.parseDestination(raw, '/');
+      expect(response).toEqual({
+        protocol: 'https',
+        pathnames: ['/test'],
+        status: 301,
+        host: 'www.google.com',
+        queries: ['abc=def'],
+      });
+    });
+
+    it('mix 5', () => {
+      const raw = 'www.google.com.opts-path-f52gk43u.opts-query-mfrggplemvta.opts-https.opts-uri.redirect.center';
+      const response = service.parseDestination(raw, '/abc?fxa');
+      expect(response).toEqual({
+        protocol: 'https',
+        pathnames: ['/test', '/abc'],
+        status: 301,
+        host: 'www.google.com',
+        queries: ['abc=def', 'fxa'],
+      });
+    });
   });
 });
