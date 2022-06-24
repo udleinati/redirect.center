@@ -127,7 +127,7 @@ describe('StatisticService', () => {
         },
       ]);
 
-      const summary = service.summary();
+      const summary = service.overview();
       expect(spyDbGetData).toBeCalledTimes(1);
       expect(summary).toEqual({ periodDomains: 1, everDomains: 2 });
     });

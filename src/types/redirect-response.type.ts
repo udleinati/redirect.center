@@ -12,7 +12,15 @@ export class RedirectResponse {
     this.url = `${destination.protocol}://${destination.host}`;
 
     if (destination.port && destination.port > 0 && destination.port <= 65535) this.url += `:${destination.port}`;
-    if (destination.pathnames.length) this.url += destination.pathnames.join('');
+
+    this.url += '/';
+
+    if (destination.pathnames.length) {
+      const path = destination.pathnames.join('');
+      if (path.startsWith('/')) this.url += path.substring(1);
+      else this.url += path;
+    }
+
     if (destination.queries.length >= 1) this.url += `?${destination.queries.join('&')}`.replace('?#', '#');
   }
 }

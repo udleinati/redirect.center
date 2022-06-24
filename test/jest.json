@@ -2,7 +2,6 @@
   "moduleFileExtensions": ["js", "json", "ts"],
   "rootDir": "../",
   "testEnvironment": "node",
-  "testRegex": "test/.*\\.spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
   },
@@ -16,11 +15,17 @@
       "functions": 0
     }
   },
-  "moduleDirectories": ["node_modules", "<rootDir>"],
-  "modulePaths": ["<rootDir>/src"],
+
+  "moduleDirectories": ["node_modules"],
   "globals": {
     "ts-jest": {
       "compiler": "ttypescript"
     }
-  }
+  },
+  "testMatch": [
+    "<rootDir>/test/**/*.spec.ts"
+  ],
+  "testPathIgnorePatterns": ["<rootDir>/src"],
+  "coveragePathIgnorePatterns": ["<rootDir>/test", "<rootDir>/node_modules/"],
+  "watchPathIgnorePatterns": [ "<rootDir>/src" ]
 }

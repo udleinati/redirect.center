@@ -13,7 +13,7 @@ export class PageController {
     return {
       uptime: os.uptime(),
       app: this.config.get('app'),
-      statistics: this.statistic.summary(),
+      statistics: this.statistic.overview(),
     };
   }
 
