@@ -114,7 +114,7 @@ export class RedirectService {
       const queries = [];
       let loop = 1;
 
-      while ((r = raw.match(/\.(?:opts-|_|)(?:query)[\.\-]([^\.]+)/))) {
+      while ((r = raw.match(/\.(?:opts-|_|)(?:query|base32)[\.\-]([^\.]+)/))) {
         if (loop++ > 5) this.logger.warn(`CHECK RAW (query) ${raw}`);
 
         raw = raw.replace(r[0], '');
