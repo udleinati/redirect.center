@@ -255,5 +255,31 @@ describe('RedirectService', () => {
         queries: ['abc=def', 'fxa'],
       });
     });
+
+    it('mix 6', () => {
+      const raw = 'www.google.com.opts-slash.test.opts-slash.abc.html.redirect.center.';
+      const response = service.parseDestination(raw, '/');
+      console.log(response);
+      expect(response).toEqual({
+        protocol: 'http',
+        pathnames: ['/test', '/abc.html'],
+        status: 301,
+        host: 'www.google.com',
+        queries: [],
+      });
+    });
+
+    it('mix 6', () => {
+      const raw = 'www.google.com.opts-slash.test.opts-slash.abc.opts-slash.redirect.center.';
+      const response = service.parseDestination(raw, '/');
+      console.log(response);
+      expect(response).toEqual({
+        protocol: 'http',
+        pathnames: ['/test', '/abc', '/'],
+        status: 301,
+        host: 'www.google.com',
+        queries: [],
+      });
+    });
   });
 });

@@ -112,8 +112,11 @@ export class RedirectService {
     /* opts-query */
     {
       const queries = [];
+      let loop = 1;
 
       while ((r = raw.match(/\.(?:opts-|_|)(?:query)[\.\-]([^\.]+)/))) {
+        if (loop++ > 5) this.logger.warn(`CHECK RAW (query) ${raw}`);
+
         raw = raw.replace(r[0], '');
         r[1] = r[1].replace(/-/g, '=');
         queries.push(Buffer.from(base32.decode(r[1])).toString());
@@ -125,12 +128,14 @@ export class RedirectService {
     /* opts-slash */
     {
       const pathnames = [];
+      let loop = 1;
 
-      // while ((r = raw.match(/\.(?:opts-|_|)slash[\.\-](.*)/)) || )) {
       while (
         (r = raw.match(/(\.(?:opts-|_|)slash\.)(.*?)(?:(?:(?:.opts-slash|.slash|_slash))|$)/)) ||
         (r = raw.match(/\.(?:opts-|_|)slash/))
       ) {
+        if (loop++ > 5) this.logger.warn(`CHECK RAW (slash) ${raw}`);
+
         if (r && r[2]) {
           raw = raw.replace(`${r[1]}${r[2]}`, '');
           pathnames.push(`/${r[2]}`);

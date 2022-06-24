@@ -3,9 +3,7 @@
 
 <head>
   <meta charset="utf-8" />
-  <title>
-    {{~ app.projectName }}
-  </title>
+  <title>{{ app.projectName }} - An easy way to redirect using your DNS</title>
   <meta name="description" content="DNS Redirect, Domain redirects with CNAME, how to redirect" />
   <meta name="author" content="Udlei Nati / udlei@nati.biz">
   <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
@@ -54,8 +52,7 @@
   <header>
     <div class="container">
       <h1>
-        <a href="/">
-          {{~ app.projectName }}</a>
+        <a href="/" alt="{{ app.projectName }}">{{ app.projectName }}</a>
         <small class="en">Redirect domains using DNS only</small>
         <small class="pt-br">Redirecione domínios usando somente o DNS</small>
       </h1>
@@ -498,14 +495,24 @@
         }
 
         return url.hostname
-          + (url.pathname && url.pathname !== '/'
+
+          /* path with special characters */
+          + (url.pathname && url.pathname !== '/' && !url.pathname.match(/^[\/a-z0-9-_\.]+$/)
             ? `.opts-path-${base32.encode(new TextEncoder().encode(url.pathname), { type: 'rfc4648', lc: true })}`
             : '')
+
+          /* path without special characters */
+          + (url.pathname && url.pathname !== '/' && url.pathname.match(/^[\/a-z0-9-_\.]+$/)
+            ? url.pathname.replace(/\//g, '.opts-slash.').replace(/([^.])$/, '$1').replace(/\.$/, '')
+            : '')
+
           + (url.search
             ? `.opts-query-${base32.encode(new TextEncoder().encode(url.search.slice(1)), { type: 'rfc4648', lc: true })}`
             : '')
+
           + (url.protocol === 'https:' ? '.opts-https' : '')
-          + '.{{~ app.fqdn }}.'
+
+          + '.{{~ app.fqdn }}.';
       }
     });
   </script>
