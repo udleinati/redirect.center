@@ -19,7 +19,7 @@ async function bootstrap() {
   app.setViewEngine('hbs');
 
   // start server
-  const server = await app.listen(config.get('app.port'), '0.0.0.0');
+  const server = await app.listen(config.get('app.port'), config.get('app.ip'));
 
   // https://shuheikagawa.com/blog/2019/04/25/keep-alive-timeout/
   server.keepAliveTimeout = 2 * 60 * 1000;
