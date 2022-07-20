@@ -41,9 +41,12 @@ export class RedirectService {
         error.code = 'MORETHANONE';
         throw error;
       } else if (
-        ![ParseResultType.Reserved, ParseResultType.Listed, ParseResultType.NotListed].includes(
-          parseDomain(resolved[0]).type,
-        )
+        ![
+          ParseResultType.Reserved,
+          ParseResultType.Listed,
+          ParseResultType.NotListed,
+          ParseResultType.Invalid,
+        ].includes(parseDomain(resolved[0]).type)
       ) {
         const error = new Error(`The record on the host ${host} is not valid.`) as any;
         error.code = 'NOTADOMAIN';
