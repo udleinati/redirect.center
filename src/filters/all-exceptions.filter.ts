@@ -25,7 +25,7 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
       headers: request.headers,
     };
 
-    this.logger.error(jsonMsg);
+    if (['TypeError'].includes(exception.name)) this.logger.error(jsonMsg);
 
     return response.status(status).json({
       statusCode: jsonMsg.statusCode,
