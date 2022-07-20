@@ -31,7 +31,7 @@ export ENTRY_IP=54.84.55.102
 $ npm run start:prod
 ```
 
-### Last but no least
+### Last but not least
 Create an * entry in your DNS.
 
 ```sh
