@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from 'nestjs-pino';
 import { join } from 'path';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { AllExceptionsFilter } from './filters';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
@@ -11,6 +12,8 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
   const logger = app.get(Logger);
+
+  app.useGlobalFilters(new AllExceptionsFilter(config, logger as any));
   app.useLogger(logger);
 
   // template engine
