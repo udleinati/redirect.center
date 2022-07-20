@@ -36,6 +36,3 @@ coverage
 
 # Environment
 .env*
-
-# Db
-db/*.json

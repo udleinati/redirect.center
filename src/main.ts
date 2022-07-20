@@ -19,12 +19,12 @@ async function bootstrap() {
   app.setViewEngine('hbs');
 
   // start server
-  const server = await app.listen(config.get('app.port'), '0.0.0.0');
+  const server = await app.listen(config.get('app.listenPort'), config.get('app.listenIp'));
 
   // https://shuheikagawa.com/blog/2019/04/25/keep-alive-timeout/
   server.keepAliveTimeout = 2 * 60 * 1000;
 
-  logger.log(`Server is listening on port ${config.get('app.port')}`, 'NestApplication');
+  logger.log(`Server is listening on ${config.get('app.listenIp')}:${config.get('app.listenPort')}`, 'NestApplication');
 }
 
 bootstrap();
