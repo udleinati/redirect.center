@@ -4,7 +4,7 @@ import * as url from 'url';
 import * as base32 from 'base32.js';
 import { ConfigService } from '@nestjs/config';
 import { Destination, RedirectResponse } from '../types';
-import { parseDomain, ParseResultType } from 'parse-domain';
+import { parseDomain, ParseResultType, Validation } from 'parse-domain';
 import { dnsResolveCname } from '../helpers';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class RedirectService {
   }
 
   async resolveDns(host: string): Promise<string> {
-    const parsedHost = parseDomain(host) as any;
+    const parsedHost = parseDomain(host, { validation: Validation.Lax }) as any;
 
     let resolved;
 

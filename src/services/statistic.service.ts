@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { JsonDB } from 'node-json-db';
 import { Config } from 'node-json-db/dist/lib/JsonDBConfig';
-import { parseDomain } from 'parse-domain';
+import { parseDomain, Validation } from 'parse-domain';
 
 interface Statistic {
   count: number;
@@ -27,20 +27,20 @@ export class StatisticService {
 
   write(host: string): void {
     this.logger.debug(`write received host ${host}`);
-    const parsedHost = parseDomain(host) as any;
+    const parsedHost = parseDomain(host, { validation: Validation.Lax }) as any;
     this.entryHost(host, parsedHost);
     this.entryDomain(parsedHost);
   }
 
   entryHost(host: string, parsedHost: any) {
     let entry: Statistic = { count: 0 };
-    const key = `/host/${host}`;
+    const key = `/host/${host}`.toLowerCase();
 
     try {
       entry = this.db.getData(key) as Statistic;
     } catch (e) {
       entry.firstTime = new Date().toISOString();
-      entry.domain = `${parsedHost.domain}.${parsedHost.topLevelDomains.join()}`;
+      entry.domain = `${parsedHost.domain}.${parsedHost.topLevelDomains.join('.')}`.toLowerCase();
     }
 
     entry.count += 1;
@@ -53,7 +53,7 @@ export class StatisticService {
 
   entryDomain(parsedHost: any): Statistic {
     let entry: Statistic = { count: 0 };
-    const domain = `${parsedHost.domain}.${parsedHost.topLevelDomains.join()}`;
+    const domain = `${parsedHost.domain}.${parsedHost.topLevelDomains.join('.')}`.toLowerCase();
     const key = `/domain/${domain}`;
 
     try {
