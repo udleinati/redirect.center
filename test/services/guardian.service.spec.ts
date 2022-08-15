@@ -17,8 +17,14 @@ describe('GuardianService', () => {
   });
 
   describe('isDenied', () => {
-    it('true', () => {
+    it('true - considere host', () => {
       const spyDbGetData = jest.spyOn((service as any).db, 'getData').mockReturnValue(['www.github.com']);
+      const isDenied = service.isDenied('www.github.com');
+      expect(isDenied).toBe(true);
+    });
+
+    it('true - ignore hosthost', () => {
+      const spyDbGetData = jest.spyOn((service as any).db, 'getData').mockReturnValue(['github.com']);
       const isDenied = service.isDenied('www.github.com');
       expect(isDenied).toBe(true);
     });

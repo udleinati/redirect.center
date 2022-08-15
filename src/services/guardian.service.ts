@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import { JsonDB } from 'node-json-db';
 import { Config } from 'node-json-db/dist/lib/JsonDBConfig';
+import * as url from 'url';
+import * as psl from 'psl';
 
 @Injectable()
 export class GuardianService {
@@ -20,6 +22,11 @@ export class GuardianService {
 
     try {
       isDenied = this.db.getData('/denyFqdn').includes(fqdn);
+
+      if (!isDenied) {
+        const domain = psl.get(fqdn);
+        if (domain) isDenied = this.db.getData('/denyFqdn').includes(domain);
+      }
     } catch (err) {
       if (err.name === 'DataError' && err.message.includes("Can't find dataPath: /denyFqdn")) {
         this.db.push('/denyFqdn', []);

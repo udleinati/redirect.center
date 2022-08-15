@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Controller,
   ForbiddenException,
   Get,
@@ -24,6 +25,7 @@ export class RedirectController {
   @Get('*')
   @Redirect()
   async redirect(@Headers('host') host: string, @Req() req: Request) {
+    if (!host) throw new BadRequestException();
     host = host.includes(':') ? host.split(':')[0] : host || 'undefined';
 
     /* source guardian */
