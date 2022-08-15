@@ -28,7 +28,7 @@ export class StatisticService {
   write(host: string): void {
     this.logger.debug(`write received host ${host}`);
     const parsedHost = parseDomain(host, { validation: Validation.Lax }) as any;
-    this.entryHost(host, parsedHost);
+    // this.entryHost(host, parsedHost); The file is getting to big. Considere changing to sqlite.
     this.entryDomain(parsedHost);
   }
 
