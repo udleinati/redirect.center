@@ -42,7 +42,7 @@ describe('RedirectService', () => {
         response = err;
       }
 
-      expect(response.code).toBe('MORETHANONE');
+      expect(response.response.message).toBe('More than one record on the host test1.nati.biz');
     });
 
     // it('error NOTADOMAIN', async () => {
@@ -276,6 +276,19 @@ describe('RedirectService', () => {
         pathnames: ['/test', '/abc', '/'],
         status: 301,
         host: 'www.google.com',
+        queries: [],
+      });
+    });
+
+    it('mix 8', () => {
+      const raw = '127.0.0.1.opts-port-22602.opts-slash.test.redirect.center.';
+      const response = service.parseDestination(raw, '/');
+      expect(response).toEqual({
+        protocol: 'http',
+        pathnames: ['/test'],
+        status: 301,
+        port: 22602,
+        host: '127.0.0.1',
         queries: [],
       });
     });

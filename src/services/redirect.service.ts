@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
 import * as url from 'url';
 import * as base32 from 'base32.js';
@@ -37,9 +37,7 @@ export class RedirectService {
       resolved = await dnsResolveCname(host);
 
       if (resolved.length > 1) {
-        const error = new Error(`More than one record on the host ${host}.`) as any;
-        error.code = 'MORETHANONE';
-        throw error;
+        throw new BadRequestException(`More than one record on the host ${host}`);
       } else if (
         ![
           ParseResultType.Reserved,
@@ -48,9 +46,7 @@ export class RedirectService {
           ParseResultType.Invalid,
         ].includes(parseDomain(resolved[0]).type)
       ) {
-        const error = new Error(`The record on the host ${host} is not valid.`) as any;
-        error.code = 'NOTADOMAIN';
-        throw error;
+        throw new BadRequestException(`The record on the host ${host} is not valid`);
       }
     } catch (err) {
       if (
@@ -62,6 +58,8 @@ export class RedirectService {
         ]
       ) {
         return this.resolveDns(`redirect.${host}`);
+      } else if (err.code === 'ENOTFOUND') {
+        throw new BadRequestException(`The destination is not properly set, check the host ${host}`);
       }
 
       throw err;

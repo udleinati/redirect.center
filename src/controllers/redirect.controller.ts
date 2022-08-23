@@ -37,7 +37,11 @@ export class RedirectController {
     try {
       redirect = await this.service.resolveDnsAndRedirect(host, req.url);
     } catch (err) {
-      throw new InternalServerErrorException(`${err.code}: ${err.message}`);
+      if (['BadRequestException'].includes(err.name)) {
+        throw err;
+      } else {
+        throw new InternalServerErrorException(`${err.code}: ${err.message}`);
+      }
     }
 
     /* destination gaurdian */
