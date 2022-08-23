@@ -58,7 +58,7 @@ export class RedirectService {
         ]
       ) {
         return this.resolveDns(`redirect.${host}`);
-      } else if (err.code === 'ENOTFOUND') {
+      } else if (['ENOTFOUND', 'ENODATA'].includes(err.code)) {
         throw new BadRequestException(`The destination is not properly set, check the host ${host}`);
       }
 
