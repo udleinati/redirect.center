@@ -13,24 +13,24 @@ describe('GuardianService', () => {
 
     service = new GuardianService(logger);
 
-    jest.spyOn((service as any).db, 'reload').mockReturnValue(true);
+    jest.spyOn(service, 'openAndParse').mockReturnValue();
   });
 
   describe('isDenied', () => {
     it('true - considere host', () => {
-      const spyDbGetData = jest.spyOn((service as any).db, 'getData').mockReturnValue(['www.github.com']);
+      const spyDbGetData = jest.spyOn(service, 'getFileContent').mockReturnValue({ denyFqdn: ['www.github.com'] });
       const isDenied = service.isDenied('www.github.com');
       expect(isDenied).toBe(true);
     });
 
     it('true - ignore hosthost', () => {
-      const spyDbGetData = jest.spyOn((service as any).db, 'getData').mockReturnValue(['github.com']);
+      const spyDbGetData = jest.spyOn(service, 'getFileContent').mockReturnValue({ denyFqdn: ['github.com'] });
       const isDenied = service.isDenied('www.github.com');
       expect(isDenied).toBe(true);
     });
 
     it('false', () => {
-      const spyDbGetData = jest.spyOn((service as any).db, 'getData').mockReturnValue(['www.github.com']);
+      const spyDbGetData = jest.spyOn(service, 'getFileContent').mockReturnValue({ denyFqdn: ['www.github.com'] });
       const isDenied = service.isDenied('www.bitbucket.com');
       expect(isDenied).toBe(false);
     });

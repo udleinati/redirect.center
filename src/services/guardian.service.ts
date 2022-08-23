@@ -1,19 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { readFileSync } from 'fs';
 import { InjectPinoLogger, PinoLogger } from 'nestjs-pino';
-import { JsonDB } from 'node-json-db';
-import { Config } from 'node-json-db/dist/lib/JsonDBConfig';
-import * as url from 'url';
+import { join } from 'path';
 import * as psl from 'psl';
 
 @Injectable()
 export class GuardianService {
-  private readonly db = new JsonDB(new Config('db/guardian', false, false, '/'));
+  private readonly filepath = join(__dirname, '..', '..', 'db', 'guardian.json');
+  private fileContent: Record<string, any>;
 
   constructor(@InjectPinoLogger(GuardianService.name) private readonly logger: PinoLogger) {
     const interval = 60 * 1000;
+
+    this.openAndParse();
+
     setInterval(() => {
       this.logger.debug(`db.reload - interval ${interval}`);
-      this.db.reload();
+      this.openAndParse();
     }, interval).unref();
   }
 
@@ -21,22 +24,24 @@ export class GuardianService {
     let isDenied;
 
     try {
-      isDenied = this.db.getData('/denyFqdn').includes(fqdn);
+      isDenied = this.getFileContent().denyFqdn?.includes(fqdn);
 
       if (!isDenied) {
         const domain = psl.get(fqdn);
-        if (domain) isDenied = this.db.getData('/denyFqdn').includes(domain);
+        if (domain) isDenied = this.getFileContent().denyFqdn?.includes(domain);
       }
     } catch (err) {
-      if (err.name === 'DataError' && err.message.includes("Can't find dataPath: /denyFqdn")) {
-        this.db.push('/denyFqdn', []);
-        this.db.save();
-      } else {
-        throw err;
-      }
+      throw err;
     }
 
-    this.logger.debug(`isDenied ${fqdn} ${isDenied}`);
     return isDenied;
+  }
+
+  openAndParse(): void {
+    this.fileContent = JSON.parse(readFileSync(this.filepath).toString('utf8') || '{}');
+  }
+
+  getFileContent(): Record<string, any> {
+    return this.fileContent;
   }
 }

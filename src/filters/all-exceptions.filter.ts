@@ -27,6 +27,10 @@ export class AllExceptionsFilter extends BaseExceptionFilter {
 
     if (['TypeError'].includes(exception.name)) this.logger.error(jsonMsg);
 
+    if (jsonMsg.statusCode >= 500 && jsonMsg.statusCode <= 599) {
+      this.logger.error(`investigate this error: ${exception.name}/${exception.message}`, exception.stack);
+    }
+
     return response.status(status).json({
       statusCode: jsonMsg.statusCode,
       message: jsonMsg.message,
