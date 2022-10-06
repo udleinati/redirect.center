@@ -495,14 +495,13 @@
         }
 
         return url.hostname
-
           /* path with special characters */
-          + (url.pathname && url.pathname !== '/' && !url.pathname.match(/^[\/a-z0-9-_\.]+$/)
+          + ((url.pathname && url.pathname !== '/' && !url.pathname.match(/^[\/a-z0-9-_\.]+$/) || url.pathname.match(/query/))
             ? `.opts-path-${base32.encode(new TextEncoder().encode(url.pathname), { type: 'rfc4648', lc: true })}`
             : '')
 
           /* path without special characters */
-          + (url.pathname && url.pathname !== '/' && url.pathname.match(/^[\/a-z0-9-_\.]+$/)
+          + (url.pathname && url.pathname !== '/' && url.pathname.match(/^[\/a-z0-9-_\.]+$/ && !url.pathname.match(/query/))
             ? url.pathname.replace(/\//g, '.opts-slash.').replace(/([^.])$/, '$1').replace(/\.$/, '')
             : '')
 
