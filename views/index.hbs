@@ -501,7 +501,7 @@
             : '')
 
           /* path without special characters */
-          + (url.pathname && url.pathname !== '/' && url.pathname.match(/^[\/a-z0-9-_\.]+$/ && !url.pathname.match(/query/))
+          + (url.pathname && url.pathname !== '/' && url.pathname.match(/^[\/a-z0-9-_\.]+$/) && !url.pathname.match(/query/))
             ? url.pathname.replace(/\//g, '.opts-slash.').replace(/([^.])$/, '$1').replace(/\.$/, '')
             : '')
 
