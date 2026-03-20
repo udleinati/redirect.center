@@ -65,15 +65,12 @@ sudo cp redirect-center.service /etc/systemd/system/
 #    - WorkingDirectory: path to your project (default: /opt/redirect-center)
 #    - User: the system user to run as (default: www-data)
 #    - ExecStart: path to deno binary (check with: which deno)
+#    In the editor, add:
+#      [Service]
+#        Environment=FQDN=redirect.center
+#        Environment=ENTRY_IP=54.84.55.102
+#        Environment=LISTEN_PORT=80
 sudo nano /etc/systemd/system/redirect-center.service
-
-# 3. Add environment variables via systemd override
-sudo systemctl edit redirect-center
-# In the editor, add:
-#   [Service]
-#   Environment=FQDN=redirect.center
-#   Environment=ENTRY_IP=54.84.55.102
-#   Environment=LISTEN_PORT=80
 
 # 4. Reload systemd, enable on boot, and start
 sudo systemctl daemon-reload
