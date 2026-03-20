@@ -54,7 +54,7 @@
       <h1>
         <a href="/" alt="{{ app.projectName }}">{{ app.projectName }}</a>
         <small class="en">Redirect domains using DNS only</small>
-        <small class="pt-br">Redirecione domínios usando somente o DNS</small>
+        <small class="pt-br">Redirecione dom&iacute;nios usando somente o DNS</small>
       </h1>
 
       <p><span id="uptime">...</span></p>
@@ -64,13 +64,13 @@
           {{ statistics.periodDomains }} domains - Since last restart:
           {{ statistics.everDomains }} domains</span>
         <span class="pt-br">&Uacute;ltimas 24h:
-          {{ statistics.periodDomains }} dom&iacute;nios - Desde o último restart:
+          {{ statistics.periodDomains }} dom&iacute;nios - Desde o &uacute;ltimo restart:
           {{ statistics.everDomains }} dom&iacute;nios</span>
       </p>
 
       <p class="languages">
         <span><a href="javascript:;" class="change-language to-en">English</a> - <a class="change-language to-pt-br"
-            href="javascript:;">Português</a></span>
+            href="javascript:;">Portugu&ecirc;s</a></span>
       </p>
     </div>
   </header>
@@ -78,7 +78,7 @@
     <br />
     <p class="lead">
       <span class="en">What do you want to do?</span>
-      <span class="pt-br">O que você quer fazer?</span>
+      <span class="pt-br">O que voc&ecirc; quer fazer?</span>
     </p>
     <div class="panel-group" id="accordion" role="tablist" aria-multiselectable="true">
       <div class="panel panel-default">
@@ -105,13 +105,12 @@
                     <div class="row">
                       <div class="col-xs-4">Host Record: <strong>&lt;leave-empty&gt;</strong></div>
                       <div class="col-xs-2">Type: <strong>A</strong></div>
-                      <div class="col-xs-6">To: <strong>
-                          {{~ app.entryIp }}</strong></div>
+                      <div class="col-xs-6">To: <strong>{{ app.entryIp }}</strong></div>
                     </div>
                     <div class="row">
                       <div class="col-xs-4">Host Record: <strong>redirect</strong></div>
                       <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                      <div class="col-xs-6">To: <strong>www.my-domain.com.{{~ app.fqdn }}</strong></div>
+                      <div class="col-xs-6">To: <strong>www.my-domain.com.{{ app.fqdn }}</strong></div>
                     </div>
                   </div>
                 </div>
@@ -120,13 +119,12 @@
                     <div class="row">
                       <div class="col-xs-4">Host Record: <strong>&lt;deixe-vazio&gt;</strong></div>
                       <div class="col-xs-2">Type: <strong>A</strong></div>
-                      <div class="col-xs-6">To: <strong>
-                          {{~ app.entryIp }}</strong></div>
+                      <div class="col-xs-6">To: <strong>{{ app.entryIp }}</strong></div>
                     </div>
                     <div class="row">
                       <div class="col-xs-4">Host Record: <strong>redirect</strong></div>
                       <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                      <div class="col-xs-6">To: <strong>www.my-domain.com.{{~ app.fqdn }}</strong></div>
+                      <div class="col-xs-6">To: <strong>www.my-domain.com.{{ app.fqdn }}</strong></div>
                     </div>
                   </div>
                 </div>
@@ -134,14 +132,14 @@
             </div>
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="label label-danger pt-br">PAR&Acirc;METRO</span>
             <span class="pt-br">
-              O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              O par&acirc;metro <code>.opts-https.</code> redireciona para o dom&iacute;nio com <strong>https</strong>. Ex:
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
             <span class="en">
               The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
           </div>
         </div>
@@ -171,7 +169,7 @@
                   <div class="row">
                     <div class="col-xs-4">Host Record: <strong>www</strong></div>
                     <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                    <div class="col-xs-6">To: <strong>www.my-other-domain.com.{{~ app.fqdn }}</strong></div>
+                    <div class="col-xs-6">To: <strong>www.my-other-domain.com.{{ app.fqdn }}</strong></div>
                   </div>
                 </div>
               </div>
@@ -179,14 +177,14 @@
 
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="label label-danger pt-br">PAR&Acirc;METRO</span>
             <span class="pt-br">
-              O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              O par&acirc;metro <code>.opts-https.</code> redireciona para o dom&iacute;nio com <strong>https</strong>. Ex:
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
             <span class="en">
               The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
           </div>
         </div>
@@ -216,16 +214,16 @@
                   <div class="row">
                     <div class="col-xs-4">Host Record: <strong>www</strong></div>
                     <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                    <div class="col-xs-6">To: <strong>www.my-other-domain.com.opts-uri.{{~ app.fqdn }}</strong></div>
+                    <div class="col-xs-6">To: <strong>www.my-other-domain.com.opts-uri.{{ app.fqdn }}</strong></div>
                   </div>
                 </div>
               </div>
             </div>
             <br />
             <span class="label label-danger en">ATTENTION</span>
-            <span class="label label-danger pt-br">ATENÇÃO</span>
+            <span class="label label-danger pt-br">ATEN&Ccedil;&Atilde;O</span>
             <span class="pt-br">
-              O parâmetro <code>.opts-uri.</code> é o responsável por repassar o caminhodo da URL origem para a URL
+              O par&acirc;metro <code>.opts-uri.</code> &eacute; o respons&aacute;vel por repassar o caminho da URL origem para a URL
               destino.
             </span>
             <span class="en">
@@ -234,14 +232,14 @@
             </span>
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="label label-danger pt-br">PAR&Acirc;METRO</span>
             <span class="pt-br">
-              O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              O par&acirc;metro <code>.opts-https.</code> redireciona para o dom&iacute;nio com <strong>https</strong>. Ex:
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
             <span class="en">
               The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
 
           </div>
@@ -271,16 +269,16 @@
                   <div class="row">
                     <div class="col-xs-3">Host Record: <strong>jobs</strong></div>
                     <div class="col-xs-2">Type: <strong>CNAME</strong></div>
-                    <div class="col-xs-7">To: <strong>www.my-domain.com.opts-slash.jobs.opts-query.id.opts-eq.1.{{~ app.fqdn }}</strong></div>
+                    <div class="col-xs-7">To: <strong>www.my-domain.com.opts-slash.jobs.opts-query.id.opts-eq.1.{{ app.fqdn }}</strong></div>
                   </div>
                 </div>
               </div>
             </div>
             <br />
             <span class="label label-danger en">ATTENTION</span>
-            <span class="label label-danger pt-br">ATENÇÃO</span>
+            <span class="label label-danger pt-br">ATEN&Ccedil;&Atilde;O</span>
             <span class="pt-br">
-              O parâmetro <code>.opts-slash.</code> é o responsável por transformar <code>.jobs</code> para <code>/jobs</code>
+              O par&acirc;metro <code>.opts-slash.</code> &eacute; o respons&aacute;vel por transformar <code>.jobs</code> para <code>/jobs</code>
               e repassar para a URL destino.
             </span>
             <span class="en">
@@ -289,39 +287,39 @@
             </span>
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="label label-danger pt-br">PAR&Acirc;METRO</span>
             <span class="pt-br">
-              O parâmetro <code>.opts-https.</code> redireciona para o domínio com <strong>https</strong>. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              O par&acirc;metro <code>.opts-https.</code> redireciona para o dom&iacute;nio com <strong>https</strong>. Ex:
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
             <span class="en">
               The <code>.opts-https.</code> parameter redirect to <strong>https</strong> domain. Ex:
-              www.my-domain.com.opts-https.{{~ app.fqdn }}.
+              www.my-domain.com.opts-https.{{ app.fqdn }}.
             </span>
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="label label-danger pt-br">PAR&Acirc;METRO</span>
             <span class="en">
               The <code>.opts-path-&lt;base32-encoded-path&gt;.</code> parameter add the URL path. It's important when
               you need to capitalize some characteres in your URL.
             </span>
             <span class="pt-br">
-              O parâmetro <code>.opts-path-&lt;base32-encoded-path&gt;.</code> adiciona o path na sua URL. Ele é especialmente
-              importante quando pretente usar caracteres maiúsculos.
+              O par&acirc;metro <code>.opts-path-&lt;base32-encoded-path&gt;.</code> adiciona o path na sua URL. Ele &eacute; especialmente
+              importante quando pretente usar caracteres mai&uacute;sculos.
             </span>
             <br />
             <span class="label label-danger en">PARAMETER</span>
-            <span class="label label-danger pt-br">PARÂMETRO</span>
+            <span class="label label-danger pt-br">PAR&Acirc;METRO</span>
             <span class="en">
               The <code>.opts-query-&lt;base32-encoded-query&gt;.</code> parameter is responsible to turning query params
               of <code>?&lt;query&gt;</code> to canonical domain name. You have to encode your query using RFC 4648 Base32
               encoding and remove all trailing <code>=</code> characters. You can use the converter below to do that.
             </span>
             <span class="pt-br">
-              O parâmetro <code>.opts-query-&lt;base32-encoded-query&gt;.</code> é responsável por transformar os parâmetros
-              de consulta <code>?&lt;query&gt;</code> em um nome de domínio canônico. Você deve codificar sua consulta usando
-              a codificação RFC 4648 Base32 e remover todos os caracteres <code>=</code> que aparecem no final da linha.
-              Você pode usar o conversor abaixo para fazer isso.
+              O par&acirc;metro <code>.opts-query-&lt;base32-encoded-query&gt;.</code> &eacute; respons&aacute;vel por transformar os par&acirc;metros
+              de consulta <code>?&lt;query&gt;</code> em um nome de dom&iacute;nio can&ocirc;nico. Voc&ecirc; deve codificar sua consulta usando
+              a codifica&ccedil;&atilde;o RFC 4648 Base32 e remover todos os caracteres <code>=</code> que aparecem no final da linha.
+              Voc&ecirc; pode usar o conversor abaixo para fazer isso.
             </span>
             <br />
             <br />
@@ -353,16 +351,14 @@
   <footer>
     <div class="container">
       <p class="pt-br">
-        <span>
-          {{~ app.projectName }}</span> é
+        <span>{{ app.projectName }}</span> &eacute;
         <a href="https://github.com/udleinati/redirect.center">open source</a>, code contributions,
-        feedback no geral de idéias s&atilde;o muito bem vindas, postar via
+        feedback no geral de id&eacute;ias s&atilde;o muito bem vindas, postar via
         <a href="https://github.com/udleinati/redirect.center/issues">GitHub issues</a>,
         <a href="mailto:udlei@nati.biz">email</a> (udlei@nati.biz).
       </p>
       <p class="en">
-        <span>
-          {{~ app.projectName }}</span> is
+        <span>{{ app.projectName }}</span> is
         <a href="https://github.com/udleinati/redirect.center">open source</a>, code contributions,
         general feedback and ideas are greatly appreciated via either
         the <a href="https://github.com/udleinati/redirect.center/issues">GitHub issues</a>,
@@ -373,16 +369,9 @@
           redirect host</li>
         <li>Leiten Sie von DNS, Domain-Weiterleitung, Umleitung dns cname</li>
         <li>redirecionar por dns, redirecionamiento de dominio, redirecionar cname dns</li>
-        <li>redirigir mediante DNS, redireccionamiento de dominio, DNS CNAME redirección</li>
+        <li>redirigir mediante DNS, redireccionamiento de dominio, DNS CNAME redirecci&oacute;n</li>
         <li>reindirizzare dal DNS, redireccionamiento dominio, cname reindirizzamento DNS</li>
-        <li>Перенаправление на DNS, домен перенаправления, перенаправлять DNS CNAME</li>
-        <li>إعادة توجيه من قبل نظام أسماء النطاقات، إعادة توجيه المجال توجيه DNS CNAME</li>
-        <li>הפניה על ידי DNS, הפניה תחום, להפנות CNAME DNS</li>
-        <li>डीएनएस, डोमेन अनुप्रेषित द्वारा पुन: निर्देशित DNS CNAME अनुप्रेषित</li>
-        <li>DNS, 도메인 리디렉션으로 리디렉션의 DNS CNAME 리디렉션</li>
-        <li>DNSは、ドメインリダイレクトによってリダイレクト、DNSのCNAMEのリダイレクト</li>
-        <li>通过DNS，域名重定向重定向，重定向DNS CNAME</li>
-        <li>通過DNS，域名重定向重定向，重定向DNS CNAME</li>
+        <li>&#1055;&#1077;&#1088;&#1077;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1077; &#1085;&#1072; DNS, &#1076;&#1086;&#1084;&#1077;&#1085; &#1087;&#1077;&#1088;&#1077;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1077;&#1085;&#1080;&#1103;, &#1087;&#1077;&#1088;&#1077;&#1085;&#1072;&#1087;&#1088;&#1072;&#1074;&#1083;&#1103;&#1090;&#1100; DNS CNAME</li>
       </ul>
     </div>
   </footer>
@@ -511,7 +500,7 @@
 
           + (url.protocol === 'https:' ? '.opts-https' : '')
 
-          + '.{{~ app.fqdn }}.';
+          + '.{{ app.fqdn }}.';
       }
     });
   </script>
