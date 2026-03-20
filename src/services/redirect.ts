@@ -5,6 +5,7 @@ import type { Destination } from "../types/destination.ts";
 import { RedirectResponse } from "../types/redirect-response.ts";
 import { dnsResolveCname } from "../helpers/dns.ts";
 import { decode } from "../helpers/base32.ts";
+import { logger } from "../helpers/logger.ts";
 
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
@@ -151,7 +152,7 @@ export function parseDestination(raw: string, reqUrl: string): Destination {
     while (
       (r = raw.match(/\.(?:opts-|_|)(?:query|base32)[.\-]([^.]+)/))
     ) {
-      if (loop++ > 5) console.warn(`[redirect] CHECK RAW (query) ${raw}`);
+      if (loop++ > 5) logger.warn(`[redirect] CHECK RAW (query) ${raw}`);
 
       raw = raw.replace(r[0], "");
       r[1] = r[1].replace(/-/g, "=");
@@ -172,7 +173,7 @@ export function parseDestination(raw: string, reqUrl: string): Destination {
       )) ||
       (r = raw.match(/\.(?:opts-|_|)slash/))
     ) {
-      if (loop++ > 5) console.warn(`[redirect] CHECK RAW (slash) ${raw}`);
+      if (loop++ > 5) logger.warn(`[redirect] CHECK RAW (slash) ${raw}`);
 
       if (r && r[2]) {
         raw = raw.replace(`${r[1]}${r[2]}`, "");

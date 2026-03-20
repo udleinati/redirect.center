@@ -1,4 +1,5 @@
 import psl from "psl";
+import { logger } from "../helpers/logger.ts";
 
 interface GuardianData {
   denyFqdn: string[];
@@ -14,7 +15,7 @@ class GuardianService {
 
     const interval = 60 * 1000;
     setInterval(() => {
-      console.debug(`[guardian] db.reload - interval ${interval}`);
+      logger.debug(`[guardian] db.reload - interval ${interval}`);
       this.openAndParse();
     }, interval);
   }
@@ -37,7 +38,7 @@ class GuardianService {
       const text = Deno.readTextFileSync(this.filepath);
       this.fileContent = JSON.parse(text || "{}");
     } catch (err) {
-      console.error(`[guardian] Failed to load guardian.json: ${err}`);
+      logger.error(`[guardian] Failed to load guardian.json: ${err}`);
     }
   }
 

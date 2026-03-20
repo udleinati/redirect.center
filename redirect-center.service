@@ -9,7 +9,10 @@ WorkingDirectory=/opt/redirect.center
 ExecStart=/usr/bin/deno run --allow-net --allow-read --allow-env --unstable-kv src/main.ts
 Restart=always
 RestartSec=3
-Environment=DENO_DIR=/opt/redirect-center/.deno
+Environment=FQDN=redirect.center
+Environment=ENTRY_IP=54.84.55.102
+Environment=LISTEN_PORT=80
+Environment=LOGGER_LEVEL=info
 
 # Logging
 StandardOutput=journal

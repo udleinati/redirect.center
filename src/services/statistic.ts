@@ -1,4 +1,5 @@
 import { parseDomain } from "parse-domain";
+import { logger } from "../helpers/logger.ts";
 
 interface Statistic {
   count: number;
@@ -30,7 +31,7 @@ class StatisticService {
 
   async write(host: string): Promise<void> {
     await this.ensureReady();
-    console.debug(`[statistic] write received host ${host}`);
+    logger.debug(`[statistic] write received host ${host}`);
 
     const parsedHost = parseDomain(host) as {
       domain: string;
@@ -55,7 +56,7 @@ class StatisticService {
     entry.lastTime = new Date().toISOString();
 
     await this.kv.set(key, entry);
-    console.debug(
+    logger.debug(
       `[statistic] entryDomain key ${domain}, entry: ${JSON.stringify(entry)}`,
     );
   }

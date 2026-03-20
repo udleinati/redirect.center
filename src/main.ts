@@ -9,6 +9,7 @@ import {
   HttpError,
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
+import { logger } from "./helpers/logger.ts";
 
 const app = new Hono();
 const env = vento({
@@ -97,7 +98,7 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
 
   // Statistics (fire and forget)
   statistic.write(host).catch((err) =>
-    console.error(`[statistic] write error: ${err}`)
+    logger.error(`[statistic] write error: ${err}`)
   );
 
   return c.redirect(redirect.url, redirect.status as 301);
@@ -112,6 +113,10 @@ Deno.serve(
     hostname: config.listenIp,
     onListen({ hostname, port }) {
       console.log(`[server] Server is listening on ${hostname}:${port}`);
+    },
+    onError(error) {
+      console.error(`[server] ${error}`);
+      return new Response("Internal Server Error", { status: 500 });
     },
   },
   app.fetch,
