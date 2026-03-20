@@ -82,7 +82,9 @@ export async function resolveDns(host: string): Promise<string> {
     const isKnownDnsError = isDnsNotFound ||
       ["ENOTFOUND", "ESERVFAIL", "EBADRESP", "ECONNREFUSED"].includes(
         error.code ?? "",
-      );
+      ) ||
+      error.message?.includes("invalid characters") ||
+      error.message?.includes("proto error");
 
     if (isKnownDnsError) {
       throw new HttpError(
