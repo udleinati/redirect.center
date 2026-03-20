@@ -13,7 +13,7 @@ A free, open-source DNS-based domain redirect service. Users create CNAME record
 - **Template engine:** Vento (`ventojs` — `.vto` files, NOT Handlebars)
 - **Database:** Deno KV (`Deno.openKv()`) for statistics
 - **DNS resolution:** `Deno.resolveDns(host, "CNAME")`
-- **Process management:** Custom `supervisor.ts` (replaces PM2)
+- **Process management:** systemd (`redirect-center.service`)
 - **Container:** Docker (`denoland/deno:latest`)
 
 ## Project Structure
@@ -40,7 +40,7 @@ views/
 ├── index.vto                  # Landing page template (Vento syntax, bilingual EN/PT)
 db/
 ├── guardian.json               # Blacklist file {"denyFqdn": [...]}
-supervisor.ts                  # Process supervisor with exponential backoff restart
+redirect-center.service        # systemd unit file for production
 Dockerfile                     # Multi-stage Docker build
 deno.json                      # Config, tasks, imports
 ```
@@ -51,7 +51,7 @@ deno.json                      # Config, tasks, imports
 deno task dev          # Dev server with --watch (port 3000)
 deno task start        # Production server
 deno task test         # Run all tests (50 tests)
-deno task supervisor   # Run via supervisor (auto-restart on crash)
+sudo systemctl start redirect-center   # Start in background (production)
 ```
 
 ## Environment Variables
@@ -127,12 +127,17 @@ If no CNAME is found and the subdomain is not `redirect`, it retries with `redir
 - Checks both the full FQDN and the base domain (via `psl` library)
 - Blocks both source (incoming) and destination (redirect target) domains
 
-## Supervisor
+## systemd (Production)
 
-- `supervisor.ts` runs `src/main.ts` as a subprocess
-- Auto-restarts on crash with exponential backoff (1s → 2s → 4s → ... max 30s)
-- Resets backoff after 60s of stable uptime
-- Forwards SIGINT/SIGTERM for graceful shutdown
+- Service file: `redirect-center.service`
+- Install: `sudo cp redirect-center.service /etc/systemd/system/ && sudo systemctl daemon-reload`
+- Enable on boot: `sudo systemctl enable redirect-center`
+- Start: `sudo systemctl start redirect-center`
+- Stop: `sudo systemctl stop redirect-center`
+- Logs: `journalctl -u redirect-center -f`
+- Auto-restarts on crash (`Restart=always`, `RestartSec=3`)
+- Runs as `www-data` user with security hardening
+- Adjust `WorkingDirectory` and `User` in the service file as needed
 
 ## Docker
 
