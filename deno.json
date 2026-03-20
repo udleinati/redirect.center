@@ -7,6 +7,7 @@
   },
   "imports": {
     "hono": "jsr:@hono/hono@^4",
+    "hono/compress": "jsr:@hono/hono@^4/compress",
     "hono/deno": "jsr:@hono/hono@^4/deno",
     "hono/": "jsr:@hono/hono@^4/",
     "ventojs": "https://deno.land/x/vento@v1.12.12/mod.ts",

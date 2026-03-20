@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { compress } from "hono/compress";
 import { serveStatic } from "hono/deno";
 import vento from "ventojs";
 import { config } from "./config.ts";
@@ -17,6 +18,9 @@ const env = vento({
 });
 
 app.onError(errorHandler);
+
+// Compression (gzip/deflate)
+app.use("*", compress());
 
 // Static files
 app.use("/public/*", serveStatic({ root: "./" }));
@@ -42,12 +46,12 @@ app.get("/", async (c) => {
 });
 
 // FQDN-only routes: return 404 for non-redirect paths on the service domain
-app.all("/*", (c, next) => {
+app.all("/*", async (c, next) => {
   const host = (c.req.header("host") || "").split(":")[0];
   if (host === config.fqdn) {
     return c.json({ statusCode: 404, message: "Not Found" }, 404);
   }
-  return next();
+  await next();
 });
 
 // All other routes - redirect logic
