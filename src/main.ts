@@ -19,6 +19,30 @@ const env = vento({
 
 app.onError(errorHandler);
 
+// Access log middleware (Apache Combined Log Format)
+app.use("*", async (c, next) => {
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+
+  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+    c.req.header("x-real-ip") || "-";
+  const method = c.req.method;
+  const url = new URL(c.req.url);
+  const path = url.pathname + url.search;
+  const protocol = c.req.header("x-forwarded-proto") || url.protocol.replace(":", "");
+  const status = c.res.status;
+  const contentLength = c.res.headers.get("content-length") || "-";
+  const referer = c.req.header("referer") || "-";
+  const ua = c.req.header("user-agent") || "-";
+  const host = c.req.header("host") || "-";
+  const timestamp = new Date().toISOString();
+
+  console.log(
+    `${ip} - - [${timestamp}] "${method} ${path} HTTP/${protocol}" ${status} ${contentLength} "${referer}" "${ua}" host=${host} ${ms}ms`,
+  );
+});
+
 // Compression (gzip/deflate)
 app.use("*", compress());
 
@@ -79,10 +103,6 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   statistic.write(host).catch((err) =>
     console.error(`[statistic] write error: ${err}`)
   );
-
-  // Log
-  const reqPath = new URL(c.req.url).pathname;
-  console.info(`[redirect] ${host}${reqPath} -> ${redirect.status} ${redirect.url}`);
 
   return c.redirect(redirect.url, redirect.status as 301);
 }

@@ -5,37 +5,104 @@
 # redirect.center
 Redirect domains using DNS only.
 
-### How do I install?
+## Requirements
+
+- [Deno](https://deno.land/) v2+
+
+## How do I install?
 
 ```sh
-$ cd /opt
-$ git clone https://github.com/udleinati/redirect.center.git
-$ cd redirect.center
-$ npm install
-$ npm run start:dev:pretty
+cd /opt
+git clone https://github.com/udleinati/redirect.center.git
+cd redirect.center
 ```
 
-### Environment Variables
-Look at the file ./src/config.js to configure others environment variables.
-You must set at least these three variables:
+## Environment Variables
+
+Look at the file `./src/config.ts` to see all available environment variables.
+You must set at least these variables:
 
 ```sh
 export FQDN=redirect.center
-export PORT=80
 export ENTRY_IP=54.84.55.102
+export LISTEN_PORT=80
 ```
 
-### How do I run in production?
+| Variable | Default | Description |
+|---|---|---|
+| `FQDN` | `localhost` | Service domain (used to detect homepage vs redirect) |
+| `ENTRY_IP` | `127.0.0.1` | IP users must set in their A record |
+| `LISTEN_PORT` | `3000` | Server port |
+| `LISTEN_IP` | `0.0.0.0` | Server bind address |
+| `ENVIRONMENT` | `dev1` | Environment name |
+| `PROJECT_NAME` | `redirect.center` | Displayed in UI and meta tags |
+| `LOGGER_LEVEL` | `debug` | Log level |
+
+## How do I run in development?
 
 ```sh
-$ npm run start:prod
+deno task dev
 ```
 
-### Last but not least
-Create an * entry in your DNS.
+## How do I run tests?
 
 ```sh
-*.redirect.center CNAME TO redirect.center
+deno task test
+```
+
+## How do I run in production?
+
+### Option 1: systemd (recommended)
+
+This runs the service in the background, auto-restarts on crash, and starts on boot.
+You can SSH in, start it, and disconnect without issues.
+
+```sh
+# 1. Copy the service file to systemd
+sudo cp redirect-center.service /etc/systemd/system/
+
+# 2. Edit the service file to match your environment
+#    - WorkingDirectory: path to your project (default: /opt/redirect-center)
+#    - User: the system user to run as (default: www-data)
+#    - ExecStart: path to deno binary (check with: which deno)
+sudo nano /etc/systemd/system/redirect-center.service
+
+# 3. Add environment variables via systemd override
+sudo systemctl edit redirect-center
+# In the editor, add:
+#   [Service]
+#   Environment=FQDN=redirect.center
+#   Environment=ENTRY_IP=54.84.55.102
+#   Environment=LISTEN_PORT=80
+
+# 4. Reload systemd, enable on boot, and start
+sudo systemctl daemon-reload
+sudo systemctl enable redirect-center
+sudo systemctl start redirect-center
+```
+
+**Common systemd commands:**
+
+```sh
+sudo systemctl status redirect-center    # Check if running
+sudo systemctl restart redirect-center   # Restart
+sudo systemctl stop redirect-center      # Stop
+journalctl -u redirect-center -f         # View logs in real-time
+journalctl -u redirect-center --since today  # Today's logs
+```
+
+### Option 2: Direct (foreground)
+
+```sh
+deno task start
+```
+
+## DNS Setup
+
+Create a wildcard entry in your DNS:
+
+```
+*.redirect.center CNAME redirect.center
 ```
 
 ## Contributors
@@ -70,5 +137,3 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 <a href="https://opencollective.com/redirectcenter/sponsor/7/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/7/avatar.svg"></a>
 <a href="https://opencollective.com/redirectcenter/sponsor/8/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/8/avatar.svg"></a>
 <a href="https://opencollective.com/redirectcenter/sponsor/9/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/9/avatar.svg"></a>
-
-
