@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { getCookie, setCookie } from "hono/cookie";
 import { compress } from "hono/compress";
 import vento from "ventojs";
 import { config } from "./config.ts";
@@ -10,6 +11,9 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { logger } from "./helpers/logger.ts";
+
+const MAX_REDIRECTS = 3;
+const LOOP_COOKIE = "_rc";
 
 const app = new Hono();
 const env = vento({
@@ -83,6 +87,23 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   if (!host) throw new HttpError(400, "Bad Request");
   host = host.includes(":") ? host.split(":")[0] : host;
 
+  // Loop detection via cookie
+  const loopCount = parseInt(getCookie(c, LOOP_COOKIE) || "0", 10);
+  if (loopCount >= MAX_REDIRECTS) {
+    logger.warn(`[loop] Redirect loop detected for ${host} (${loopCount} redirects)`);
+    // Clear cookie and return error
+    setCookie(c, LOOP_COOKIE, "", { path: "/", maxAge: 0 });
+    return c.html(
+      `<html><head><title>Redirect Loop Detected</title></head><body style="font-family:sans-serif;text-align:center;padding:60px">` +
+      `<h1>Redirect Loop Detected</h1>` +
+      `<p>The domain <strong>${host}</strong> has a DNS misconfiguration that causes an infinite redirect loop.</p>` +
+      `<p>Please check your CNAME record — it should not point back to the same domain.</p>` +
+      `<p style="margin-top:30px;color:#888">Powered by <a href="https://${config.fqdn}">${config.projectName}</a></p>` +
+      `</body></html>`,
+      508,
+    );
+  }
+
   // Source guardian check
   if (guardian.isDenied(host)) {
     throw new HttpError(403, "Forbidden");
@@ -101,7 +122,14 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     logger.error(`[statistic] write error: ${err}`)
   );
 
-  return c.redirect(redirect.url, redirect.status as 301);
+  // Set loop detection cookie (incremented count, expires in 10s)
+  const response = c.redirect(redirect.url, redirect.status as 301);
+  setCookie(c, LOOP_COOKIE, String(loopCount + 1), {
+    path: "/",
+    maxAge: 10,
+    httpOnly: true,
+  });
+  return response;
 }
 
 // Start server

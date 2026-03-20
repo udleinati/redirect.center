@@ -6,6 +6,7 @@
   },
   "imports": {
     "hono": "jsr:@hono/hono@^4",
+    "hono/cookie": "jsr:@hono/hono@^4/cookie",
     "hono/compress": "jsr:@hono/hono@^4/compress",
     "hono/deno": "jsr:@hono/hono@^4/deno",
     "hono/": "jsr:@hono/hono@^4/",
