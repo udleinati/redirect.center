@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getCookie, setCookie } from "hono/cookie";
 import { compress } from "hono/compress";
+import { getConnInfo } from "hono/deno";
 import vento from "ventojs";
 import { config } from "./config.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
@@ -23,19 +24,28 @@ const env = vento({
 
 app.onError(errorHandler);
 
+// Block requests without User-Agent
+app.use("*", async (c, next) => {
+  const ua = c.req.header("user-agent");
+  if (!ua) {
+    return c.json({ statusCode: 403, message: "Forbidden" }, 403);
+  }
+  await next();
+});
+
 // Access log middleware (Apache Combined Log Format)
 app.use("/", async (c, next) => {
+  const start = Date.now();
   await next();
 
   const host = c.req.header("host") || "-";
+  if (host != config.fqdn) return;
 
-  if (host != config.fqdn) return
-
-  const start = Date.now();
   const ms = Date.now() - start;
-
+  const connInfo = getConnInfo(c);
   const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-    c.req.header("x-real-ip") || "-";
+    c.req.header("x-real-ip") ||
+    (connInfo.remote.address ?? "-");
   const method = c.req.method;
   const url = new URL(c.req.url);
   const path = url.pathname + url.search;
