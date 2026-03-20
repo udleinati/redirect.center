@@ -9,7 +9,6 @@ import {
   HttpError,
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
-import type { RedirectResponse } from "./types/redirect-response.ts";
 
 const app = new Hono();
 const env = vento({
@@ -44,6 +43,15 @@ app.get("/", async (c) => {
   return handleRedirect(c);
 });
 
+// FQDN-only routes: return 404 for non-redirect paths on the service domain
+app.all("/*", (c, next) => {
+  const host = (c.req.header("host") || "").split(":")[0];
+  if (host === config.fqdn) {
+    return c.json({ statusCode: 404, message: "Not Found" }, 404);
+  }
+  return next();
+});
+
 // All other routes - redirect logic
 app.all("/*", handleRedirect);
 
@@ -58,14 +66,7 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   }
 
   // Resolve redirect
-  let redirect: RedirectResponse;
-  try {
-    redirect = await resolveDnsAndRedirect(host, c.req.url.replace(/^https?:\/\/[^/]+/, ""));
-  } catch (err) {
-    if (err instanceof HttpError) throw err;
-    const error = err as Error & { code?: string };
-    throw new HttpError(500, `${error.code}: ${error.message}`);
-  }
+  const redirect = await resolveDnsAndRedirect(host, c.req.url.replace(/^https?:\/\/[^/]+/, ""));
 
   // Destination guardian check
   if (guardian.isDenied(redirect.fqdn)) {

@@ -63,24 +63,30 @@ export async function resolveDns(host: string): Promise<string> {
 
     return record;
   } catch (err: unknown) {
-    const error = err as { code?: string; name?: string; status?: number };
+    const error = err as { code?: string; name?: string; status?: number; message?: string };
+
+    // Deno's DNS resolver may throw errors without a `code` property
+    // (e.g., "no records found for Query ..."). Detect and normalize them.
+    const isDnsNotFound = error.code === "ENODATA" ||
+      (!error.code && error.message?.includes("no records found"));
 
     if (
-      error.code === "ENODATA" &&
+      isDnsNotFound &&
       parsedHost.subDomains &&
       !parsedHost.subDomains.includes("redirect")
     ) {
       return resolveDns(`redirect.${host}`);
     }
 
-    if (
-      ["ENOTFOUND", "ENODATA", "ESERVFAIL", "EBADRESP", "ECONNREFUSED"].includes(
+    const isKnownDnsError = isDnsNotFound ||
+      ["ENOTFOUND", "ESERVFAIL", "EBADRESP", "ECONNREFUSED"].includes(
         error.code ?? "",
-      )
-    ) {
+      );
+
+    if (isKnownDnsError) {
       throw new HttpError(
         400,
-        `Error ${error.code}. The destination is not properly set, check the host ${host}`,
+        `The destination is not properly set, check the host ${host}`,
       );
     }
 
