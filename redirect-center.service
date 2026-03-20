@@ -18,8 +18,6 @@ SyslogIdentifier=redirect-center
 
 # Security hardening
 NoNewPrivileges=true
-ProtectSystem=strict
-ReadWritePaths=/opt/redirect-center
 
 [Install]
 WantedBy=multi-user.target
