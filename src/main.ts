@@ -27,27 +27,27 @@ app.onError(errorHandler);
 app.use("/", async (c, next) => {
   const host = (c.req.header("host") || "").split(":")[0];
 
-  if (host != config.fqdn) return
+  if (host === config.fqdn) {
+    const start = Date.now();
+    await next();
+    const ms = Date.now() - start;
 
-  const start = Date.now();
-  await next();
-  const ms = Date.now() - start;
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+      c.req.header("x-real-ip") || "-";
+    const method = c.req.method;
+    const url = new URL(c.req.url);
+    const path = url.pathname + url.search;
+    const protocol = c.req.header("x-forwarded-proto") || url.protocol.replace(":", "");
+    const status = c.res.status;
+    const contentLength = c.res.headers.get("content-length") || "-";
+    const referer = c.req.header("referer") || "-";
+    const ua = c.req.header("user-agent") || "-";
+    const timestamp = new Date().toISOString();
 
-  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-    c.req.header("x-real-ip") || "-";
-  const method = c.req.method;
-  const url = new URL(c.req.url);
-  const path = url.pathname + url.search;
-  const protocol = c.req.header("x-forwarded-proto") || url.protocol.replace(":", "");
-  const status = c.res.status;
-  const contentLength = c.res.headers.get("content-length") || "-";
-  const referer = c.req.header("referer") || "-";
-  const ua = c.req.header("user-agent") || "-";
-  const timestamp = new Date().toISOString();
-
-  console.log(
-    `${ip} - - [${timestamp}] "${method} ${path} HTTP/${protocol}" ${status} ${contentLength} "${referer}" "${ua}" host=${host} ${ms}ms`,
-  );
+    console.log(
+      `${ip} - - [${timestamp}] "${method} ${path} HTTP/${protocol}" ${status} ${contentLength} "${referer}" "${ua}" host=${host} ${ms}ms`,
+    );
+  }
 });
 
 // Compression (gzip/deflate)
