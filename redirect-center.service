@@ -5,7 +5,7 @@ After=network.target
 [Service]
 Type=simple
 User=www-data
-WorkingDirectory=/opt/redirect-center
+WorkingDirectory=/opt/redirect.center
 ExecStart=/usr/bin/deno run --allow-net --allow-read --allow-env --unstable-kv src/main.ts
 Restart=always
 RestartSec=3
