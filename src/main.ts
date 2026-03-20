@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { compress } from "hono/compress";
-import { serveStatic } from "hono/deno";
 import vento from "ventojs";
 import { config } from "./config.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
@@ -20,7 +19,7 @@ const env = vento({
 app.onError(errorHandler);
 
 // Access log middleware (Apache Combined Log Format)
-app.use("*", async (c, next) => {
+app.use("/", async (c, next) => {
   const start = Date.now();
   await next();
   const ms = Date.now() - start;
@@ -45,9 +44,6 @@ app.use("*", async (c, next) => {
 
 // Compression (gzip/deflate)
 app.use("*", compress());
-
-// Static files
-app.use("/public/*", serveStatic({ root: "./" }));
 
 // Homepage - only for the FQDN host
 app.get("/", async (c) => {
