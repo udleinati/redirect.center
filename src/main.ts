@@ -24,15 +24,6 @@ const env = vento({
 
 app.onError(errorHandler);
 
-// Block requests without User-Agent
-app.use("*", async (c, next) => {
-  const ua = c.req.header("user-agent");
-  if (!ua) {
-    return c.json({ statusCode: 403, message: "Forbidden" }, 403);
-  }
-  await next();
-});
-
 // Access log middleware (Apache Combined Log Format)
 app.use("/", async (c, next) => {
   const start = Date.now();
@@ -69,6 +60,9 @@ app.get("/", async (c) => {
   const host = (c.req.header("host") || "").split(":")[0];
 
   if (host === config.fqdn) {
+    const ua = c.req.header("user-agent");
+    if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
+
     const statistics = await statistic.overview();
 
     const template = await env.load("index.vto");
