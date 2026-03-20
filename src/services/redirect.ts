@@ -97,7 +97,13 @@ export async function resolveDns(host: string): Promise<string> {
 
 export function parseDestination(raw: string, reqUrl: string): Destination {
   const destination = createDestination();
-  const parsedUrl = new URL(reqUrl, "http://placeholder");
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(reqUrl, "http://placeholder");
+  } catch {
+    throw new HttpError(400, "Bad Request");
+  }
 
   // Remove trailing dot and FQDN suffix
   raw = raw.replace(/\.$/, "");
