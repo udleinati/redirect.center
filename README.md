@@ -91,6 +91,34 @@ journalctl -u redirect-center -f         # View logs in real-time
 journalctl -u redirect-center --since today  # Today's logs
 ```
 
+**Log rotation (recommended):**
+
+To limit logs to max 1GB and 7 days, edit `/etc/systemd/journald.conf`:
+
+```sh
+sudo nano /etc/systemd/journald.conf
+```
+
+Set or uncomment these lines:
+
+```ini
+[Journal]
+SystemMaxUse=1G
+MaxRetentionSec=7day
+```
+
+Then restart journald:
+
+```sh
+sudo systemctl restart systemd-journald
+```
+
+To manually clean old logs:
+
+```sh
+sudo journalctl --vacuum-size=1G --vacuum-time=7d
+```
+
 ### Option 2: Direct (foreground)
 
 ```sh
