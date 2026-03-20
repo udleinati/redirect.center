@@ -25,6 +25,10 @@ app.onError(errorHandler);
 
 // Access log middleware (Apache Combined Log Format)
 app.use("/", async (c, next) => {
+  const host = (c.req.header("host") || "").split(":")[0];
+
+  if (host != config.fqdn) return
+
   const start = Date.now();
   await next();
   const ms = Date.now() - start;
@@ -39,7 +43,6 @@ app.use("/", async (c, next) => {
   const contentLength = c.res.headers.get("content-length") || "-";
   const referer = c.req.header("referer") || "-";
   const ua = c.req.header("user-agent") || "-";
-  const host = c.req.header("host") || "-";
   const timestamp = new Date().toISOString();
 
   console.log(
