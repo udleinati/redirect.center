@@ -26,12 +26,10 @@ app.get("/", async (c) => {
   const host = (c.req.header("host") || "").split(":")[0];
 
   if (host === config.fqdn) {
-    const uptime = Math.floor(performance.now() / 1000);
     const statistics = await statistic.overview();
 
     const template = await env.load("index.vto");
     const result = await template({
-      uptime,
       app: config,
       statistics,
     });
