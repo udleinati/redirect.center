@@ -1,5 +1,5 @@
 import { layout, escapeHtml } from "./layout.ts";
-import type { User, Seat, Domain } from "../../../shared/src/types.ts";
+import type { User, Subscription, Domain } from "../../../shared/src/types.ts";
 
 export function landingPage(): string {
   const content = `
@@ -72,19 +72,19 @@ export function landingPage(): string {
         <h2 class="text-3xl font-bold text-center mb-4">HTTPS Redirects</h2>
         <p class="text-center text-gray-600 mb-8 max-w-2xl mx-auto">
           Need SSL/TLS for your redirects? Our paid plans automatically provision and renew certificates
-          for your custom domain, giving your visitors a secure redirect experience.
+          for your custom domains, giving your visitors a secure redirect experience.
         </p>
         <div class="grid md:grid-cols-2 gap-6 max-w-2xl mx-auto">
           <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold mb-2">Simple</h3>
+            <h3 class="font-semibold mb-2">Simple Slot</h3>
             <p class="text-sm text-gray-600">
-              One domain, one redirect. Perfect for a single branded short URL or landing page redirect.
+              One domain per slot. Buy multiple slots to cover multiple domains.
             </p>
           </div>
           <div class="bg-gray-50 p-6 rounded-xl">
-            <h3 class="font-semibold mb-2">Wildcard</h3>
+            <h3 class="font-semibold mb-2">Wildcard Slot</h3>
             <p class="text-sm text-gray-600">
-              Wildcard certificate covering all subdomains. Ideal for pattern-based redirects across an entire domain.
+              Wildcard certificate covering all subdomains of a domain. One slot per wildcard domain.
             </p>
           </div>
         </div>
@@ -95,24 +95,24 @@ export function landingPage(): string {
     <section id="pricing" class="py-16 bg-gray-50">
       <div class="max-w-4xl mx-auto px-4">
         <h2 class="text-3xl font-bold text-center mb-4">Pricing</h2>
-        <p class="text-center text-gray-600 mb-12">Each seat covers one domain with automatic HTTPS certificate provisioning.</p>
+        <p class="text-center text-gray-600 mb-12">Each slot covers one domain with automatic HTTPS certificate provisioning. Buy as many as you need.</p>
 
         <div class="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           <!-- Simple -->
           <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <div class="p-6">
-              <h3 class="text-xl font-bold mb-1">Simple</h3>
+              <h3 class="text-xl font-bold mb-1">Simple Slot</h3>
               <p class="text-sm text-gray-500 mb-4">Single domain redirect with HTTPS</p>
               <div class="mb-2">
                 <span class="text-3xl font-bold">$3</span>
-                <span class="text-gray-500">/month</span>
+                <span class="text-gray-500">/slot/month</span>
               </div>
               <p class="text-sm text-gray-400 mb-6">
-                or $32.40/year <span class="text-green-600 font-medium">(save 10%)</span>
+                or $32.40/slot/year <span class="text-green-600 font-medium">(save 10%)</span>
               </p>
               <ul class="space-y-2 text-sm text-gray-600 mb-6">
                 <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> Automatic SSL certificate</li>
-                <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> Single domain</li>
+                <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> Buy multiple slots at once</li>
                 <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> All redirect types (301, 302, 307, 308)</li>
                 <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> Path &amp; query string forwarding</li>
               </ul>
@@ -128,14 +128,14 @@ export function landingPage(): string {
               Popular
             </div>
             <div class="p-6">
-              <h3 class="text-xl font-bold mb-1">Wildcard</h3>
+              <h3 class="text-xl font-bold mb-1">Wildcard Slot</h3>
               <p class="text-sm text-gray-500 mb-4">All subdomains with wildcard HTTPS</p>
               <div class="mb-2">
                 <span class="text-3xl font-bold">$5</span>
-                <span class="text-gray-500">/month</span>
+                <span class="text-gray-500">/slot/month</span>
               </div>
               <p class="text-sm text-gray-400 mb-6">
-                or $54/year <span class="text-green-600 font-medium">(save 10%)</span>
+                or $54/slot/year <span class="text-green-600 font-medium">(save 10%)</span>
               </p>
               <ul class="space-y-2 text-sm text-gray-600 mb-6">
                 <li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> Wildcard SSL certificate</li>
@@ -220,37 +220,143 @@ export function magicLinkSentPage(email: string): string {
 
 export function dashboardPage(
   user: User,
-  seats: Seat[],
-  domains: Map<string, Domain | null>,
+  subscriptions: Subscription[],
+  domains: Map<string, Domain[]>,
 ): string {
-  const seatRows = seats.length > 0
-    ? seats
-        .map((seat) => {
-          const domain = domains.get(seat.id);
-          const statusBadge = statusToBadge(seat.status);
-          const domainText = domain
-            ? escapeHtml(domain.domain)
-            : '<span class="text-gray-400 italic">No domain</span>';
+  // Build alerts
+  let alerts = "";
+  for (const sub of subscriptions) {
+    const typeName = sub.type === "simple" ? "Simple Slot" : "Wildcard Slot";
 
-          return `
-            <tr class="border-b border-gray-100 hover:bg-gray-50">
-              <td class="py-3 px-4">
-                <a href="/dashboard/seats/${seat.id}" class="text-blue-600 hover:text-blue-800 font-medium">
-                  ${escapeHtml(seat.type.charAt(0).toUpperCase() + seat.type.slice(1))}
-                </a>
-              </td>
-              <td class="py-3 px-4">${domainText}</td>
-              <td class="py-3 px-4">${statusBadge}</td>
-              <td class="py-3 px-4 text-right">
-                <a href="/dashboard/seats/${seat.id}" class="text-sm text-blue-600 hover:text-blue-800">Manage</a>
-              </td>
-            </tr>
-          `;
-        })
-        .join("")
-    : `<tr><td colspan="4" class="py-8 px-4 text-center text-gray-500">
-         No seats yet. <a href="/dashboard/subscribe" class="text-blue-600 hover:text-blue-800">Subscribe to get started.</a>
-       </td></tr>`;
+    if (sub.status === "past_due") {
+      alerts += `
+        <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-lg mb-4">
+          <strong>Payment failed</strong> for your ${escapeHtml(typeName)} subscription.
+          The payment will be retried automatically.
+          <a href="/dashboard/portal" class="underline font-medium">Update payment method</a>.
+        </div>`;
+    }
+
+    if (sub.status === "canceled" && sub.grace_period_end) {
+      const graceDate = new Date(sub.grace_period_end).toLocaleDateString();
+      alerts += `
+        <div class="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg mb-4">
+          <strong>Subscription canceled</strong> &mdash; ${escapeHtml(typeName)}.
+          Your domains will be deactivated on ${escapeHtml(graceDate)}.
+          <a href="/dashboard/subscribe" class="underline font-medium">Reactivate</a>.
+        </div>`;
+    }
+
+    if (sub.over_limit) {
+      const subDomains = domains.get(sub.id) ?? [];
+      const excess = subDomains.length - sub.quantity;
+      alerts += `
+        <div class="bg-orange-50 border border-orange-200 text-orange-800 px-4 py-3 rounded-lg mb-4">
+          <strong>Over limit</strong> &mdash; ${escapeHtml(typeName)}.
+          You have more domains than slots. Remove ${excess} domain(s) to regularize.
+        </div>`;
+    }
+  }
+
+  // Build subscription sections
+  let subscriptionSections = "";
+
+  if (subscriptions.length === 0) {
+    subscriptionSections = `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
+        <p class="text-gray-500 mb-4">You don't have any subscriptions yet.</p>
+        <div class="flex gap-3 justify-center">
+          <a href="/dashboard/subscribe" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+            Subscribe Simple Slots
+          </a>
+          <a href="/dashboard/subscribe" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+            Subscribe Wildcard Slots
+          </a>
+        </div>
+      </div>`;
+  }
+
+  for (const sub of subscriptions) {
+    const typeName = sub.type === "simple" ? "Simple Slots" : "Wildcard Slots";
+    const subDomains = domains.get(sub.id) ?? [];
+    const availableSlots = Math.max(0, sub.quantity - subDomains.length);
+    const intervalLabel = sub.billing_interval === "yearly" ? "Yearly" : "Monthly";
+    const renewalDate = sub.current_period_end
+      ? new Date(sub.current_period_end).toLocaleDateString()
+      : "N/A";
+
+    const statusBadge = statusToBadge(sub.status);
+
+    // Domain rows
+    let domainRows = "";
+    if (subDomains.length === 0) {
+      domainRows = `<p class="text-sm text-gray-400 italic py-2">No domains added yet</p>`;
+    } else {
+      domainRows = subDomains.map(d => `
+        <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-sm">${escapeHtml(d.domain)}</span>
+            ${validationToBadge(d.validation_status)}
+          </div>
+          <form method="POST" action="/dashboard/domains/${d.id}/remove" onsubmit="return confirm('Remove ${escapeHtml(d.domain)}? The slot will become available.')">
+            <button type="submit" class="text-xs text-red-500 hover:text-red-700">Remove</button>
+          </form>
+        </div>
+      `).join("");
+    }
+
+    // Can add domain?
+    const canAddDomain = sub.status === "active" && !sub.over_limit && availableSlots > 0;
+
+    const addDomainForm = canAddDomain ? `
+      <form method="POST" action="/dashboard/subscriptions/${sub.id}/domains" class="mt-4 flex gap-2">
+        <input type="text" name="domain" required placeholder="example.com"
+          class="flex-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none" />
+        <button type="submit" class="bg-blue-600 text-white px-4 py-1.5 rounded-lg hover:bg-blue-700 transition text-sm font-medium">
+          + Add
+        </button>
+      </form>
+      <p class="text-xs text-gray-400 mt-1">After adding, point the domain's DNS to redirect.center for validation.</p>
+    ` : "";
+
+    // Add slots form
+    const addSlotsForm = sub.status === "active" ? `
+      <form method="POST" action="/dashboard/subscriptions/${sub.id}/add-slots" class="flex items-center gap-2">
+        <input type="number" name="quantity" value="1" min="1" max="50"
+          class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center" />
+        <button type="submit" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Buy more slots</button>
+      </form>
+    ` : "";
+
+    subscriptionSections += `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <div class="p-6">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="text-lg font-bold">${escapeHtml(typeName)}</h2>
+            ${statusBadge}
+          </div>
+          <p class="text-sm text-gray-500 mb-4">
+            Plan: ${escapeHtml(intervalLabel)} &middot;
+            ${sub.quantity} slot${sub.quantity > 1 ? "s" : ""} &middot;
+            ${subDomains.length} in use &middot;
+            ${availableSlots} available
+            &middot; Next renewal: ${escapeHtml(renewalDate)}
+          </p>
+
+          <div class="flex items-center gap-3 mb-4">
+            ${addSlotsForm}
+            ${user.stripe_customer_id ? '<a href="/dashboard/portal" class="text-sm text-gray-500 hover:text-gray-700">Manage subscription</a>' : ""}
+          </div>
+
+          <div class="border-t border-gray-100 pt-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Domains</h3>
+            ${domainRows}
+            ${addDomainForm}
+          </div>
+        </div>
+      </div>
+    `;
+  }
 
   const content = `
     <div class="max-w-4xl mx-auto px-4 py-8">
@@ -259,26 +365,13 @@ export function dashboardPage(
         <div class="flex gap-3">
           ${user.stripe_customer_id ? '<a href="/dashboard/portal" class="text-sm border border-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 transition">Billing Portal</a>' : ""}
           <a href="/dashboard/subscribe" class="text-sm bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition">
-            New Seat
+            Subscribe New Slot Type
           </a>
         </div>
       </div>
 
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table class="w-full">
-          <thead>
-            <tr class="bg-gray-50 text-left text-sm text-gray-500">
-              <th class="py-3 px-4 font-medium">Type</th>
-              <th class="py-3 px-4 font-medium">Domain</th>
-              <th class="py-3 px-4 font-medium">Status</th>
-              <th class="py-3 px-4 font-medium text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${seatRows}
-          </tbody>
-        </table>
-      </div>
+      ${alerts}
+      ${subscriptionSections}
     </div>
   `;
 
@@ -290,74 +383,60 @@ export function subscribePage(config: {
   simpleYearly?: string;
   wildcardMonthly?: string;
   wildcardYearly?: string;
-}, user: User): string {
+}, user: User, existingSubscriptions: Subscription[]): string {
+  const hasSimple = existingSubscriptions.some(s => s.type === "simple");
+  const hasWildcard = existingSubscriptions.some(s => s.type === "wildcard");
+
+  function slotCard(
+    title: string,
+    slotType: string,
+    price: string,
+    interval: string,
+    priceId: string | undefined,
+    hasExisting: boolean,
+    badge?: string,
+  ): string {
+    if (hasExisting) {
+      return `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 opacity-60">
+          <h3 class="font-bold text-lg mb-1">${title}</h3>
+          <p class="text-sm text-gray-500 mb-3">${interval}</p>
+          <div class="text-2xl font-bold mb-4">${price}</div>
+          <p class="text-sm text-gray-500">You already have a ${slotType} subscription. Add more slots from your dashboard.</p>
+        </div>`;
+    }
+
+    return `
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="font-bold text-lg mb-1">${title}${badge ? ` ${badge}` : ""}</h3>
+        <p class="text-sm text-gray-500 mb-3">${interval}</p>
+        <div class="text-2xl font-bold mb-4">${price}</div>
+        <form method="POST" action="/dashboard/subscribe">
+          <input type="hidden" name="priceId" value="${escapeHtml(priceId ?? "")}" />
+          <input type="hidden" name="slotType" value="${escapeHtml(slotType)}" />
+          <div class="flex items-center gap-2 mb-4">
+            <label class="text-sm text-gray-600">Quantity:</label>
+            <input type="number" name="quantity" value="1" min="1" max="50"
+              class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center" />
+          </div>
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium"
+            ${priceId ? "" : "disabled"}>
+            Subscribe
+          </button>
+        </form>
+      </div>`;
+  }
+
   const content = `
     <div class="max-w-3xl mx-auto px-4 py-8">
       <h1 class="text-2xl font-bold mb-2">Choose a Plan</h1>
-      <p class="text-gray-600 mb-8">Each seat covers one domain with automatic HTTPS certificate provisioning.</p>
+      <p class="text-gray-600 mb-8">Each slot covers one domain with automatic HTTPS certificate provisioning.</p>
 
       <div class="grid md:grid-cols-2 gap-6">
-        <!-- Simple Monthly -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 class="font-bold text-lg mb-1">Simple - Monthly</h3>
-          <p class="text-sm text-gray-500 mb-3">Single domain with HTTPS</p>
-          <div class="text-2xl font-bold mb-4">$3<span class="text-base font-normal text-gray-500">/mo</span></div>
-          <form method="POST" action="/dashboard/subscribe">
-            <input type="hidden" name="priceId" value="${escapeHtml(config.simpleMonthly ?? "")}" />
-            <input type="hidden" name="seatType" value="simple" />
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium"
-              ${config.simpleMonthly ? "" : "disabled"}>
-              Subscribe
-            </button>
-          </form>
-        </div>
-
-        <!-- Simple Yearly -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 class="font-bold text-lg mb-1">Simple - Yearly</h3>
-          <p class="text-sm text-gray-500 mb-3">Single domain with HTTPS</p>
-          <div class="text-2xl font-bold mb-1">$32.40<span class="text-base font-normal text-gray-500">/yr</span></div>
-          <p class="text-sm text-green-600 font-medium mb-3">Save 10%</p>
-          <form method="POST" action="/dashboard/subscribe">
-            <input type="hidden" name="priceId" value="${escapeHtml(config.simpleYearly ?? "")}" />
-            <input type="hidden" name="seatType" value="simple" />
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium"
-              ${config.simpleYearly ? "" : "disabled"}>
-              Subscribe
-            </button>
-          </form>
-        </div>
-
-        <!-- Wildcard Monthly -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 class="font-bold text-lg mb-1">Wildcard - Monthly</h3>
-          <p class="text-sm text-gray-500 mb-3">All subdomains with wildcard HTTPS</p>
-          <div class="text-2xl font-bold mb-4">$5<span class="text-base font-normal text-gray-500">/mo</span></div>
-          <form method="POST" action="/dashboard/subscribe">
-            <input type="hidden" name="priceId" value="${escapeHtml(config.wildcardMonthly ?? "")}" />
-            <input type="hidden" name="seatType" value="wildcard" />
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium"
-              ${config.wildcardMonthly ? "" : "disabled"}>
-              Subscribe
-            </button>
-          </form>
-        </div>
-
-        <!-- Wildcard Yearly -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 class="font-bold text-lg mb-1">Wildcard - Yearly</h3>
-          <p class="text-sm text-gray-500 mb-3">All subdomains with wildcard HTTPS</p>
-          <div class="text-2xl font-bold mb-1">$54<span class="text-base font-normal text-gray-500">/yr</span></div>
-          <p class="text-sm text-green-600 font-medium mb-3">Save 10%</p>
-          <form method="POST" action="/dashboard/subscribe">
-            <input type="hidden" name="priceId" value="${escapeHtml(config.wildcardYearly ?? "")}" />
-            <input type="hidden" name="seatType" value="wildcard" />
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium"
-              ${config.wildcardYearly ? "" : "disabled"}>
-              Subscribe
-            </button>
-          </form>
-        </div>
+        ${slotCard("Simple Slot - Monthly", "simple", '$3<span class="text-base font-normal text-gray-500">/slot/mo</span>', "Single domain with HTTPS", config.simpleMonthly, hasSimple)}
+        ${slotCard("Simple Slot - Yearly", "simple", '$32.40<span class="text-base font-normal text-gray-500">/slot/yr</span>', "Single domain with HTTPS", config.simpleYearly, hasSimple, '<span class="text-sm text-green-600 font-medium">Save 10%</span>')}
+        ${slotCard("Wildcard Slot - Monthly", "wildcard", '$5<span class="text-base font-normal text-gray-500">/slot/mo</span>', "All subdomains with wildcard HTTPS", config.wildcardMonthly, hasWildcard)}
+        ${slotCard("Wildcard Slot - Yearly", "wildcard", '$54<span class="text-base font-normal text-gray-500">/slot/yr</span>', "All subdomains with wildcard HTTPS", config.wildcardYearly, hasWildcard, '<span class="text-sm text-green-600 font-medium">Save 10%</span>')}
       </div>
 
       <div class="mt-6 text-center">
@@ -380,7 +459,7 @@ export function checkoutSuccessPage(user: User): string {
         </div>
         <h1 class="text-2xl font-bold mb-2">Subscription Active!</h1>
         <p class="text-gray-600 mb-6">
-          Your seat has been created. You can now configure your domain in the dashboard.
+          Your slots have been created. You can now add domains in the dashboard.
         </p>
         <a href="/dashboard" class="inline-block bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition font-medium">
           Go to Dashboard
@@ -390,75 +469,6 @@ export function checkoutSuccessPage(user: User): string {
   `;
 
   return layout("Subscription Active", content, user);
-}
-
-export function seatDetailPage(user: User, seat: Seat, domain: Domain | null): string {
-  const statusBadge = statusToBadge(seat.status);
-  const domainValue = domain ? escapeHtml(domain.domain) : "";
-  const validationBadge = domain ? validationToBadge(domain.validation_status) : "";
-
-  const domainInfo = domain
-    ? `<div class="mt-4 p-4 bg-gray-50 rounded-lg">
-         <div class="flex items-center justify-between mb-2">
-           <span class="text-sm font-medium text-gray-700">Current Domain</span>
-           ${validationBadge}
-         </div>
-         <p class="font-mono text-sm">${escapeHtml(domain.domain)}</p>
-         ${domain.is_wildcard ? '<p class="text-xs text-gray-500 mt-1">Wildcard certificate (*.domain)</p>' : ""}
-       </div>`
-    : "";
-
-  const content = `
-    <div class="max-w-2xl mx-auto px-4 py-8">
-      <div class="flex items-center gap-2 mb-6">
-        <a href="/dashboard" class="text-sm text-gray-500 hover:text-gray-700">Dashboard</a>
-        <span class="text-gray-300">/</span>
-        <span class="text-sm text-gray-900">Seat Details</span>
-      </div>
-
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-          <h1 class="text-xl font-bold">${escapeHtml(seat.type.charAt(0).toUpperCase() + seat.type.slice(1))} Seat</h1>
-          ${statusBadge}
-        </div>
-
-        ${seat.current_period_end
-          ? `<p class="text-sm text-gray-500">Current period ends: ${new Date(seat.current_period_end).toLocaleDateString()}</p>`
-          : ""}
-
-        ${domainInfo}
-      </div>
-
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h2 class="text-lg font-semibold mb-4">${domain ? "Change" : "Set"} Domain</h2>
-        <form method="POST" action="/dashboard/seats/${seat.id}/domain">
-          <label for="domain" class="block text-sm font-medium text-gray-700 mb-1">Domain</label>
-          <input
-            type="text"
-            id="domain"
-            name="domain"
-            value="${domainValue}"
-            required
-            placeholder="example.com"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mb-4"
-          />
-          <p class="text-sm text-gray-500 mb-4">
-            After setting the domain, point its DNS to redirect.center for validation.
-          </p>
-          <button
-            type="submit"
-            class="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition font-medium"
-            ${seat.status !== "active" ? "disabled" : ""}
-          >
-            ${domain ? "Update" : "Set"} Domain
-          </button>
-          ${seat.status !== "active" ? '<p class="text-sm text-red-500 mt-2">Domain changes are disabled while seat is not active.</p>' : ""}
-        </form>
-      </div>
-    </div>
-  `;
-
-  return layout("Seat Details", content, user);
 }
 
 export function errorPage(title: string, message: string): string {
@@ -486,8 +496,14 @@ function statusToBadge(status: string): string {
     canceled: "bg-red-100 text-red-700",
     past_due: "bg-yellow-100 text-yellow-700",
   };
+  const labels: Record<string, string> = {
+    active: "Active",
+    canceled: "Canceled",
+    past_due: "Past Due",
+  };
   const colorClass = colors[status] ?? "bg-gray-100 text-gray-700";
-  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}">${status}</span>`;
+  const label = labels[status] ?? status;
+  return `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClass}">${label}</span>`;
 }
 
 function validationToBadge(status: string): string {

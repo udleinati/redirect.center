@@ -1,9 +1,9 @@
 import Stripe from "stripe";
 import { getConfig } from "../../../shared/src/config.ts";
 import * as usersQuery from "../../../shared/src/db/queries/users.ts";
-import * as seatsQuery from "../../../shared/src/db/queries/seats.ts";
-import * as domainsQuery from "../../../shared/src/db/queries/domains.ts";
-import type { SeatType } from "../../../shared/src/types.ts";
+import * as subscriptionQueries from "../../../shared/src/db/queries/subscriptions.ts";
+import * as domainQueries from "../../../shared/src/db/queries/domains.ts";
+import type { SlotType, BillingInterval } from "../../../shared/src/types.ts";
 
 function getStripeClient(): Stripe {
   const config = getConfig();
@@ -15,11 +15,23 @@ function getStripeClient(): Stripe {
   });
 }
 
+function priceIdToBillingInterval(priceId: string): BillingInterval {
+  const config = getConfig();
+  if (
+    priceId === config.stripe.prices.simpleYearly ||
+    priceId === config.stripe.prices.wildcardYearly
+  ) {
+    return "yearly";
+  }
+  return "monthly";
+}
+
 export async function createCheckoutSession(
   userId: string,
   email: string,
   priceId: string,
-  seatType: SeatType,
+  slotType: SlotType,
+  quantity: number,
 ): Promise<string> {
   const config = getConfig();
   const stripe = getStripeClient();
@@ -34,23 +46,56 @@ export async function createCheckoutSession(
     await usersQuery.updateStripeCustomerId(userId, customerId);
   }
 
-  const session = await stripe.checkout.sessions.create({
+  const checkoutParams: Stripe.Checkout.SessionCreateParams = {
     customer: customerId,
     mode: "subscription",
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity }],
     success_url: `${config.baseUrl}/dashboard/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.baseUrl}/dashboard/subscribe`,
     metadata: {
       user_id: userId,
-      seat_type: seatType,
+      slot_type: slotType,
     },
-  });
+  };
+
+  // Align billing cycle with existing subscription
+  const existingSubscription = await subscriptionQueries.findAnyActiveByUserId(userId);
+  if (existingSubscription?.current_period_end) {
+    checkoutParams.subscription_data = {
+      billing_cycle_anchor: Math.floor(existingSubscription.current_period_end.getTime() / 1000),
+      proration_behavior: "create_prorations",
+    };
+  }
+
+  const session = await stripe.checkout.sessions.create(checkoutParams);
 
   if (!session.url) {
     throw new Error("Stripe checkout session URL is missing");
   }
 
   return session.url;
+}
+
+export async function updateSubscriptionQuantity(
+  stripeSubscriptionId: string,
+  newQuantity: number,
+): Promise<void> {
+  const stripe = getStripeClient();
+
+  const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+  const itemId = subscription.items.data[0]?.id;
+
+  if (!itemId) {
+    throw new Error("No subscription item found");
+  }
+
+  await stripe.subscriptions.update(stripeSubscriptionId, {
+    items: [{
+      id: itemId,
+      quantity: newQuantity,
+    }],
+    proration_behavior: "create_prorations",
+  });
 }
 
 export async function createCustomerPortalSession(
@@ -77,8 +122,6 @@ export async function handleWebhook(
   let event: Stripe.Event;
 
   if (!config.stripe.webhookSecret) {
-    // No webhook secret configured — parse the event without signature verification.
-    // This is useful when using stripe-cli in development (it generates its own secret).
     console.warn("[webhook] STRIPE_WEBHOOK_SECRET not set, skipping signature verification");
     event = JSON.parse(body) as Stripe.Event;
   } else {
@@ -93,7 +136,7 @@ export async function handleWebhook(
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id;
-      const seatType = (session.metadata?.seat_type ?? "simple") as SeatType;
+      const slotType = (session.metadata?.slot_type ?? "simple") as SlotType;
       const subscriptionId = session.subscription as string;
 
       if (!userId) {
@@ -101,54 +144,82 @@ export async function handleWebhook(
         return;
       }
 
-      // Retrieve subscription to get price ID and period
+      // Retrieve subscription to get price ID, quantity and period
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
       const priceId = subscription.items.data[0]?.price.id;
+      const quantity = subscription.items.data[0]?.quantity ?? 1;
+      const billingInterval = priceIdToBillingInterval(priceId);
 
-      await seatsQuery.create(userId, seatType, subscriptionId, priceId);
+      const sub = await subscriptionQueries.create(
+        userId,
+        slotType,
+        billingInterval,
+        quantity,
+        subscriptionId,
+        priceId,
+      );
 
-      console.log(`[stripe] Seat created for user ${userId}, type=${seatType}, sub=${subscriptionId}`);
+      // Update period dates
+      if (subscription.current_period_start && subscription.current_period_end) {
+        await subscriptionQueries.updateStripePeriod(
+          sub.id,
+          new Date(subscription.current_period_start * 1000),
+          new Date(subscription.current_period_end * 1000),
+        );
+      }
+
+      console.log(`[stripe] Subscription created for user ${userId}, type=${slotType}, qty=${quantity}, sub=${subscriptionId}`);
       break;
     }
 
     case "customer.subscription.updated": {
       const subscription = event.data.object as Stripe.Subscription;
-      const seat = await seatsQuery.findByStripeSubscriptionId(subscription.id);
+      const sub = await subscriptionQueries.findByStripeSubscriptionId(subscription.id);
 
-      if (!seat) {
-        console.warn(`[stripe] No seat found for subscription ${subscription.id}`);
+      if (!sub) {
+        console.warn(`[stripe] No subscription found for ${subscription.id}`);
         return;
       }
 
       // Update period dates
       const periodStart = new Date(subscription.current_period_start * 1000);
       const periodEnd = new Date(subscription.current_period_end * 1000);
-      await seatsQuery.updateStripePeriod(seat.id, periodStart, periodEnd);
+      await subscriptionQueries.updateStripePeriod(sub.id, periodStart, periodEnd);
 
-      // Update status based on subscription status
-      if (subscription.status === "active" || subscription.status === "trialing") {
-        await seatsQuery.updateStatus(seat.id, "active");
-      } else if (subscription.status === "past_due") {
-        await seatsQuery.updateStatus(seat.id, "past_due");
+      // Update quantity
+      const newQuantity = subscription.items.data[0]?.quantity ?? 1;
+      if (newQuantity !== sub.quantity) {
+        await subscriptionQueries.updateQuantity(sub.id, newQuantity);
+
+        // Check over_limit
+        const domainCount = await domainQueries.countBySubscriptionId(sub.id);
+        await subscriptionQueries.updateOverLimit(sub.id, domainCount > newQuantity);
       }
 
-      console.log(`[stripe] Subscription ${subscription.id} updated, status=${subscription.status}`);
+      // Update status
+      if (subscription.status === "active" || subscription.status === "trialing") {
+        await subscriptionQueries.updateStatus(sub.id, "active");
+      } else if (subscription.status === "past_due") {
+        await subscriptionQueries.updateStatus(sub.id, "past_due");
+      }
+
+      console.log(`[stripe] Subscription ${subscription.id} updated, status=${subscription.status}, qty=${newQuantity}`);
       break;
     }
 
     case "customer.subscription.deleted": {
       const subscription = event.data.object as Stripe.Subscription;
-      const seat = await seatsQuery.findByStripeSubscriptionId(subscription.id);
+      const sub = await subscriptionQueries.findByStripeSubscriptionId(subscription.id);
 
-      if (!seat) {
-        console.warn(`[stripe] No seat found for subscription ${subscription.id}`);
+      if (!sub) {
+        console.warn(`[stripe] No subscription found for ${subscription.id}`);
         return;
       }
 
-      await seatsQuery.updateStatus(seat.id, "canceled");
-      await domainsQuery.removeBySeatId(seat.id);
+      await subscriptionQueries.updateStatus(sub.id, "canceled");
+      await subscriptionQueries.setGracePeriod(sub.id);
 
-      console.log(`[stripe] Subscription ${subscription.id} canceled, domain removed`);
+      console.log(`[stripe] Subscription ${subscription.id} canceled, 7-day grace period started`);
       break;
     }
 
@@ -158,13 +229,13 @@ export async function handleWebhook(
 
       if (!subscriptionId) return;
 
-      const seat = await seatsQuery.findByStripeSubscriptionId(subscriptionId);
-      if (!seat) {
-        console.warn(`[stripe] No seat found for subscription ${subscriptionId}`);
+      const sub = await subscriptionQueries.findByStripeSubscriptionId(subscriptionId);
+      if (!sub) {
+        console.warn(`[stripe] No subscription found for ${subscriptionId}`);
         return;
       }
 
-      await seatsQuery.updateStatus(seat.id, "past_due");
+      await subscriptionQueries.updateStatus(sub.id, "past_due");
       console.log(`[stripe] Payment failed for subscription ${subscriptionId}, marked past_due`);
       break;
     }

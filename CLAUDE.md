@@ -14,42 +14,48 @@ Monorepo com dois serviços:
 - Runtime: Deno + TypeScript
 - HTTP: Hono v4
 - Templates: Vento (`.vto` files) — usado no redirect service
-- Base de dados: PostgreSQL 18 (raw queries via deno-postgres)
+- Base de dados: PostgreSQL 17 (raw queries via deno-postgres)
 - Pagamentos: Stripe (Checkout hosted + Customer Portal)
 - Auth: Magic link por email (SMTP genérico, compatível com AWS SES)
 - Frontend: Server-rendered HTML + Tailwind CSS via CDN (sem framework SPA)
-- Dev: Docker Compose (web + redirect + postgres + mailhog)
+- Dev: Docker Compose (web + redirect + postgres + mailhog + stripe-cli)
 - DNS: `Deno.resolveDns()` para resolver CNAME records
 - Statistics: Deno KV (built-in key-value store)
 - Encoding: Base32 para paths/queries em CNAME records
 
 ## Fases do projeto
-1. **Fase 1 (concluída):** Gestão de subscritores, seats, pagamentos Stripe, painel
-2. **Fase 2:** Validação de domínios — quando um utilizador adiciona um domínio a um seat,
+1. **Fase 1 (concluída):** Gestão de subscritores, slots, pagamentos Stripe, painel
+2. **Fase 2:** Validação de domínios — quando um utilizador adiciona um domínio a um slot,
    validar que o DNS está corretamente configurado
 3. **Fase 3:** Emissão automática de certificados HTTPS via Let's Encrypt para domínios validados
 
 ## Modelo de dados
 - **Users:** identificados por email, autenticação por magic link
-- **Sessions:** token de sessão com expiração de 3 horas
-- **MagicLinks:** token de login via email com expiração de 24 horas
-- **Seats:** subscrição paga (simples ou wildcard), gerida via Stripe
-- **Domains:** associados 1:1 a seats, com status de validação (pending/validated/failed)
-- Um utilizador pode ter seats ilimitados (desde que pague)
-- Um seat tem no máximo 1 domínio associado (substituível)
+- **Subscriptions:** 1 por tipo (simple/wildcard) por utilizador, com quantity variável, gerida via Stripe
+- **Domains:** associados a subscriptions, limitados pelo quantity da subscrição
+- Um utilizador pode ter no máximo 2 subscrições ativas (1 simple + 1 wildcard)
+- Cada subscrição pode ter N domínios até ao limite do quantity
+- Soft delete em todas as tabelas exceto sessions
+- Subscrições do mesmo utilizador são alinhadas na data de renovação via billing_cycle_anchor
 
 ## Regras de negócio
 - Magic link expira em 24h; sessão expira em 3h
 - Redirect HTTP gratuito continua inalterado para todos
-- HTTPS é feature paga (requer seat ativo)
+- HTTPS é feature paga (requer slot ativo)
 - Planos: mensal e anual (anual com 10% de desconto)
-- Cancelamento remove acesso imediatamente
-- Domínio pode ser substituído no seat a qualquer momento
+- Na UI: "Simple Slot" e "Wildcard Slot"
+- Compra múltipla: o utilizador escolhe a quantidade de slots ao subscrever
+- Se já tem subscrição do tipo, aumenta a quantity (não cria nova)
+- Subscrições de tipos diferentes são alinhadas na mesma data de renovação (billing_cycle_anchor)
+- past_due: domínios continuam a funcionar, aviso no painel, bloqueio de novas adições
+- Cancelamento definitivo: 7 dias de graça antes de soft delete nos domínios
+- Redução de quantity abaixo do número de domínios: flag over_limit, exige remoção manual
+- Domínio pode ser removido (soft delete) a qualquer momento, liberando o slot
 
 ## Comandos
 ```bash
 # Desenvolvimento (Docker Compose)
-docker compose up                              # Sobe tudo: web + redirect + postgres + mailhog
+docker compose up                              # Sobe tudo: web + redirect + postgres + mailhog + stripe-cli
 
 # Redirect service
 cd packages/redirect
@@ -85,11 +91,12 @@ deno task start                                # Produção
 - `packages/redirect/src/services/redirect.ts` — Core da lógica de redirect (DNS parsing)
 - `packages/redirect/src/main.ts` — Entry point do redirect com Hono
 - `packages/redirect/views/index.vto` — Landing page bilíngue (EN/PT) com SEO
-- `packages/web/src/main.ts` — Entry point do web service
-- `packages/web/src/services/stripe.ts` — Integração Stripe
+- `packages/web/src/main.ts` — Entry point do web service (inclui job de limpeza de grace period)
+- `packages/web/src/services/stripe.ts` — Integração Stripe (checkout, webhooks, quantity updates)
 - `packages/web/src/services/auth.ts` — Autenticação magic link
 - `packages/shared/src/db/migrations/` — SQL migrations
-- `packages/shared/src/db/queries/` — DB queries (users, sessions, seats, domains, magic_links)
+- `packages/shared/src/db/queries/` — DB queries (users, sessions, subscriptions, domains, magic_links)
+- `packages/shared/src/types.ts` — Tipos TypeScript (User, Subscription, Domain, etc.)
 
 ## Redirect: Modificadores DNS suportados
 - `.opts-https` — Force HTTPS

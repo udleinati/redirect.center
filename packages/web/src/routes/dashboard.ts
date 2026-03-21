@@ -1,17 +1,20 @@
 import { Hono } from "hono";
 import { authMiddleware } from "../middleware/auth.ts";
 import { getConfig } from "../../../shared/src/config.ts";
-import * as seatsQuery from "../../../shared/src/db/queries/seats.ts";
-import * as domainsQuery from "../../../shared/src/db/queries/domains.ts";
-import { createCheckoutSession, createCustomerPortalSession } from "../services/stripe.ts";
+import * as subscriptionQueries from "../../../shared/src/db/queries/subscriptions.ts";
+import * as domainQueries from "../../../shared/src/db/queries/domains.ts";
+import {
+  createCheckoutSession,
+  createCustomerPortalSession,
+  updateSubscriptionQuantity,
+} from "../services/stripe.ts";
 import {
   dashboardPage,
   subscribePage,
   checkoutSuccessPage,
-  seatDetailPage,
   errorPage,
 } from "../templates/pages.ts";
-import type { User, SeatType, Domain } from "../../../shared/src/types.ts";
+import type { User, SlotType, Domain } from "../../../shared/src/types.ts";
 
 const dashboard = new Hono();
 
@@ -20,21 +23,22 @@ dashboard.use("*", authMiddleware);
 
 dashboard.get("/", async (c) => {
   const user = c.get("user" as never) as User;
-  const seats = await seatsQuery.findByUserId(user.id);
+  const subscriptions = await subscriptionQueries.findByUserId(user.id);
 
-  // Load domains for each seat
-  const domains = new Map<string, Domain | null>();
-  for (const seat of seats) {
-    const domain = await domainsQuery.findBySeatId(seat.id);
-    domains.set(seat.id, domain);
+  // Load domains for each subscription
+  const domains = new Map<string, Domain[]>();
+  for (const sub of subscriptions) {
+    const subDomains = await domainQueries.findBySubscriptionId(sub.id);
+    domains.set(sub.id, subDomains);
   }
 
-  return c.html(dashboardPage(user, seats, domains));
+  return c.html(dashboardPage(user, subscriptions, domains));
 });
 
-dashboard.get("/subscribe", (c) => {
+dashboard.get("/subscribe", async (c) => {
   const user = c.get("user" as never) as User;
   const config = getConfig();
+  const subscriptions = await subscriptionQueries.findByUserId(user.id);
 
   return c.html(
     subscribePage(
@@ -45,6 +49,7 @@ dashboard.get("/subscribe", (c) => {
         wildcardYearly: config.stripe.prices.wildcardYearly,
       },
       user,
+      subscriptions,
     ),
   );
 });
@@ -53,14 +58,19 @@ dashboard.post("/subscribe", async (c) => {
   const user = c.get("user" as never) as User;
   const body = await c.req.parseBody();
   const priceId = body["priceId"] as string;
-  const seatType = body["seatType"] as SeatType;
+  const slotType = body["slotType"] as SlotType;
+  const quantity = parseInt(body["quantity"] as string || "1", 10);
 
-  if (!priceId || !seatType) {
+  if (!priceId || !slotType) {
     return c.html(errorPage("Invalid Request", "Missing plan selection."), 400);
   }
 
-  if (seatType !== "simple" && seatType !== "wildcard") {
-    return c.html(errorPage("Invalid Request", "Invalid seat type."), 400);
+  if (slotType !== "simple" && slotType !== "wildcard") {
+    return c.html(errorPage("Invalid Request", "Invalid slot type."), 400);
+  }
+
+  if (quantity < 1 || isNaN(quantity)) {
+    return c.html(errorPage("Invalid Request", "Quantity must be at least 1."), 400);
   }
 
   try {
@@ -68,7 +78,8 @@ dashboard.post("/subscribe", async (c) => {
       user.id,
       user.email,
       priceId,
-      seatType,
+      slotType,
+      quantity,
     );
     return c.redirect(checkoutUrl);
   } catch (error) {
@@ -80,27 +91,53 @@ dashboard.post("/subscribe", async (c) => {
   }
 });
 
+// Add more slots to existing subscription
+dashboard.post("/subscriptions/:id/add-slots", async (c) => {
+  const user = c.get("user" as never) as User;
+  const subId = c.req.param("id");
+  const body = await c.req.parseBody();
+  const additionalQuantity = parseInt(body["quantity"] as string || "1", 10);
+
+  if (additionalQuantity < 1 || isNaN(additionalQuantity)) {
+    return c.html(errorPage("Invalid Request", "Quantity must be at least 1."), 400);
+  }
+
+  const sub = await subscriptionQueries.findById(subId);
+  if (!sub || sub.user_id !== user.id) {
+    return c.html(errorPage("Not Found", "Subscription not found."), 404);
+  }
+
+  if (sub.status !== "active") {
+    return c.html(errorPage("Not Allowed", "Cannot add slots while subscription is not active."), 403);
+  }
+
+  if (!sub.stripe_subscription_id) {
+    return c.html(errorPage("Error", "No Stripe subscription linked."), 400);
+  }
+
+  try {
+    const newQuantity = sub.quantity + additionalQuantity;
+    await updateSubscriptionQuantity(sub.stripe_subscription_id, newQuantity);
+    // Stripe webhook will update our DB quantity
+    return c.redirect("/dashboard");
+  } catch (error) {
+    console.error("[dashboard] Add slots error:", error);
+    return c.html(
+      errorPage("Error", "Failed to add slots. Please try again."),
+      500,
+    );
+  }
+});
+
 dashboard.get("/checkout/success", (c) => {
   const user = c.get("user" as never) as User;
   return c.html(checkoutSuccessPage(user));
 });
 
-dashboard.get("/seats/:id", async (c) => {
+// Add domain to subscription
+dashboard.post("/subscriptions/:id/domains", async (c) => {
   const user = c.get("user" as never) as User;
-  const seatId = c.req.param("id");
-
-  const seat = await seatsQuery.findById(seatId);
-  if (!seat || seat.user_id !== user.id) {
-    return c.html(errorPage("Not Found", "Seat not found."), 404);
-  }
-
-  const domain = await domainsQuery.findBySeatId(seat.id);
-  return c.html(seatDetailPage(user, seat, domain));
-});
-
-dashboard.post("/seats/:id/domain", async (c) => {
-  const user = c.get("user" as never) as User;
-  const seatId = c.req.param("id");
+  const subId = c.req.param("id");
   const body = await c.req.parseBody();
   const domainName = (body["domain"] as string)?.trim().toLowerCase();
 
@@ -108,34 +145,66 @@ dashboard.post("/seats/:id/domain", async (c) => {
     return c.html(errorPage("Invalid Request", "Domain name is required."), 400);
   }
 
-  const seat = await seatsQuery.findById(seatId);
-  if (!seat || seat.user_id !== user.id) {
-    return c.html(errorPage("Not Found", "Seat not found."), 404);
+  const sub = await subscriptionQueries.findById(subId);
+  if (!sub || sub.user_id !== user.id) {
+    return c.html(errorPage("Not Found", "Subscription not found."), 404);
   }
 
-  if (seat.status !== "active") {
-    return c.html(errorPage("Not Allowed", "Domain changes are not allowed while seat is not active."), 403);
+  if (sub.status === "past_due") {
+    return c.html(errorPage("Not Allowed", "Resolve the pending payment before adding domains."), 403);
   }
 
-  const isWildcard = seat.type === "wildcard";
+  if (sub.over_limit) {
+    return c.html(errorPage("Not Allowed", "Remove excess domains before adding new ones."), 403);
+  }
+
+  // Check slot availability
+  const domainCount = await domainQueries.countBySubscriptionId(sub.id);
+  if (domainCount >= sub.quantity) {
+    return c.html(errorPage("No Slots Available", "All slots are in use. Buy more slots to add domains."), 403);
+  }
+
+  const isWildcard = sub.type === "wildcard";
 
   try {
-    const existingDomain = await domainsQuery.findBySeatId(seat.id);
-
-    if (existingDomain) {
-      await domainsQuery.updateDomain(existingDomain.id, domainName, isWildcard);
-    } else {
-      await domainsQuery.create(seat.id, domainName, isWildcard);
-    }
-
-    return c.redirect(`/dashboard/seats/${seat.id}`);
+    await domainQueries.create(sub.id, domainName, isWildcard);
+    return c.redirect("/dashboard");
   } catch (error) {
-    console.error("[dashboard] Domain update error:", error);
+    console.error("[dashboard] Domain add error:", error);
     return c.html(
-      errorPage("Error", "Failed to update domain. It may already be in use."),
+      errorPage("Error", "Failed to add domain. It may already be in use."),
       500,
     );
   }
+});
+
+// Remove domain (soft delete)
+dashboard.post("/domains/:id/remove", async (c) => {
+  const user = c.get("user" as never) as User;
+  const domainId = c.req.param("id");
+
+  const domain = await domainQueries.findById(domainId);
+  if (!domain) {
+    return c.html(errorPage("Not Found", "Domain not found."), 404);
+  }
+
+  // Verify ownership
+  const sub = await subscriptionQueries.findById(domain.subscription_id);
+  if (!sub || sub.user_id !== user.id) {
+    return c.html(errorPage("Not Found", "Domain not found."), 404);
+  }
+
+  await domainQueries.softDelete(domainId);
+
+  // Check if over_limit is resolved
+  if (sub.over_limit) {
+    const domainCount = await domainQueries.countBySubscriptionId(sub.id);
+    if (domainCount <= sub.quantity) {
+      await subscriptionQueries.updateOverLimit(sub.id, false);
+    }
+  }
+
+  return c.redirect("/dashboard");
 });
 
 dashboard.get("/portal", async (c) => {

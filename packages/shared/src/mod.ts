@@ -7,7 +7,7 @@ export {
   userQueries,
   sessionQueries,
   magicLinkQueries,
-  seatQueries,
+  subscriptionQueries,
   domainQueries,
 } from "./db/mod.ts";
 
@@ -15,9 +15,10 @@ export type {
   User,
   Session,
   MagicLink,
-  Seat,
-  SeatType,
-  SeatStatus,
+  Subscription,
+  SlotType,
+  SubscriptionStatus,
+  BillingInterval,
   Domain,
   ValidationStatus,
 } from "./types.ts";
