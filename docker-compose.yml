@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:18
+    image: postgres:17
     environment:
       POSTGRES_DB: redirect_center
       POSTGRES_USER: redirect_center
@@ -9,6 +9,11 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redirect_center -d redirect_center"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
 
   web:
     build:
@@ -33,15 +38,17 @@ services:
       SESSION_DURATION_HOURS: 3
       MAGIC_LINK_DURATION_HOURS: 24
     depends_on:
-      - postgres
-      - mailhog
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
 
   redirect:
     build:
       context: .
       dockerfile: packages/redirect/Dockerfile
     ports:
-      - "8080:80"
+      - "8180:80"
     environment:
       FQDN: redirect.center
       LISTEN_PORT: 80
