@@ -55,6 +55,15 @@ services:
       ENTRY_IP: 127.0.0.1
       LOGGER_LEVEL: info
 
+  stripe-cli:
+    image: stripe/stripe-cli
+    command: listen --forward-to web:8000/api/webhooks/stripe
+    environment:
+      STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+    depends_on:
+      web:
+        condition: service_started
+
   mailhog:
     image: mailhog/mailhog
     ports:
