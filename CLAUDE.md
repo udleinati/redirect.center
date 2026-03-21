@@ -5,10 +5,11 @@ redirect.center é um serviço de redirect de domínios baseado em DNS (CNAME re
 O redirect HTTP é gratuito. Estamos a adicionar suporte a HTTPS como feature paga.
 
 ## Arquitectura
-Monorepo com três serviços:
+Monorepo com quatro serviços:
 - `packages/web` — Landing page + painel de gestão de subscrições (server-rendered HTML)
 - `packages/redirect` — Serviço de redirecionamento HTTP (lógica original)
 - `packages/certmanager` — Validação DNS, emissão e renovação de certificados HTTPS
+- `packages/proxy` — HTTPS reverse proxy (Caddy + Deno sidecar para TLS termination)
 - `packages/shared` — Código partilhado (DB, tipos, config)
 
 ## Stack
@@ -19,7 +20,7 @@ Monorepo com três serviços:
 - Pagamentos: Stripe (Checkout hosted + Customer Portal)
 - Auth: Magic link por email (SMTP genérico, compatível com AWS SES)
 - Frontend: Server-rendered HTML + Tailwind CSS via CDN (sem framework SPA)
-- Dev: Docker Compose (web + redirect + certmanager + postgres + pebble + mailhog + stripe-cli)
+- Dev: Docker Compose (web + redirect + certmanager + proxy + postgres + pebble + mailhog + stripe-cli)
 - DNS: `Deno.resolveDns()` para resolver CNAME records
 - Statistics: Deno KV (built-in key-value store)
 - Encoding: Base32 para paths/queries em CNAME records
@@ -27,7 +28,7 @@ Monorepo com três serviços:
 ## Fases do projeto
 1. **Fase 1 (concluída):** Gestão de subscritores, slots, pagamentos Stripe, painel
 2. **Fase 2 (concluída):** Validação DNS, emissão e renovação de certificados HTTPS via Let's Encrypt
-3. **Fase 3:** Servir HTTPS (reverse proxy com certificados emitidos)
+3. **Fase 3 (concluída):** Servir HTTPS via reverse proxy Caddy + sidecar Deno para TLS termination
 
 ## Modelo de dados
 - **Users:** identificados por email, autenticação por magic link
@@ -102,6 +103,14 @@ deno task start                                # Produção
 - `packages/certmanager/src/acme/dns-challenge.ts` — CNAME delegation (Route53/Cloudflare)
 - `packages/certmanager/src/workers/` — Validation, renewal, notification workers
 - `packages/certmanager/src/services/crypto.ts` — AES-256-GCM encryption for private keys
+- `packages/proxy/src/main.ts` — Entry point do sidecar (sync certs + manage Caddy)
+- `packages/proxy/src/services/cert-sync.ts` — Polling PostgreSQL, decrypt, write PEM, reload Caddy
+- `packages/proxy/src/services/caddy-api.ts` — Client para API admin do Caddy (:2019)
+- `packages/proxy/src/services/db.ts` — Queries de certificados válidos
+- `packages/proxy/src/services/crypto.ts` — Decryption AES-256-GCM (mirror do certmanager)
+- `packages/proxy/static/error.html` — Página de erro bilingue (domínio sem HTTPS)
+- `packages/proxy/Caddyfile.initial` — Config mínima para arranque do Caddy
+- `packages/proxy/entrypoint.sh` — Inicia Caddy + sidecar Deno
 
 ## Redirect: Modificadores DNS suportados
 - `.opts-https` — Force HTTPS
@@ -130,6 +139,7 @@ deno task start                                # Produção
 - `web` — landing page + painel (porta 8000)
 - `redirect` — serviço de redirect HTTP (porta 80)
 - `certmanager` — validação DNS + emissão/renovação de certificados
+- `proxy` — HTTPS reverse proxy Caddy + sidecar Deno (porta 443)
 - `postgres` — banco de dados
 - `pebble` — servidor ACME local (dev, portas 14000/15000)
 - `mailhog` — captura de emails (dev)
@@ -162,6 +172,34 @@ deno task start                                # Produção
 - `VALIDATION_WORKER_INTERVAL_SECONDS` — default 30
 - `RENEWAL_WORKER_INTERVAL_SECONDS` — default 3600
 - `NOTIFICATION_WORKER_INTERVAL_SECONDS` — default 3600
+
+## Fase 3 — HTTPS Reverse Proxy
+
+### Arquitectura
+- Container Docker com Caddy (TLS termination, porta 443) + sidecar Deno (sync certs do PostgreSQL)
+- HTTP (porta 80) → redirect service (sem Caddy) | HTTPS (porta 443) → Caddy → redirect service
+- Não há redirect automático HTTP→HTTPS — são independentes
+
+### Sidecar (Deno)
+- Polling PostgreSQL a cada 30s, lê certificados com status `issued` e não expirados
+- Desencripta chaves privadas (AES-256-GCM), escreve PEM no filesystem `/certs/{domain}/`
+- Checksum SHA-256 em memória para evitar reescritas desnecessárias
+- Reconstrói configuração e envia `POST /load` à API admin do Caddy quando há mudanças
+- No arranque, faz sync completo (clean + rebuild)
+
+### Caddy
+- Configurado via API admin JSON (`:2019`), não Caddyfile estático
+- ACME automático desactivado (certificados geridos pelo certmanager)
+- Reverse proxy para `http://redirect:3000`
+- Certificados carregados via `tls.certificates.load_files`
+
+### Variáveis de ambiente do proxy
+- `DATABASE_URL` — conexão PostgreSQL (obrigatório)
+- `CERT_ENCRYPTION_KEY` — chave AES-256-GCM (64 hex chars, obrigatório)
+- `CADDY_ADMIN_API` — URL da API admin do Caddy (default: `http://localhost:2019`)
+- `REDIRECT_UPSTREAM` — URL do redirect service (default: `http://redirect:3000`)
+- `SYNC_INTERVAL_SECONDS` — intervalo de polling ao banco (default: 30)
+- `LOGGER_LEVEL` — debug|info|warn|error (default: debug)
 
 ## Protecções implementadas
 - Loop detection via cookies (max 3 redirects em 10s)

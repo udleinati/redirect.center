@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HTTPS Not Available</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f8fafc;
+      color: #334155;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      max-width: 520px;
+      padding: 2.5rem;
+      text-align: center;
+    }
+    .icon {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 1.5rem;
+      color: #f59e0b;
+    }
+    h1 {
+      font-size: 1.5rem;
+      color: #0f172a;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+      color: #64748b;
+    }
+    .divider {
+      width: 48px;
+      height: 2px;
+      background: #e2e8f0;
+      margin: 1.5rem auto;
+    }
+    a {
+      color: #2563eb;
+      text-decoration: none;
+    }
+    a:hover { text-decoration: underline; }
+    .suggestion {
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+    }
+    .suggestion code {
+      background: #fef3c7;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+    }
+    .lang-toggle {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+    }
+    .lang-toggle button {
+      background: none;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      padding: 0.25rem 0.75rem;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 0.8rem;
+    }
+    .lang-toggle button:hover { background: #f1f5f9; }
+    .lang-toggle button.active { background: #e2e8f0; color: #0f172a; }
+    [data-lang="pt"] .en { display: none; }
+    [data-lang="en"] .pt { display: none; }
+  </style>
+</head>
+<body data-lang="en">
+  <div class="container">
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+    </svg>
+
+    <div class="en">
+      <h1>HTTPS Not Available</h1>
+      <p>This domain does not have an active HTTPS certificate.</p>
+      <div class="suggestion">
+        <p>Try accessing this site via HTTP instead:</p>
+        <p><code>http://</code> instead of <code>https://</code></p>
+      </div>
+      <p style="margin-top: 1.5rem; font-size: 0.875rem;">
+        Powered by <a href="https://redirect.center">redirect.center</a>
+      </p>
+    </div>
+
+    <div class="pt">
+      <h1>HTTPS Indisponível</h1>
+      <p>Este domínio não possui um certificado HTTPS ativo.</p>
+      <div class="suggestion">
+        <p>Tente aceder ao site via HTTP:</p>
+        <p><code>http://</code> em vez de <code>https://</code></p>
+      </div>
+      <p style="margin-top: 1.5rem; font-size: 0.875rem;">
+        Powered by <a href="https://redirect.center">redirect.center</a>
+      </p>
+    </div>
+
+    <div class="lang-toggle">
+      <button class="active" onclick="setLang('en')">EN</button>
+      <button onclick="setLang('pt')">PT</button>
+    </div>
+  </div>
+  <script>
+    function setLang(lang) {
+      document.body.dataset.lang = lang;
+      document.querySelectorAll('.lang-toggle button').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+    }
+    // Auto-detect language
+    if (navigator.language.startsWith('pt')) setLang('pt');
+  </script>
+</body>
+</html>

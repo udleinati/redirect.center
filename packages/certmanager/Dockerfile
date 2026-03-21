@@ -7,6 +7,7 @@ COPY packages/certmanager/deno.json ./packages/certmanager/
 COPY packages/shared/deno.json ./packages/shared/
 COPY packages/web/deno.json ./packages/web/
 COPY packages/redirect/deno.json ./packages/redirect/
+COPY packages/proxy/deno.json ./packages/proxy/
 COPY deno.json .
 
 RUN deno install

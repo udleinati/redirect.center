@@ -1,0 +1,12 @@
+{
+  "name": "@redirect-center/proxy",
+  "version": "0.1.0",
+  "exports": "./src/main.ts",
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-read --allow-env --allow-write src/main.ts",
+    "start": "deno run --allow-net --allow-read --allow-env --allow-write src/main.ts"
+  },
+  "imports": {
+    "@std/encoding": "jsr:@std/encoding@^1"
+  }
+}

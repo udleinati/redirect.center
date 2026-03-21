@@ -1,0 +1,8 @@
+{
+	# Minimal initial config — sidecar will replace via admin API
+	admin :2019
+	# No automatic HTTPS
+	auto_https off
+}
+
+# Empty server — sidecar will configure via /load

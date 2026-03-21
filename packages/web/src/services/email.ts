@@ -8,24 +8,32 @@ export async function sendEmail(
 ): Promise<void> {
   const config = getConfig();
 
-  if (!config.smtp.host || !config.smtp.user || !config.smtp.pass) {
-    console.warn("[email] SMTP not configured, logging email instead:");
+  if (!config.smtp.host) {
+    console.warn("[email] SMTP not configured (no SMTP_HOST), logging email instead:");
     console.log(`  To: ${to}`);
     console.log(`  Subject: ${subject}`);
     console.log(`  Body: ${html}`);
     return;
   }
 
+  const hasAuth = !!(config.smtp.user && config.smtp.pass);
+
   const client = new SMTPClient({
     connection: {
       hostname: config.smtp.host,
       port: config.smtp.port,
       tls: config.smtp.port === 465,
-      auth: {
-        username: config.smtp.user,
-        password: config.smtp.pass,
-      },
+      ...(hasAuth
+        ? {
+            auth: {
+              username: config.smtp.user!,
+              password: config.smtp.pass!,
+            },
+          }
+        : {}),
     },
+    // Allow sending without TLS in dev (Mailpit doesn't need TLS on port 1025)
+    debug: { allowUnsecure: !hasAuth },
   });
 
   try {
@@ -36,7 +44,12 @@ export async function sendEmail(
       content: "auto",
       html,
     });
+    console.log(`[email] Sent to ${to}: ${subject}`);
   } finally {
-    await client.close();
+    try {
+      await client.close();
+    } catch {
+      // Connection may not have been established
+    }
   }
 }

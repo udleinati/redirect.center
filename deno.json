@@ -3,7 +3,8 @@
     "./packages/shared",
     "./packages/web",
     "./packages/redirect",
-    "./packages/certmanager"
+    "./packages/certmanager",
+    "./packages/proxy"
   ],
   "compilerOptions": {
     "strict": true

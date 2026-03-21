@@ -23,7 +23,7 @@ services:
       - "8000:8000"
     environment:
       DATABASE_URL: postgresql://redirect_center:dev_password@postgres:5432/redirect_center
-      SMTP_HOST: mailhog
+      SMTP_HOST: mailpit
       SMTP_PORT: 1025
       SMTP_FROM: noreply@redirect.center
       STRIPE_SECRET_KEY: sk_test_51TDSUeFQ8RwVzLyFhzVm8mFpKPuEGELrmNHFmuE0ZDgmMJLDgMRCF7CfTWLegUqzqF7B8ebKiWSzv6ccbAHeUiUg00yfq6H78n
@@ -40,7 +40,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      mailhog:
+      mailpit:
         condition: service_started
 
   redirect:
@@ -53,7 +53,7 @@ services:
       FQDN: redirect.center
       LISTEN_PORT: 80
       ENTRY_IP: 127.0.0.1
-      LOGGER_LEVEL: info
+      LOGGER_LEVEL: debug
 
   certmanager:
     build:
@@ -64,7 +64,7 @@ services:
       CERT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       ACME_DIRECTORY_URL: https://pebble:14000/dir
       DNS_PROVIDER: pebble
-      SMTP_HOST: mailhog
+      SMTP_HOST: mailpit
       SMTP_PORT: 1025
       SMTP_FROM: noreply@redirect.center
       BASE_URL: http://localhost:8000
@@ -77,8 +77,29 @@ services:
         condition: service_healthy
       pebble:
         condition: service_started
-      mailhog:
+      mailpit:
         condition: service_started
+
+  proxy:
+    build:
+      context: .
+      dockerfile: packages/proxy/Dockerfile
+    ports:
+      - "443:443"
+    environment:
+      DATABASE_URL: postgresql://redirect_center:dev_password@postgres:5432/redirect_center
+      CERT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      CADDY_ADMIN_API: http://localhost:2019
+      REDIRECT_UPSTREAM: http://redirect:80
+      SYNC_INTERVAL_SECONDS: 30
+      LOGGER_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redirect:
+        condition: service_started
+    volumes:
+      - cert-data:/certs
 
   pebble:
     image: ghcr.io/letsencrypt/pebble:latest
@@ -102,11 +123,12 @@ services:
       web:
         condition: service_started
 
-  mailhog:
-    image: mailhog/mailhog
+  mailpit:
+    image: axllent/mailpit
     ports:
       - "1025:1025"
       - "8025:8025"
 
 volumes:
   pgdata:
+  cert-data:

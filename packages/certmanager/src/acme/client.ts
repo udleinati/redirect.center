@@ -133,8 +133,14 @@ export async function completeAndFinalize(
   });
 
   console.log(`[acme] Finalizing order for ${domain}`);
-  const cert = await client.finalizeOrder(order, csr);
-  console.log(`[acme] Order finalized for ${domain}`);
+  const finalizedOrder = await client.finalizeOrder(order, csr);
+
+  // finalizeOrder returns the finalized order object — get the certificate PEM separately
+  const cert = await client.getCertificate(finalizedOrder);
+  if (!cert) {
+    throw new Error("No certificate returned from ACME server after finalization");
+  }
+  console.log(`[acme] Certificate retrieved for ${domain}`);
 
   return {
     certificate: cert,
