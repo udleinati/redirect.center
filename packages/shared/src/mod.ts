@@ -9,6 +9,8 @@ export {
   magicLinkQueries,
   subscriptionQueries,
   domainQueries,
+  certificateQueries,
+  notificationQueries,
 } from "./db/mod.ts";
 
 export type {
@@ -21,6 +23,9 @@ export type {
   BillingInterval,
   Domain,
   ValidationStatus,
+  Certificate,
+  CertificateStatus,
+  Notification,
 } from "./types.ts";
 
 export { getConfig } from "./config.ts";

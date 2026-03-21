@@ -2,7 +2,8 @@
   "workspace": [
     "./packages/shared",
     "./packages/web",
-    "./packages/redirect"
+    "./packages/redirect",
+    "./packages/certmanager"
   ],
   "compilerOptions": {
     "strict": true

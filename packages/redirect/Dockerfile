@@ -6,6 +6,7 @@ WORKDIR /app
 COPY packages/redirect/deno.json ./packages/redirect/
 COPY packages/shared/deno.json ./packages/shared/
 COPY packages/web/deno.json ./packages/web/
+COPY packages/certmanager/deno.json ./packages/certmanager/
 COPY deno.json .
 
 RUN deno install

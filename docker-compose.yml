@@ -55,6 +55,43 @@ services:
       ENTRY_IP: 127.0.0.1
       LOGGER_LEVEL: info
 
+  certmanager:
+    build:
+      context: .
+      dockerfile: packages/certmanager/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://redirect_center:dev_password@postgres:5432/redirect_center
+      CERT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      ACME_DIRECTORY_URL: https://pebble:14000/dir
+      DNS_PROVIDER: pebble
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_FROM: noreply@redirect.center
+      BASE_URL: http://localhost:8000
+      VALIDATION_WORKER_INTERVAL_SECONDS: 30
+      RENEWAL_WORKER_INTERVAL_SECONDS: 3600
+      NOTIFICATION_WORKER_INTERVAL_SECONDS: 3600
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pebble:
+        condition: service_started
+      mailhog:
+        condition: service_started
+
+  pebble:
+    image: ghcr.io/letsencrypt/pebble:latest
+    command: pebble -config /etc/pebble/pebble-config.json
+    ports:
+      - "14000:14000"
+      - "15000:15000"
+    environment:
+      PEBBLE_VA_NOSLEEP: 1
+      PEBBLE_VA_ALWAYS_VALID: 1  # Accept all challenges in dev
+      PEBBLE_WFE_NONCEREJECT: 0
+    volumes:
+      - ./docker/pebble/pebble-config.json:/etc/pebble/pebble-config.json:ro
+
   stripe-cli:
     image: stripe/stripe-cli
     command: listen --forward-to web:8000/api/webhooks/stripe

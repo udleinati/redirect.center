@@ -5,9 +5,10 @@ redirect.center é um serviço de redirect de domínios baseado em DNS (CNAME re
 O redirect HTTP é gratuito. Estamos a adicionar suporte a HTTPS como feature paga.
 
 ## Arquitectura
-Monorepo com dois serviços:
+Monorepo com três serviços:
 - `packages/web` — Landing page + painel de gestão de subscrições (server-rendered HTML)
 - `packages/redirect` — Serviço de redirecionamento HTTP (lógica original)
+- `packages/certmanager` — Validação DNS, emissão e renovação de certificados HTTPS
 - `packages/shared` — Código partilhado (DB, tipos, config)
 
 ## Stack
@@ -18,16 +19,15 @@ Monorepo com dois serviços:
 - Pagamentos: Stripe (Checkout hosted + Customer Portal)
 - Auth: Magic link por email (SMTP genérico, compatível com AWS SES)
 - Frontend: Server-rendered HTML + Tailwind CSS via CDN (sem framework SPA)
-- Dev: Docker Compose (web + redirect + postgres + mailhog + stripe-cli)
+- Dev: Docker Compose (web + redirect + certmanager + postgres + pebble + mailhog + stripe-cli)
 - DNS: `Deno.resolveDns()` para resolver CNAME records
 - Statistics: Deno KV (built-in key-value store)
 - Encoding: Base32 para paths/queries em CNAME records
 
 ## Fases do projeto
 1. **Fase 1 (concluída):** Gestão de subscritores, slots, pagamentos Stripe, painel
-2. **Fase 2:** Validação de domínios — quando um utilizador adiciona um domínio a um slot,
-   validar que o DNS está corretamente configurado
-3. **Fase 3:** Emissão automática de certificados HTTPS via Let's Encrypt para domínios validados
+2. **Fase 2 (concluída):** Validação DNS, emissão e renovação de certificados HTTPS via Let's Encrypt
+3. **Fase 3:** Servir HTTPS (reverse proxy com certificados emitidos)
 
 ## Modelo de dados
 - **Users:** identificados por email, autenticação por magic link
@@ -95,8 +95,13 @@ deno task start                                # Produção
 - `packages/web/src/services/stripe.ts` — Integração Stripe (checkout, webhooks, quantity updates)
 - `packages/web/src/services/auth.ts` — Autenticação magic link
 - `packages/shared/src/db/migrations/` — SQL migrations
-- `packages/shared/src/db/queries/` — DB queries (users, sessions, subscriptions, domains, magic_links)
-- `packages/shared/src/types.ts` — Tipos TypeScript (User, Subscription, Domain, etc.)
+- `packages/shared/src/db/queries/` — DB queries (users, sessions, subscriptions, domains, certificates, notifications, magic_links)
+- `packages/shared/src/types.ts` — Tipos TypeScript (User, Subscription, Domain, Certificate, Notification, etc.)
+- `packages/certmanager/src/main.ts` — Entry point do certmanager (3 workers)
+- `packages/certmanager/src/acme/client.ts` — Wrapper ACME (acme-client)
+- `packages/certmanager/src/acme/dns-challenge.ts` — CNAME delegation (Route53/Cloudflare)
+- `packages/certmanager/src/workers/` — Validation, renewal, notification workers
+- `packages/certmanager/src/services/crypto.ts` — AES-256-GCM encryption for private keys
 
 ## Redirect: Modificadores DNS suportados
 - `.opts-https` — Force HTTPS
@@ -111,6 +116,52 @@ deno task start                                # Produção
 - Branch de desenvolvimento: `feat/pro-version`
 - **Nunca fazer commits diretamente no `master`**
 - O merge para `master` será feito manualmente após revisão
+
+## Fase 2 — Validação DNS e Certificados
+
+### Arquitectura
+- Novo serviço `certmanager` (packages/certmanager) — gere validação DNS, emissão e renovação de certificados
+- Usa `npm:acme-client` para interagir com Let's Encrypt via protocolo ACME
+- Challenge DNS-01 com CNAME delegation: o utilizador configura um CNAME para `_acme-challenge.{domain}.acme.redirect.center`, e o certmanager gere os TXT records automaticamente
+- Certificados e chaves privadas armazenados no PostgreSQL, encriptados com AES-256-GCM
+- Desenvolvimento local usa Pebble (servidor ACME em Docker)
+
+### Serviços (Docker Compose)
+- `web` — landing page + painel (porta 8000)
+- `redirect` — serviço de redirect HTTP (porta 80)
+- `certmanager` — validação DNS + emissão/renovação de certificados
+- `postgres` — banco de dados
+- `pebble` — servidor ACME local (dev, portas 14000/15000)
+- `mailhog` — captura de emails (dev)
+- `stripe-cli` — webhook forwarding (dev)
+
+### Workers do certmanager
+1. **Validation worker** (a cada 30s) — processa pedidos de validação, verifica DNS, emite certificados
+2. **Renewal worker** (a cada 1h) — verifica certificados a expirar em 14 dias, tenta renovar
+3. **Notification worker** (a cada 1h) — envia emails e cria avisos para problemas de renovação/expiração
+
+### Fluxo de certificado
+1. Utilizador adiciona domínio → sistema gera challenge → mostra instruções CNAME
+2. Utilizador configura CNAME no DNS e clica "Validar"
+3. Certmanager verifica CNAME, cria TXT em acme.redirect.center, submete challenge ao Let's Encrypt
+4. Certificado emitido → armazenado encriptado no banco → domínio marcado como "validated"
+5. 14 dias antes da expiração: renovação automática (sem intervenção do utilizador)
+6. Se DNS inválido na renovação: notificação por email + aviso no painel
+
+### Certificados Let's Encrypt
+- Validade: 90 dias
+- Renovação automática: 14 dias antes da expiração
+- Challenge: DNS-01 via CNAME delegation (renovação sem intervenção do utilizador)
+
+### Variáveis de ambiente do certmanager
+- `CERT_ENCRYPTION_KEY` — 64 hex chars (32 bytes). Gerar: `openssl rand -hex 32`
+- `ACME_DIRECTORY_URL` — URL do servidor ACME (production/staging/pebble)
+- `DNS_PROVIDER` — route53, cloudflare, pebble, mock
+- `DNS_ZONE_ID`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` — para Route53
+- `DNS_PROVIDER_API_KEY` — para Cloudflare
+- `VALIDATION_WORKER_INTERVAL_SECONDS` — default 30
+- `RENEWAL_WORKER_INTERVAL_SECONDS` — default 3600
+- `NOTIFICATION_WORKER_INTERVAL_SECONDS` — default 3600
 
 ## Protecções implementadas
 - Loop detection via cookies (max 3 redirects em 10s)

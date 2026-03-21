@@ -44,6 +44,50 @@ export async function create(
   return rows[0];
 }
 
+export async function updateValidationStatus(
+  id: string,
+  status: "pending" | "validated" | "failed",
+): Promise<Domain | null> {
+  return await queryOne<Domain>(
+    `UPDATE domains SET validation_status = $1, updated_at = NOW()
+     WHERE id = $2 AND deleted_at IS NULL
+     RETURNING *`,
+    [status, id],
+  );
+}
+
+export async function setDnsChallenge(
+  id: string,
+  token: string,
+): Promise<Domain | null> {
+  return await queryOne<Domain>(
+    `UPDATE domains SET dns_challenge_token = $1, dns_challenge_created_at = NOW(), updated_at = NOW()
+     WHERE id = $2 AND deleted_at IS NULL
+     RETURNING *`,
+    [token, id],
+  );
+}
+
+export async function requestValidation(id: string): Promise<Domain | null> {
+  return await queryOne<Domain>(
+    `UPDATE domains SET validation_requested_at = NOW(), updated_at = NOW()
+     WHERE id = $1 AND deleted_at IS NULL
+     RETURNING *`,
+    [id],
+  );
+}
+
+export async function findPendingValidation(): Promise<Domain[]> {
+  return await query<Domain>(
+    `SELECT d.* FROM domains d
+     JOIN subscriptions s ON d.subscription_id = s.id
+     WHERE d.validation_status = 'pending'
+     AND d.validation_requested_at IS NOT NULL
+     AND d.deleted_at IS NULL
+     AND s.deleted_at IS NULL`,
+  );
+}
+
 export async function softDelete(id: string): Promise<void> {
   await query(
     `UPDATE domains SET deleted_at = NOW(), updated_at = NOW() WHERE id = $1`,

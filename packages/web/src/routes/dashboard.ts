@@ -3,6 +3,7 @@ import { authMiddleware } from "../middleware/auth.ts";
 import { getConfig } from "../../../shared/src/config.ts";
 import * as subscriptionQueries from "../../../shared/src/db/queries/subscriptions.ts";
 import * as domainQueries from "../../../shared/src/db/queries/domains.ts";
+import * as certificateQueries from "../../../shared/src/db/queries/certificates.ts";
 import {
   createCheckoutSession,
   createCustomerPortalSession,
@@ -14,7 +15,7 @@ import {
   checkoutSuccessPage,
   errorPage,
 } from "../templates/pages.ts";
-import type { User, SlotType, Domain } from "../../../shared/src/types.ts";
+import type { User, SlotType, Domain, Certificate } from "../../../shared/src/types.ts";
 
 const dashboard = new Hono();
 
@@ -25,14 +26,19 @@ dashboard.get("/", async (c) => {
   const user = c.get("user" as never) as User;
   const subscriptions = await subscriptionQueries.findByUserId(user.id);
 
-  // Load domains for each subscription
+  // Load domains and certificates for each subscription
   const domains = new Map<string, Domain[]>();
+  const certificates = new Map<string, Certificate | null>();
   for (const sub of subscriptions) {
     const subDomains = await domainQueries.findBySubscriptionId(sub.id);
     domains.set(sub.id, subDomains);
+    for (const d of subDomains) {
+      const cert = await certificateQueries.findByDomainId(d.id);
+      certificates.set(d.id, cert);
+    }
   }
 
-  return c.html(dashboardPage(user, subscriptions, domains));
+  return c.html(dashboardPage(user, subscriptions, domains, certificates));
 });
 
 dashboard.get("/subscribe", async (c) => {
@@ -118,7 +124,6 @@ dashboard.post("/subscriptions/:id/add-slots", async (c) => {
   try {
     const newQuantity = sub.quantity + additionalQuantity;
     await updateSubscriptionQuantity(sub.stripe_subscription_id, newQuantity);
-    // Stripe webhook will update our DB quantity
     return c.redirect("/dashboard");
   } catch (error) {
     console.error("[dashboard] Add slots error:", error);
@@ -168,6 +173,7 @@ dashboard.post("/subscriptions/:id/domains", async (c) => {
 
   try {
     await domainQueries.create(sub.id, domainName, isWildcard);
+    // Certificate initialization will be handled by certmanager when it detects the new domain
     return c.redirect("/dashboard");
   } catch (error) {
     console.error("[dashboard] Domain add error:", error);
@@ -176,6 +182,33 @@ dashboard.post("/subscriptions/:id/domains", async (c) => {
       500,
     );
   }
+});
+
+// Request domain validation
+dashboard.post("/domains/:id/validate", async (c) => {
+  const user = c.get("user" as never) as User;
+  const domainId = c.req.param("id");
+
+  const domain = await domainQueries.findById(domainId);
+  if (!domain) {
+    return c.html(errorPage("Not Found", "Domain not found."), 404);
+  }
+
+  // Verify ownership
+  const sub = await subscriptionQueries.findById(domain.subscription_id);
+  if (!sub || sub.user_id !== user.id) {
+    return c.html(errorPage("Not Found", "Domain not found."), 404);
+  }
+
+  // Reset validation status if failed
+  if (domain.validation_status === "failed") {
+    await domainQueries.updateValidationStatus(domain.id, "pending");
+  }
+
+  // Set validation_requested_at so the certmanager picks it up
+  await domainQueries.requestValidation(domain.id);
+
+  return c.redirect("/dashboard");
 });
 
 // Remove domain (soft delete)
@@ -192,6 +225,12 @@ dashboard.post("/domains/:id/remove", async (c) => {
   const sub = await subscriptionQueries.findById(domain.subscription_id);
   if (!sub || sub.user_id !== user.id) {
     return c.html(errorPage("Not Found", "Domain not found."), 404);
+  }
+
+  // Soft delete certificate if exists
+  const cert = await certificateQueries.findByDomainId(domainId);
+  if (cert) {
+    await certificateQueries.softDelete(cert.id);
   }
 
   await domainQueries.softDelete(domainId);

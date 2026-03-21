@@ -6,3 +6,5 @@ export * as sessionQueries from "./queries/sessions.ts";
 export * as magicLinkQueries from "./queries/magic_links.ts";
 export * as subscriptionQueries from "./queries/subscriptions.ts";
 export * as domainQueries from "./queries/domains.ts";
+export * as certificateQueries from "./queries/certificates.ts";
+export * as notificationQueries from "./queries/notifications.ts";
