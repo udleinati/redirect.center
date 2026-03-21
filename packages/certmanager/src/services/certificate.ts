@@ -23,7 +23,7 @@ export async function initializeCertificate(domain: Domain): Promise<void> {
   if (!user) return;
 
   // Create ACME client
-  const { client, accountKeyEncrypted, accountKeyIv } = await createAcmeClient(user.email);
+  const { client, accountKeyEncrypted, accountKeyIv, accountUrl } = await createAcmeClient(user.email);
 
   // Create order and get challenge
   const { order, keyAuthorization } = await createOrderAndGetChallenge(
@@ -39,12 +39,13 @@ export async function initializeCertificate(domain: Domain): Promise<void> {
     domain.is_wildcard,
   );
 
-  // Store ACME data
+  // Store ACME data (including account URL for later restoration)
   await certificateQueries.updateAcmeData(
     cert.id,
     accountKeyEncrypted,
     accountKeyIv,
     order.url,
+    accountUrl,
   );
 
   // Store challenge token on domain
@@ -86,27 +87,42 @@ export async function validateAndIssueCertificate(domain: Domain): Promise<void>
 
     // Step 2: Set TXT record in our DNS zone
     if (!domain.dns_challenge_token) {
+      console.error(`[cert] No DNS challenge token found for ${domain.domain} — domain object may be stale`);
       await certificateQueries.updateStatus(cert.id, "failed", "No DNS challenge token found");
       await domainQueries.updateValidationStatus(domain.id, "failed");
       return;
     }
 
+    console.log(`[cert] Step 2: Setting TXT record for ${domain.domain}`);
     await setChallengeTxtRecord(domain.domain, domain.dns_challenge_token);
 
     // Step 3: Update status to issuing
+    console.log(`[cert] Step 3: Updating status to issuing for ${domain.domain}`);
     await certificateQueries.updateStatus(cert.id, "issuing");
 
     // Step 4: Restore ACME client and complete challenge
-    const client = await restoreAcmeClient(cert.acme_account_key_encrypted, cert.acme_account_key_iv);
+    console.log(`[cert] Step 4: Restoring ACME client for ${domain.domain}`);
+    const client = await restoreAcmeClient(cert.acme_account_key_encrypted, cert.acme_account_key_iv, cert.acme_account_url);
+    console.log(`[cert] Step 4: ACME client restored for ${domain.domain}`);
 
     // Re-create order (ACME orders may have expired)
-    const { order, challenge } = await createOrderAndGetChallenge(
+    console.log(`[cert] Step 5: Creating new ACME order for ${domain.domain}`);
+    const { order, challenge, keyAuthorization } = await createOrderAndGetChallenge(
       client,
       domain.domain,
       domain.is_wildcard,
     );
+    console.log(`[cert] Step 5: Order created for ${domain.domain}`);
+
+    // Update TXT record if key authorization changed (new order = new token)
+    if (keyAuthorization !== domain.dns_challenge_token) {
+      console.log(`[cert] Step 5b: Challenge token changed, updating TXT record for ${domain.domain}`);
+      await setChallengeTxtRecord(domain.domain, keyAuthorization);
+      await domainQueries.setDnsChallenge(domain.id, keyAuthorization);
+    }
 
     // Complete challenge and get certificate
+    console.log(`[cert] Step 6: Completing challenge for ${domain.domain}`);
     const result = await completeAndFinalize(
       client,
       order,
@@ -114,6 +130,7 @@ export async function validateAndIssueCertificate(domain: Domain): Promise<void>
       domain.domain,
       domain.is_wildcard,
     );
+    console.log(`[cert] Step 6: Challenge completed for ${domain.domain}`);
 
     // Encrypt private key
     const { ciphertext: keyEncrypted, iv: keyIv } = await encrypt(result.privateKey);
@@ -157,7 +174,7 @@ export async function renewCertificate(cert: Certificate): Promise<void> {
 
   try {
     // Restore ACME client
-    const client = await restoreAcmeClient(cert.acme_account_key_encrypted, cert.acme_account_key_iv);
+    const client = await restoreAcmeClient(cert.acme_account_key_encrypted, cert.acme_account_key_iv, cert.acme_account_url);
 
     // Create new order
     const { order, challenge, keyAuthorization } = await createOrderAndGetChallenge(

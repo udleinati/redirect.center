@@ -66,16 +66,18 @@ export async function updateAcmeData(
   acmeAccountKeyEncrypted: string,
   acmeAccountKeyIv: string,
   acmeOrderUrl: string,
+  acmeAccountUrl?: string,
 ): Promise<Certificate | null> {
   return await queryOne<Certificate>(
     `UPDATE certificates SET
        acme_account_key_encrypted = $1,
        acme_account_key_iv = $2,
        acme_order_url = $3,
+       acme_account_url = $5,
        updated_at = NOW()
      WHERE id = $4 AND deleted_at IS NULL
      RETURNING *`,
-    [acmeAccountKeyEncrypted, acmeAccountKeyIv, acmeOrderUrl, id],
+    [acmeAccountKeyEncrypted, acmeAccountKeyIv, acmeOrderUrl, id, acmeAccountUrl ?? null],
   );
 }
 

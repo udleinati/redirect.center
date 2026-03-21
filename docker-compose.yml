@@ -71,6 +71,7 @@ services:
       VALIDATION_WORKER_INTERVAL_SECONDS: 30
       RENEWAL_WORKER_INTERVAL_SECONDS: 3600
       NOTIFICATION_WORKER_INTERVAL_SECONDS: 3600
+    command: ["run", "--allow-net", "--allow-read", "--allow-env", "--allow-write", "--allow-run", "--unsafely-ignore-certificate-errors=pebble", "packages/certmanager/src/main.ts"]
     depends_on:
       postgres:
         condition: service_healthy
@@ -81,7 +82,7 @@ services:
 
   pebble:
     image: ghcr.io/letsencrypt/pebble:latest
-    command: pebble -config /etc/pebble/pebble-config.json
+    command: ["-config", "/etc/pebble/pebble-config.json"]
     ports:
       - "14000:14000"
       - "15000:15000"

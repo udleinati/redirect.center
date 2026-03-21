@@ -84,6 +84,7 @@ export interface Certificate {
   acme_account_key_encrypted: string | null;
   acme_account_key_iv: string | null;
   acme_order_url: string | null;
+  acme_account_url: string | null;
   status: CertificateStatus;
   error_message: string | null;
   issued_at: Date | null;

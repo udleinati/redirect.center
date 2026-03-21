@@ -173,7 +173,9 @@ dashboard.post("/subscriptions/:id/domains", async (c) => {
 
   try {
     await domainQueries.create(sub.id, domainName, isWildcard);
-    // Certificate initialization will be handled by certmanager when it detects the new domain
+
+    // Don't request validation immediately — let the user configure DNS first
+    // and click "Validate Domain" when ready
     return c.redirect("/dashboard");
   } catch (error) {
     console.error("[dashboard] Domain add error:", error);

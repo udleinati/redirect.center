@@ -3,7 +3,8 @@
  * Runs every VALIDATION_WORKER_INTERVAL_SECONDS (default 30s).
  */
 import * as domainQueries from "../../../shared/src/db/queries/domains.ts";
-import { validateAndIssueCertificate } from "../services/certificate.ts";
+import * as certificateQueries from "../../../shared/src/db/queries/certificates.ts";
+import { initializeCertificate, validateAndIssueCertificate } from "../services/certificate.ts";
 
 const INTERVAL = parseInt(
   Deno.env.get("VALIDATION_WORKER_INTERVAL_SECONDS") ?? "30",
@@ -23,7 +24,21 @@ export function startValidationWorker(): void {
 
       for (const domain of pendingDomains) {
         try {
-          await validateAndIssueCertificate(domain);
+          // Initialize certificate if not yet created
+          const cert = await certificateQueries.findByDomainId(domain.id);
+          if (!cert) {
+            console.log(`[validation-worker] Initializing certificate for ${domain.domain}`);
+            await initializeCertificate(domain);
+            // Skip validation on this cycle — let the user configure DNS first.
+            // The domain will be picked up again on the next worker run.
+            continue;
+          }
+
+          // Re-fetch domain to get the latest state (e.g. dns_challenge_token set by initializeCertificate)
+          const freshDomain = await domainQueries.findById(domain.id);
+          if (!freshDomain) continue;
+
+          await validateAndIssueCertificate(freshDomain);
         } catch (error) {
           console.error(`[validation-worker] Error validating ${domain.domain}:`, error);
         }

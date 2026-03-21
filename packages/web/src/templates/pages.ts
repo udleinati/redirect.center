@@ -169,21 +169,36 @@ export function magicLinkSentPage(email: string): string {
 function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | undefined): string {
   const acmeCname = `_acme-challenge.${d.domain}.acme.redirect.center`;
 
-  // No certificate yet — show DNS instructions
-  if (!cert || cert.status === "pending") {
-    const hasChallenge = !!d.dns_challenge_token;
+  // No certificate yet, or cert still pending/dns_configured — show DNS instructions or progress
+  if (!cert || cert.status === "pending" || cert.status === "dns_configured") {
     const hasRequestedValidation = !!d.validation_requested_at;
 
+    // User clicked "Validate Domain" — show progress with auto-reload
     if (hasRequestedValidation && d.validation_status === "pending") {
       return `
-        <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-          <p class="text-blue-800 font-medium mb-1">Validation in progress...</p>
-          <p class="text-blue-700">We're verifying the DNS configuration and issuing the certificate. This may take up to 5 minutes.</p>
-          <p class="text-blue-600 text-xs mt-1">This page refreshes automatically.</p>
+        <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+          <p class="text-gray-700 font-medium mb-2">Configure DNS for HTTPS:</p>
+          <div class="bg-white p-2 rounded border border-gray-200 font-mono text-xs mb-2">
+            <div><span class="text-gray-500">Type:</span> CNAME</div>
+            <div><span class="text-gray-500">Name:</span> _acme-challenge.${escapeHtml(d.domain)}</div>
+            <div class="flex items-center gap-2">
+              <span><span class="text-gray-500">Value:</span> ${escapeHtml(acmeCname)}</span>
+              <button onclick="navigator.clipboard.writeText('${escapeHtml(acmeCname)}')" class="text-blue-500 hover:text-blue-700" title="Copy">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+              </button>
+            </div>
+          </div>
+          <p class="text-gray-500 text-xs mb-2">This CNAME is permanent. Do not remove it after validation — it is needed for automatic certificate renewals.</p>
+          <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
+            <p class="text-blue-800 font-medium mb-1">Validation in progress...</p>
+            <p class="text-blue-700 text-xs">We're verifying the DNS configuration and issuing the certificate. This may take up to 5 minutes.</p>
+            <p class="text-blue-600 text-xs mt-1">This page refreshes automatically.</p>
+          </div>
         </div>
         <script>setTimeout(() => location.reload(), 15000);</script>`;
     }
 
+    // No validation requested yet — show DNS instructions with Validate button
     return `
       <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
         <p class="text-gray-700 font-medium mb-2">Configure DNS for HTTPS:</p>
@@ -199,8 +214,7 @@ function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | und
         </div>
         <p class="text-gray-500 text-xs mb-2">This CNAME is permanent. Do not remove it after validation — it is needed for automatic certificate renewals.</p>
         <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline">
-          <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition"
-            ${hasChallenge ? "" : "disabled"}>
+          <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">
             Validate Domain
           </button>
         </form>
@@ -230,11 +244,24 @@ function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | und
 
   if (cert.status === "failed") {
     return `
-      <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
-        <p class="text-red-800 font-medium">Validation failed</p>
-        <p class="text-red-700 text-xs mb-2">${escapeHtml(cert.error_message ?? "Unknown error")}</p>
-        <p class="text-red-600 text-xs mb-2">Verify the CNAME record <code>_acme-challenge.${escapeHtml(d.domain)}</code> is correctly configured.</p>
-        <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline">
+      <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
+        <p class="text-gray-700 font-medium mb-2">Configure DNS for HTTPS:</p>
+        <div class="bg-white p-2 rounded border border-gray-200 font-mono text-xs mb-2">
+          <div><span class="text-gray-500">Type:</span> CNAME</div>
+          <div><span class="text-gray-500">Name:</span> _acme-challenge.${escapeHtml(d.domain)}</div>
+          <div class="flex items-center gap-2">
+            <span><span class="text-gray-500">Value:</span> ${escapeHtml(acmeCname)}</span>
+            <button onclick="navigator.clipboard.writeText('${escapeHtml(acmeCname)}')" class="text-blue-500 hover:text-blue-700" title="Copy">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+            </button>
+          </div>
+        </div>
+        <p class="text-gray-500 text-xs mb-2">This CNAME is permanent. Do not remove it after validation — it is needed for automatic certificate renewals.</p>
+        <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+          <p class="text-red-800 font-medium">Validation failed</p>
+          <p class="text-red-700 text-xs mb-2">${escapeHtml(cert.error_message ?? "Unknown error")}</p>
+        </div>
+        <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline mt-2">
           <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button>
         </form>
       </div>`;
