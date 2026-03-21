@@ -26,13 +26,13 @@ services:
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
       SMTP_FROM: noreply@redirect.center
-      STRIPE_SECRET_KEY: sk_test_placeholder
-      STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
-      STRIPE_WEBHOOK_SECRET: whsec_placeholder
-      STRIPE_PRICE_SIMPLE_MONTHLY: price_placeholder
-      STRIPE_PRICE_SIMPLE_YEARLY: price_placeholder
-      STRIPE_PRICE_WILDCARD_MONTHLY: price_placeholder
-      STRIPE_PRICE_WILDCARD_YEARLY: price_placeholder
+      STRIPE_SECRET_KEY: sk_test_51TDSUeFQ8RwVzLyFhzVm8mFpKPuEGELrmNHFmuE0ZDgmMJLDgMRCF7CfTWLegUqzqF7B8ebKiWSzv6ccbAHeUiUg00yfq6H78n
+      STRIPE_PUBLISHABLE_KEY: pk_test_51TDSUeFQ8RwVzLyFxb6Ok44olAVujyZGTlpxOv00cnhaD3O6v8YEvayJ7lvc1zbmOAC3K9gtcEjdC56yjNrbswoB00QPIsm0az
+      STRIPE_WEBHOOK_SECRET: ""  # Leave empty for dev (skips signature verification). Set in production.
+      STRIPE_PRICE_SIMPLE_MONTHLY: price_1TDSaaFQ8RwVzLyFTgyIDRDi
+      STRIPE_PRICE_SIMPLE_YEARLY: price_1TDSazFQ8RwVzLyF2T9PyfEU
+      STRIPE_PRICE_WILDCARD_MONTHLY: price_1TDSbKFQ8RwVzLyFCee4XgYz
+      STRIPE_PRICE_WILDCARD_YEARLY: price_1TDSc0FQ8RwVzLyFusCrIMfE
       BASE_URL: http://localhost:8000
       WEB_PORT: 8000
       SESSION_DURATION_HOURS: 3
@@ -59,7 +59,7 @@ services:
     image: stripe/stripe-cli
     command: listen --forward-to web:8000/api/webhooks/stripe
     environment:
-      STRIPE_API_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_API_KEY: sk_test_51TDSUeFQ8RwVzLyFhzVm8mFpKPuEGELrmNHFmuE0ZDgmMJLDgMRCF7CfTWLegUqzqF7B8ebKiWSzv6ccbAHeUiUg00yfq6H78n
     depends_on:
       web:
         condition: service_started

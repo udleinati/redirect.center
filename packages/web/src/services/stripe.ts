@@ -74,15 +74,20 @@ export async function handleWebhook(
   const config = getConfig();
   const stripe = getStripeClient();
 
-  if (!config.stripe.webhookSecret) {
-    throw new Error("STRIPE_WEBHOOK_SECRET is not configured");
-  }
+  let event: Stripe.Event;
 
-  const event = stripe.webhooks.constructEvent(
-    body,
-    signature,
-    config.stripe.webhookSecret,
-  );
+  if (!config.stripe.webhookSecret) {
+    // No webhook secret configured — parse the event without signature verification.
+    // This is useful when using stripe-cli in development (it generates its own secret).
+    console.warn("[webhook] STRIPE_WEBHOOK_SECRET not set, skipping signature verification");
+    event = JSON.parse(body) as Stripe.Event;
+  } else {
+    event = await stripe.webhooks.constructEventAsync(
+      body,
+      signature,
+      config.stripe.webhookSecret,
+    );
+  }
 
   switch (event.type) {
     case "checkout.session.completed": {
