@@ -1,153 +1,115 @@
-# redirect.center
+# redirect.center — Contexto para Claude Code
 
-## What is this project?
+## Visão geral
+redirect.center é um serviço de redirect de domínios baseado em DNS (CNAME records).
+O redirect HTTP é gratuito. Estamos a adicionar suporte a HTTPS como feature paga.
 
-A free, open-source DNS-based domain redirect service. Users create CNAME records pointing to `redirect.center` and the service parses the DNS record to perform HTTP redirects. No server, no hosting, no code needed by the end user.
+## Arquitectura
+Monorepo com dois serviços:
+- `packages/web` — Landing page + painel de gestão de subscrições (server-rendered HTML)
+- `packages/redirect` — Serviço de redirecionamento HTTP (lógica original)
+- `packages/shared` — Código partilhado (DB, tipos, config)
 
-**Owner:** Udlei Nati (communicates in Portuguese)
+## Stack
+- Runtime: Deno + TypeScript
+- HTTP: Hono v4
+- Templates: Vento (`.vto` files) — usado no redirect service
+- Base de dados: PostgreSQL 18 (raw queries via deno-postgres)
+- Pagamentos: Stripe (Checkout hosted + Customer Portal)
+- Auth: Magic link por email (SMTP genérico, compatível com AWS SES)
+- Frontend: Server-rendered HTML + Tailwind CSS via CDN (sem framework SPA)
+- Dev: Docker Compose (web + redirect + postgres + mailhog)
+- DNS: `Deno.resolveDns()` para resolver CNAME records
+- Statistics: Deno KV (built-in key-value store)
+- Encoding: Base32 para paths/queries em CNAME records
 
-## Tech Stack
+## Fases do projeto
+1. **Fase 1 (concluída):** Gestão de subscritores, seats, pagamentos Stripe, painel
+2. **Fase 2:** Validação de domínios — quando um utilizador adiciona um domínio a um seat,
+   validar que o DNS está corretamente configurado
+3. **Fase 3:** Emissão automática de certificados HTTPS via Let's Encrypt para domínios validados
 
-- **Runtime:** Deno (TypeScript)
-- **HTTP framework:** Hono (`jsr:@hono/hono@^4`)
-- **Template engine:** Vento (`ventojs` — `.vto` files, NOT Handlebars)
-- **Database:** Deno KV (`Deno.openKv()`) for statistics
-- **DNS resolution:** `Deno.resolveDns(host, "CNAME")`
-- **Process management:** systemd (`redirect-center.service`)
-- **Container:** Docker (`denoland/deno:latest`)
+## Modelo de dados
+- **Users:** identificados por email, autenticação por magic link
+- **Sessions:** token de sessão com expiração de 3 horas
+- **MagicLinks:** token de login via email com expiração de 24 horas
+- **Seats:** subscrição paga (simples ou wildcard), gerida via Stripe
+- **Domains:** associados 1:1 a seats, com status de validação (pending/validated/failed)
+- Um utilizador pode ter seats ilimitados (desde que pague)
+- Um seat tem no máximo 1 domínio associado (substituível)
 
-## Project Structure
+## Regras de negócio
+- Magic link expira em 24h; sessão expira em 3h
+- Redirect HTTP gratuito continua inalterado para todos
+- HTTPS é feature paga (requer seat ativo)
+- Planos: mensal e anual (anual com 10% de desconto)
+- Cancelamento remove acesso imediatamente
+- Domínio pode ser substituído no seat a qualquer momento
 
-```
-src/
-├── main.ts                    # Entry point — Hono app + Deno.serve()
-├── config.ts                  # AppConfig from Deno.env (FQDN, ENTRY_IP, LISTEN_PORT, etc.)
-├── services/
-│   ├── redirect.ts            # Core logic: DNS resolution + CNAME parsing → redirect URL
-│   ├── redirect_test.ts       # Tests for parseDestination (19 tests)
-│   ├── guardian.ts            # Blacklist service (reads db/guardian.json every 60s)
-│   └── statistic.ts           # Statistics via Deno KV (domains per 24h, total)
-├── helpers/
-│   ├── dns.ts                 # Wrapper for Deno.resolveDns()
-│   ├── base32.ts              # Pure TypeScript RFC 4648 base32 encode/decode
-│   └── base32_test.ts         # Tests for base32 (6 tests)
-├── types/
-│   ├── destination.ts         # Destination interface (protocol, host, pathnames, queries, status, port)
-│   └── redirect-response.ts   # RedirectResponse class — builds final URL from Destination
-├── middleware/
-│   └── error-handler.ts       # Hono onError handler (HttpError → JSON response)
-views/
-├── index.vto                  # Landing page template (Vento syntax, bilingual EN/PT)
-db/
-├── guardian.json               # Blacklist file {"denyFqdn": [...]}
-redirect-center.service        # systemd unit file for production
-Dockerfile                     # Multi-stage Docker build
-deno.json                      # Config, tasks, imports
-```
-
-## Key Commands
-
+## Comandos
 ```bash
-deno task dev          # Dev server with --watch (port 3000)
-deno task start        # Production server
-deno task test         # Run all tests (50 tests)
-sudo systemctl start redirect-center   # Start in background (production)
+# Desenvolvimento (Docker Compose)
+docker compose up                              # Sobe tudo: web + redirect + postgres + mailhog
+
+# Redirect service
+cd packages/redirect
+deno task dev                                  # Dev com watch mode
+deno task start                                # Produção
+deno task test                                 # Correr testes (25 testes)
+
+# Web service
+cd packages/web
+deno task dev                                  # Dev com watch mode
+deno task start                                # Produção
 ```
 
-## Environment Variables
+## Variáveis de ambiente
+### Redirect service
+- `FQDN` — domínio principal (default: localhost)
+- `ENTRY_IP` — IP de entrada (default: 127.0.0.1)
+- `LISTEN_PORT` — porta (default: 3000)
+- `LOGGER_LEVEL` — debug|info|warn|error (default: debug)
 
-| Variable | Default | Description |
-|---|---|---|
-| `FQDN` | `localhost` | Service domain (used to detect homepage vs redirect) |
-| `ENTRY_IP` | `127.0.0.1` | IP users must set in their A record |
-| `LISTEN_PORT` | `3000` | Server port |
-| `LISTEN_IP` | `0.0.0.0` | Server bind address |
-| `ENVIRONMENT` | `dev1` | Environment name |
-| `PROJECT_NAME` | `redirect.center` | Displayed in UI and meta tags |
-| `LOGGER_LEVEL` | `debug` | Log level |
+### Web service
+- `DATABASE_URL` — conexão PostgreSQL
+- `WEB_PORT` — porta do web (default: 8000)
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` — SMTP para magic links
+- `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`, `STRIPE_WEBHOOK_SECRET` — Stripe API
+- `STRIPE_PRICE_SIMPLE_MONTHLY`, `STRIPE_PRICE_SIMPLE_YEARLY` — Price IDs simples
+- `STRIPE_PRICE_WILDCARD_MONTHLY`, `STRIPE_PRICE_WILDCARD_YEARLY` — Price IDs wildcard
+- `BASE_URL` — URL base (default: http://localhost:8000)
+- `SESSION_DURATION_HOURS` — duração sessão (default: 3)
+- `MAGIC_LINK_DURATION_HOURS` — validade magic link (default: 24)
 
-## How the Redirect Logic Works
+## Ficheiros importantes
+- `packages/redirect/src/services/redirect.ts` — Core da lógica de redirect (DNS parsing)
+- `packages/redirect/src/main.ts` — Entry point do redirect com Hono
+- `packages/redirect/views/index.vto` — Landing page bilíngue (EN/PT) com SEO
+- `packages/web/src/main.ts` — Entry point do web service
+- `packages/web/src/services/stripe.ts` — Integração Stripe
+- `packages/web/src/services/auth.ts` — Autenticação magic link
+- `packages/shared/src/db/migrations/` — SQL migrations
+- `packages/shared/src/db/queries/` — DB queries (users, sessions, seats, domains, magic_links)
 
-1. User creates an **A record** pointing their domain to `ENTRY_IP` (e.g., `127.0.0.1`)
-2. User creates a **CNAME record** like `redirect.my-domain.com → dest.redirect.center`
-3. When a request arrives, `redirect.ts` resolves the CNAME via DNS
-4. The CNAME target is parsed by `parseDestination()` which extracts:
-   - **Host:** the destination domain (e.g., `dest`)
-   - **Options** parsed from labels:
-     - `.opts-https` → force HTTPS
-     - `.opts-statuscode-{301|302|307|308}` → HTTP status code
-     - `.opts-port-{N}` → custom port
-     - `.opts-slash.{path}` → append path segment
-     - `.opts-query-{base32}` → append query string (Base32-encoded)
-     - `.opts-path-{base32}` → append path (Base32-encoded)
-     - `.opts-uri` → preserve original request path and query
-5. A `RedirectResponse` is built and returned as an HTTP redirect
+## Redirect: Modificadores DNS suportados
+- `.opts-https` — Force HTTPS
+- `.opts-statuscode-{301|302|307|308}` — HTTP status code
+- `.opts-slash.{path}` — Add path segment
+- `.opts-path-{base32}` — Add base32-encoded path
+- `.opts-query-{base32}` — Add base32-encoded query string
+- `.opts-port-{number}` — Custom port
+- `.opts-uri` — Pass original URI through
 
-### DNS Error Handling
+## Git workflow
+- Branch de desenvolvimento: `feat/pro-version`
+- **Nunca fazer commits diretamente no `master`**
+- O merge para `master` será feito manualmente após revisão
 
-Deno's `resolveDns()` throws errors **without** an `error.code` property (unlike Node.js). The code checks both `error.code === "ENODATA"` and `error.message?.includes("no records found")`.
-
-If no CNAME is found and the subdomain is not `redirect`, it retries with `redirect.` prefix (e.g., `example.com` → `redirect.example.com`).
-
-## Landing Page (`views/index.vto`)
-
-- **Bilingual:** EN/PT with browser language auto-detection (`navigator.language`)
-- **Language switching:** CSS-based via `body[data-lang="en"] .pt { display: none }` and vice versa
-- **Language persistence:** `localStorage.setItem('lang', lang)`
-- **`<html lang>` is updated dynamically** when language is switched
-- **SEO:** JSON-LD structured data, Open Graph, Twitter Card, canonical URL, hreflang alternates
-- **Footer:** Multilingual SEO text blocks in 12 languages (en, pt, es, de, fr, it, ja, ru, ko, zh, ar, hi) with `lang` attributes
-- **CNAME Generator:** Modal with URL-to-CNAME converter (uses base32.js from unpkg)
-- **Sections:** Hero → How it works (3 steps) → How to use (accordion examples) → CNAME Generator button → Parameters Reference table → Footer
-
-### Vento Template Syntax
-
-- Variables: `{{ app.fqdn }}`, `{{ statistics.periodDomains }}`
-- NOT Handlebars — no `{{#each}}`, no `{{> partial}}`, no `{{{ unescaped }}}`
-- Vento docs: https://vento.js.org/
-
-## Routing (main.ts)
-
-- `GET /` with `host === config.fqdn` → Render landing page
-- `ALL /*` with `host === config.fqdn` → Return 404 JSON (prevents favicon.ico errors)
-- `ALL /*` with any other host → Redirect logic
-- Static files: `/public/*` served via `hono/deno` serveStatic
-
-## Testing
-
-- Tests use `Deno.test()` natively
-- Test files: `*_test.ts` next to source files
-- Run with `deno task test` (NOT bare `deno test` — needs flags)
-- 50 tests total: 25 redirect parsing + 25 base32 (duplicated across worktree)
-
-## Guardian (Blacklist)
-
-- `db/guardian.json` contains `{"denyFqdn": ["blocked-domain.com"]}`
-- Reloaded every 60 seconds
-- Checks both the full FQDN and the base domain (via `psl` library)
-- Blocks both source (incoming) and destination (redirect target) domains
-
-## systemd (Production)
-
-- Service file: `redirect-center.service`
-- Install: `sudo cp redirect-center.service /etc/systemd/system/ && sudo systemctl daemon-reload`
-- Enable on boot: `sudo systemctl enable redirect-center`
-- Start: `sudo systemctl start redirect-center`
-- Stop: `sudo systemctl stop redirect-center`
-- Logs: `journalctl -u redirect-center -f`
-- Auto-restarts on crash (`Restart=always`, `RestartSec=3`)
-- Runs as `www-data` user with security hardening
-- Adjust `WorkingDirectory` and `User` in the service file as needed
-
-## Docker
-
-```bash
-docker build -t redirect-center .
-docker run -p 3000:3000 -e FQDN=redirect.center -e ENTRY_IP=1.2.3.4 redirect-center
-```
-
-## Important Notes
-
-- The `--watch` flag in `deno task dev` only watches `.ts` files. Changes to `.vto` templates require touching `main.ts` or restarting the server
-- Deno KV is used for statistics — no external database needed
-- The project was migrated from NestJS/Node.js to Deno in March 2026
+## Protecções implementadas
+- Loop detection via cookies (max 3 redirects em 10s)
+- Guardian blacklist (db/guardian.json, recarregado a cada 60s)
+- Host validation (rejeita caracteres inválidos em DNS)
+- Path traversal protection (URLs maliciosas retornam 400)
+- Bot blocking (requests sem User-Agent retornam 403 na landing page)
+- Gzip compression em todas as respostas
+- Logger com níveis (debug só em dev)

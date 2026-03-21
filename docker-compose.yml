@@ -1,0 +1,58 @@
+services:
+  postgres:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: redirect_center
+      POSTGRES_USER: redirect_center
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://redirect_center:dev_password@postgres:5432/redirect_center
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_FROM: noreply@redirect.center
+      STRIPE_SECRET_KEY: sk_test_placeholder
+      STRIPE_PUBLISHABLE_KEY: pk_test_placeholder
+      STRIPE_WEBHOOK_SECRET: whsec_placeholder
+      STRIPE_PRICE_SIMPLE_MONTHLY: price_placeholder
+      STRIPE_PRICE_SIMPLE_YEARLY: price_placeholder
+      STRIPE_PRICE_WILDCARD_MONTHLY: price_placeholder
+      STRIPE_PRICE_WILDCARD_YEARLY: price_placeholder
+      BASE_URL: http://localhost:8000
+      WEB_PORT: 8000
+      SESSION_DURATION_HOURS: 3
+      MAGIC_LINK_DURATION_HOURS: 24
+    depends_on:
+      - postgres
+      - mailhog
+
+  redirect:
+    build:
+      context: .
+      dockerfile: packages/redirect/Dockerfile
+    ports:
+      - "8080:80"
+    environment:
+      FQDN: redirect.center
+      LISTEN_PORT: 80
+      ENTRY_IP: 127.0.0.1
+      LOGGER_LEVEL: info
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+volumes:
+  pgdata:

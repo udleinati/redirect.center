@@ -1,17 +1,25 @@
-## Code style
-This project uses [JavaScript Standard Style](https://standardjs.com/). You can use any editor able to read .eslintrc specifications and the .editorconfig file.
+## Contributing
 
-[![JavaScript Style Guide](https://cdn.rawgit.com/feross/standard/master/badge.svg)](https://github.com/feross/standard)
+### Prerequisites
+- [Deno](https://deno.land/) v2+
+- [Docker](https://docs.docker.com/get-docker/) & Docker Compose
 
-#### Need a suggestion?
-* [Visual Studio Code](https://code.visualstudio.com/)
-Required extensions: ESLint, EditorConfig for VS Code.
-
-* [Atom](https://atom.io)
-Required extensions: linter-eslint, editorconfig
-## Remember
-See if you can upgrade any dependencies.
-
+### Setup
+```bash
+git clone https://github.com/udleinati/redirect.center.git
+cd redirect.center
+docker compose up
 ```
-$ npm outdated --depth 0
+
+### Code style
+- TypeScript strict mode
+- Use `.editorconfig` settings
+
+### Running tests
+```bash
+cd packages/redirect
+deno task test
 ```
+
+### Project structure
+This is a Deno workspace monorepo. See [CLAUDE.md](CLAUDE.md) for detailed architecture.

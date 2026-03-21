@@ -1,164 +1,166 @@
-[![All Contributors](https://img.shields.io/badge/all_contributors-1-orange.svg?style=flat-square)](#contributors)
-[![Backers on Open Collective](https://opencollective.com/redirectcenter/backers/badge.svg)](#backers)
-[![Sponsors on Open Collective](https://opencollective.com/redirectcenter/sponsors/badge.svg)](#sponsors)
-
 # redirect.center
-Redirect domains using DNS only.
 
-## Requirements
+A free, open-source DNS-based domain redirect service. Create CNAME records pointing to `redirect.center` and the service performs HTTP redirects — no server, no hosting, no code needed.
+
+## How it works
+
+1. Create a CNAME record on your domain pointing to `redirect.center`
+2. The service resolves the DNS record and extracts the destination URL
+3. Visitors are automatically redirected via HTTP 301
+
+**Example:** To redirect `go.example.com` → `https://example.com/landing`:
+```
+go.example.com  CNAME  example.com.opts-slash.landing.opts-https.redirect.center
+```
+
+## Project structure
+
+```
+redirect.center/
+├── packages/
+│   ├── shared/          # Shared code (DB, types, config)
+│   ├── web/             # Web service (landing page + subscription dashboard)
+│   └── redirect/        # Redirect service (DNS-based HTTP redirects)
+├── docker-compose.yml   # Development environment
+└── deno.json            # Workspace root
+```
+
+## Prerequisites
 
 - [Deno](https://deno.land/) v2+
+- [Docker](https://docs.docker.com/get-docker/) (for development)
 
-## How do I install?
+## Development
 
-```sh
-cd /opt
-git clone https://github.com/udleinati/redirect.center.git
-cd redirect.center
+```bash
+# Start all services (web + redirect + postgres + mailhog)
+docker compose up
+
+# Or run individually:
+cd packages/redirect && deno task dev    # Redirect service (port 80)
+cd packages/web && deno task dev         # Web service (port 8000)
 ```
 
-## Environment Variables
+MailHog UI is available at http://localhost:8025 to view sent emails.
 
-Look at the file `./src/config.ts` to see all available environment variables.
-You must set at least these variables:
+## Production deployment
 
-```sh
-export FQDN=redirect.center
-export ENTRY_IP=54.84.55.102
-export LISTEN_PORT=80
+### Redirect service (systemd)
+
+1. Clone the repository:
+```bash
+git clone https://github.com/udleinati/redirect.center.git /opt/redirect.center
 ```
 
-| Variable | Default | Description |
-|---|---|---|
-| `FQDN` | `localhost` | Service domain (used to detect homepage vs redirect) |
-| `ENTRY_IP` | `127.0.0.1` | IP users must set in their A record |
-| `LISTEN_PORT` | `3000` | Server port |
-| `LISTEN_IP` | `0.0.0.0` | Server bind address |
-| `ENVIRONMENT` | `dev1` | Environment name |
-| `PROJECT_NAME` | `redirect.center` | Displayed in UI and meta tags |
-| `LOGGER_LEVEL` | `debug` | Log level |
-
-## How do I run in development?
-
-```sh
-deno task dev
+2. Copy the systemd service file:
+```bash
+sudo cp /opt/redirect.center/redirect-center.service /etc/systemd/system/
 ```
 
-## How do I run tests?
-
-```sh
-deno task test
-```
-
-## How do I run in production?
-
-### Option 1: systemd (recommended)
-
-This runs the service in the background, auto-restarts on crash, and starts on boot.
-You can SSH in, start it, and disconnect without issues.
-
-```sh
-# 1. Copy the service file to systemd
-sudo cp redirect-center.service /etc/systemd/system/
-
-# 2. Edit the service file to match your environment
-#    - WorkingDirectory: path to your project (default: /opt/redirect-center)
-#    - User: the system user to run as (default: www-data)
-#    - ExecStart: path to deno binary (check with: which deno)
-#    In the editor, add:
-#      [Service]
-#        Environment=FQDN=redirect.center
-#        Environment=ENTRY_IP=54.84.55.102
-#        Environment=LISTEN_PORT=80
+3. Edit the service file if needed (adjust paths, user, env vars):
+```bash
 sudo nano /etc/systemd/system/redirect-center.service
+```
 
-# 4. Reload systemd, enable on boot, and start
+4. Enable and start the service:
+```bash
 sudo systemctl daemon-reload
 sudo systemctl enable redirect-center
 sudo systemctl start redirect-center
 ```
 
-**Common systemd commands:**
-
-```sh
-sudo systemctl status redirect-center    # Check if running
-sudo systemctl restart redirect-center   # Restart
-sudo systemctl stop redirect-center      # Stop
-journalctl -u redirect-center -f         # View logs in real-time
-journalctl -u redirect-center --since today  # Today's logs
+5. Check status and logs:
+```bash
+sudo systemctl status redirect-center
+sudo journalctl -u redirect-center -f
 ```
 
-**Log rotation (recommended):**
+### Log management
 
-To limit logs to max 1GB and 7 days, edit `/etc/systemd/journald.conf`:
+The service uses systemd journal. To limit log size:
 
-```sh
-sudo nano /etc/systemd/journald.conf
+```bash
+# Clean logs older than 7 days
+sudo journalctl --vacuum-time=7d
+
+# Limit total log size to 1GB
+sudo journalctl --vacuum-size=1G
 ```
 
-Set or uncomment these lines:
-
+To set permanent limits, edit `/etc/systemd/journald.conf`:
 ```ini
 [Journal]
 SystemMaxUse=1G
 MaxRetentionSec=7day
 ```
+Then restart journald: `sudo systemctl restart systemd-journald`
 
-Then restart journald:
+### Updating
 
-```sh
-sudo systemctl restart systemd-journald
+```bash
+cd /opt/redirect.center
+git pull
+sudo systemctl restart redirect-center
 ```
 
-To manually clean old logs:
+## Environment variables
 
-```sh
-sudo journalctl --vacuum-size=1G --vacuum-time=7d
-```
+### Redirect service
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `FQDN` | `localhost` | Service domain name |
+| `ENTRY_IP` | `127.0.0.1` | IP address for A record |
+| `LISTEN_PORT` | `3000` | HTTP listen port |
+| `LOGGER_LEVEL` | `debug` | Log level: debug, info, warn, error |
 
-### Option 2: Direct (foreground)
+### Web service
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DATABASE_URL` | `postgresql://...@localhost:5432/redirect_center` | PostgreSQL connection string |
+| `WEB_PORT` | `8000` | HTTP listen port |
+| `BASE_URL` | `http://localhost:8000` | Public URL |
+| `SMTP_HOST` | — | SMTP server host |
+| `SMTP_PORT` | `587` | SMTP server port |
+| `SMTP_USER` | — | SMTP username |
+| `SMTP_PASS` | — | SMTP password |
+| `SMTP_FROM` | `noreply@redirect.center` | Sender email |
+| `STRIPE_SECRET_KEY` | — | Stripe secret key |
+| `STRIPE_PUBLISHABLE_KEY` | — | Stripe publishable key |
+| `STRIPE_WEBHOOK_SECRET` | — | Stripe webhook secret |
 
-```sh
-deno task start
-```
+## Stripe setup
 
-## DNS Setup
+1. Create a Stripe account at https://stripe.com
+2. Create 4 Products/Prices in the Stripe Dashboard:
+   - **Simple Monthly** — monthly price for a simple seat
+   - **Simple Yearly** — yearly price (10% discount vs monthly × 12)
+   - **Wildcard Monthly** — monthly price for a wildcard seat
+   - **Wildcard Yearly** — yearly price (10% discount vs monthly × 12)
+3. Copy each `price_id` to the corresponding env vars
+4. Configure a webhook at `{BASE_URL}/api/webhooks/stripe` with events:
+   - `checkout.session.completed`
+   - `customer.subscription.updated`
+   - `customer.subscription.deleted`
+   - `invoice.payment_failed`
+5. Copy the webhook secret to `STRIPE_WEBHOOK_SECRET`
+6. Configure the Customer Portal in Stripe Dashboard → Settings → Customer Portal
 
-Create a wildcard entry in your DNS:
+## DNS modifiers
 
-```
-*.redirect.center CNAME redirect.center
-```
+| Modifier | Example | Description |
+|----------|---------|-------------|
+| `.opts-https` | `example.com.opts-https.redirect.center` | Redirect to HTTPS |
+| `.opts-statuscode-{code}` | `example.com.opts-statuscode-302.redirect.center` | Custom status code (301/302/307/308) |
+| `.opts-slash.{path}` | `example.com.opts-slash.page.redirect.center` | Add path `/page` |
+| `.opts-path-{base32}` | `example.com.opts-path-F52GK43U.redirect.center` | Base32-encoded path |
+| `.opts-query-{base32}` | `example.com.opts-query-MFRGGPLEMVTA.redirect.center` | Base32-encoded query string |
+| `.opts-port-{number}` | `example.com.opts-port-8080.redirect.center` | Custom port |
+| `.opts-uri` | `example.com.opts-uri.redirect.center` | Pass original URI through |
 
-## Contributors
+## Contributing
 
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore -->
-| [<img src="https://avatars0.githubusercontent.com/u/302277?v=4" width="100px;"/><br /><sub><b>Udlei Nati</b></sub>](https://github.com/udleinati)<br />[💻](https://github.com/udleinati/redirect.center/commits?author=udleinati "Code") [📖](https://github.com/udleinati/redirect.center/commits?author=udleinati "Documentation") [🤔](#ideas-udleinati "Ideas, Planning, & Feedback") [🚇](#infra-udleinati "Infrastructure (Hosting, Build-Tools, etc)") |
-| :---: |
-<!-- ALL-CONTRIBUTORS-LIST:END -->
+## License
 
-
-## Backers
-
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/redirectcenter#backer)]
-
-<a href="https://opencollective.com/redirectcenter#backers" target="_blank"><img src="https://opencollective.com/redirectcenter/backers.svg?width=890"></a>
-
-
-## Sponsors
-
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/redirectcenter#sponsor)]
-
-<a href="https://opencollective.com/redirectcenter/sponsor/0/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/0/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/1/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/1/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/2/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/2/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/3/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/3/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/4/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/4/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/5/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/5/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/6/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/6/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/7/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/7/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/8/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/8/avatar.svg"></a>
-<a href="https://opencollective.com/redirectcenter/sponsor/9/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/9/avatar.svg"></a>
+MIT

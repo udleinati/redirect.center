@@ -1,0 +1,17 @@
+{
+  "name": "@redirect-center/web",
+  "version": "0.1.0",
+  "exports": "./src/main.ts",
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-read --allow-env --allow-write src/main.ts",
+    "start": "deno run --allow-net --allow-read --allow-env --allow-write src/main.ts"
+  },
+  "imports": {
+    "hono": "jsr:@hono/hono@^4",
+    "hono/cookie": "jsr:@hono/hono@^4/cookie",
+    "hono/compress": "jsr:@hono/hono@^4/compress",
+    "hono/deno": "jsr:@hono/hono@^4/deno",
+    "hono/": "jsr:@hono/hono@^4/",
+    "stripe": "npm:stripe@^14"
+  }
+}

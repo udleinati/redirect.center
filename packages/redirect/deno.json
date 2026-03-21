@@ -1,0 +1,20 @@
+{
+  "name": "@redirect-center/redirect",
+  "version": "0.1.0",
+  "exports": "./src/main.ts",
+  "tasks": {
+    "dev": "deno run --watch --allow-net --allow-read --allow-env --unstable-kv src/main.ts",
+    "start": "deno run --allow-net --allow-read --allow-env --unstable-kv src/main.ts",
+    "test": "deno test --allow-net --allow-read --allow-env --unstable-kv"
+  },
+  "imports": {
+    "hono": "jsr:@hono/hono@^4",
+    "hono/cookie": "jsr:@hono/hono@^4/cookie",
+    "hono/compress": "jsr:@hono/hono@^4/compress",
+    "hono/deno": "jsr:@hono/hono@^4/deno",
+    "hono/": "jsr:@hono/hono@^4/",
+    "ventojs": "https://deno.land/x/vento@v1.12.12/mod.ts",
+    "psl": "npm:psl@^1.9.0",
+    "parse-domain": "npm:parse-domain@^5.0.0"
+  }
+}

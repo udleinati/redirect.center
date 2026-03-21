@@ -1,0 +1,10 @@
+{
+  "name": "@redirect-center/shared",
+  "version": "0.1.0",
+  "exports": {
+    ".": "./src/mod.ts",
+    "./db": "./src/db/mod.ts",
+    "./types": "./src/types.ts",
+    "./config": "./src/config.ts"
+  }
+}
