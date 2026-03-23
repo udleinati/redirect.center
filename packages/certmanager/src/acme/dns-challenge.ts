@@ -3,7 +3,7 @@
  *
  * Instead of requiring users to create TXT records directly,
  * we ask them to create a CNAME:
- *   _acme-challenge.example.com → _acme-challenge.example.com.acme.redirect.center
+ *   _acme-challenge.example.com → _acme-challenge.example.com.acme.${FQDN}
  *
  * Then we manage the TXT records in our own DNS zone (acme.redirect.center)
  * via the DNS provider API (Route53, Cloudflare, etc.).
@@ -13,17 +13,18 @@
  */
 
 const DNS_PROVIDER = Deno.env.get("DNS_PROVIDER") ?? "mock";
+const FQDN = Deno.env.get("FQDN") ?? "redirect.center";
 
 /**
  * Set a TXT record for the ACME challenge in our DNS zone.
- * Record name: _acme-challenge.{domain}.acme.redirect.center
+ * Record name: _acme-challenge.{domain}.acme.${FQDN}
  * Record value: {keyAuthorization}
  */
 export async function setChallengeTxtRecord(
   domain: string,
   keyAuthorization: string,
 ): Promise<void> {
-  const recordName = `_acme-challenge.${domain}.acme.redirect.center`;
+  const recordName = `_acme-challenge.${domain}.acme.${FQDN}`;
 
   switch (DNS_PROVIDER) {
     case "route53":
@@ -45,7 +46,7 @@ export async function setChallengeTxtRecord(
  * Remove a TXT record after certificate issuance.
  */
 export async function removeChallengeTxtRecord(domain: string): Promise<void> {
-  const recordName = `_acme-challenge.${domain}.acme.redirect.center`;
+  const recordName = `_acme-challenge.${domain}.acme.${FQDN}`;
 
   switch (DNS_PROVIDER) {
     case "route53":

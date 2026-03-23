@@ -9,6 +9,8 @@ const CADDY_ADMIN_API =
   Deno.env.get("CADDY_ADMIN_API") ?? "http://localhost:2019";
 const REDIRECT_UPSTREAM =
   Deno.env.get("REDIRECT_UPSTREAM") ?? "http://redirect:80";
+const WEB_UPSTREAM = Deno.env.get("WEB_UPSTREAM") ?? "http://web:8000";
+const FQDN = Deno.env.get("FQDN") ?? "redirect.center";
 const CERTS_DIR = "/certs";
 
 /**
@@ -40,11 +42,47 @@ export function buildCaddyConfig(domains: string[]): Record<string, unknown> {
       },
       http: {
         servers: {
-          https: {
-            listen: [":443"],
+          http: {
+            listen: [":80"],
+            automatic_https: { disable: true },
             routes: [
               {
-                // Default route: proxy everything to redirect service
+                // FQDN match: proxy to web service
+                match: [{ host: [FQDN] }],
+                handle: [
+                  {
+                    handler: "reverse_proxy",
+                    upstreams: [{ dial: WEB_UPSTREAM.replace(/^https?:\/\//, "") }],
+                  },
+                ],
+              },
+              {
+                // Everything else: proxy to redirect service
+                handle: [
+                  {
+                    handler: "reverse_proxy",
+                    upstreams: [{ dial: REDIRECT_UPSTREAM.replace(/^https?:\/\//, "") }],
+                  },
+                ],
+              },
+            ],
+          },
+          https: {
+            listen: [":443"],
+            automatic_https: { disable: true },
+            routes: [
+              {
+                // FQDN match: proxy to web service
+                match: [{ host: [FQDN] }],
+                handle: [
+                  {
+                    handler: "reverse_proxy",
+                    upstreams: [{ dial: WEB_UPSTREAM.replace(/^https?:\/\//, "") }],
+                  },
+                ],
+              },
+              {
+                // Everything else: proxy to redirect service
                 handle: [
                   {
                     handler: "reverse_proxy",

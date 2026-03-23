@@ -6,8 +6,6 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-redirect_center}
       POSTGRES_USER: ${POSTGRES_USER:-redirect_center}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redirect_center} -d ${POSTGRES_DB:-redirect_center}"]
       interval: 10s
@@ -57,7 +55,8 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
-      SMTP_FROM: ${SMTP_FROM:-noreply@redirect.center}
+      FQDN: ${FQDN:-redirect.center}
+      SMTP_FROM: ${SMTP_FROM:-noreply@${FQDN:-redirect.center}}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in .env}
       STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:?Set STRIPE_PUBLISHABLE_KEY in .env}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in .env}
@@ -65,7 +64,7 @@ services:
       STRIPE_PRICE_SIMPLE_YEARLY: ${STRIPE_PRICE_SIMPLE_YEARLY}
       STRIPE_PRICE_WILDCARD_MONTHLY: ${STRIPE_PRICE_WILDCARD_MONTHLY}
       STRIPE_PRICE_WILDCARD_YEARLY: ${STRIPE_PRICE_WILDCARD_YEARLY}
-      BASE_URL: ${BASE_URL:-https://redirect.center}
+      BASE_URL: ${BASE_URL:-https://${FQDN:-redirect.center}}
       WEB_PORT: 8000
       SESSION_DURATION_HOURS: ${SESSION_DURATION_HOURS:-24}
       MAGIC_LINK_DURATION_HOURS: ${MAGIC_LINK_DURATION_HOURS:-1}
@@ -125,12 +124,13 @@ services:
       CERT_ENCRYPTION_KEY: ${CERT_ENCRYPTION_KEY:?Set CERT_ENCRYPTION_KEY in .env (64 hex chars)}
       ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-https://acme-v02.api.letsencrypt.org/directory}
       DNS_PROVIDER: ${DNS_PROVIDER:-cloudflare}
+      FQDN: ${FQDN:-redirect.center}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
-      SMTP_FROM: ${SMTP_FROM:-noreply@redirect.center}
-      BASE_URL: ${BASE_URL:-https://redirect.center}
+      SMTP_FROM: ${SMTP_FROM:-noreply@${FQDN:-redirect.center}}
+      BASE_URL: ${BASE_URL:-https://${FQDN:-redirect.center}}
       VALIDATION_WORKER_INTERVAL_SECONDS: ${VALIDATION_WORKER_INTERVAL_SECONDS:-60}
       RENEWAL_WORKER_INTERVAL_SECONDS: ${RENEWAL_WORKER_INTERVAL_SECONDS:-3600}
       NOTIFICATION_WORKER_INTERVAL_SECONDS: ${NOTIFICATION_WORKER_INTERVAL_SECONDS:-3600}
@@ -164,6 +164,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-redirect_center}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-redirect_center}
       CERT_ENCRYPTION_KEY: ${CERT_ENCRYPTION_KEY}
+      FQDN: ${FQDN:-redirect.center}
+      WEB_UPSTREAM: http://web:8000
       CADDY_ADMIN_API: http://localhost:2019
       REDIRECT_UPSTREAM: http://redirect:80
       SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-30}
@@ -193,9 +195,7 @@ services:
 
 volumes:
   pgdata:
-    driver: local
   cert-data:
-    driver: local
 
 networks:
   internal:

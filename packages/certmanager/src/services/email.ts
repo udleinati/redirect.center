@@ -3,11 +3,13 @@
  * Reuses the same SMTP config as the web service.
  */
 
+import nodemailer from "nodemailer";
+
 const SMTP_HOST = Deno.env.get("SMTP_HOST");
 const SMTP_PORT = parseInt(Deno.env.get("SMTP_PORT") ?? "587", 10);
 const SMTP_USER = Deno.env.get("SMTP_USER");
 const SMTP_PASS = Deno.env.get("SMTP_PASS");
-const SMTP_FROM = Deno.env.get("SMTP_FROM") ?? "noreply@redirect.center";
+const SMTP_FROM = Deno.env.get("SMTP_FROM") ?? `noreply@${Deno.env.get("FQDN") ?? "redirect.center"}`;
 const BASE_URL = Deno.env.get("BASE_URL") ?? "http://localhost:8000";
 
 export async function sendCertificateEmail(
@@ -21,30 +23,28 @@ export async function sendCertificateEmail(
   }
 
   try {
-    // Dynamic import to avoid loading denomailer if SMTP not configured
-    const { SmtpClient } = await import("https://deno.land/x/denomailer@1.6.0/mod.ts");
+    const hasAuth = !!(SMTP_USER && SMTP_PASS);
 
-    const client = new SmtpClient();
-
-    const connectConfig: Record<string, unknown> = {
-      hostname: SMTP_HOST,
+    const transporter = nodemailer.createTransport({
+      host: SMTP_HOST,
       port: SMTP_PORT,
-    };
+      secure: SMTP_PORT === 465,
+      ...(hasAuth
+        ? {
+            auth: {
+              user: SMTP_USER!,
+              pass: SMTP_PASS!,
+            },
+          }
+        : {}),
+    });
 
-    if (SMTP_USER && SMTP_PASS) {
-      connectConfig.username = SMTP_USER;
-      connectConfig.password = SMTP_PASS;
-    }
-
-    await client.connect(connectConfig);
-    await client.send({
+    await transporter.sendMail({
       from: SMTP_FROM,
       to,
       subject,
-      content: "",
       html: htmlBody,
     });
-    await client.close();
 
     console.log(`[email] Sent: "${subject}" to ${to}`);
   } catch (error) {

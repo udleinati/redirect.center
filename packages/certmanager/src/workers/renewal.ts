@@ -25,12 +25,12 @@ export function startRenewalWorker(): void {
 
       for (const cert of expiringCerts) {
         try {
-          // Verify domain still points to redirect.center
+          // Verify domain still points to our service
           const cnameValid = await verifyCnamePointsToRedirectCenter(cert.domain);
           if (!cnameValid) {
             await certificateQueries.markRenewalFailed(
               cert.id,
-              "CNAME no longer points to redirect.center",
+              `CNAME no longer points to ${Deno.env.get("FQDN") ?? "redirect.center"}`,
             );
             console.log(`[renewal-worker] Skipping ${cert.domain}: CNAME invalid`);
             continue;

@@ -23,6 +23,6 @@ RUN deno cache src/main.ts
 # Create certs directory
 RUN mkdir -p /certs
 
-EXPOSE 443
+EXPOSE 80 443
 
 CMD ["/entrypoint.sh"]

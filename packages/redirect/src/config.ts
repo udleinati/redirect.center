@@ -15,7 +15,7 @@ export function loadConfig(): AppConfig {
     listenPort: Number(Deno.env.get("LISTEN_PORT")) || 3000,
     listenIp: Deno.env.get("LISTEN_IP") || "0.0.0.0",
     environment: Deno.env.get("ENVIRONMENT") || "dev1",
-    projectName: Deno.env.get("PROJECT_NAME") || "redirect.center",
+    projectName: Deno.env.get("PROJECT_NAME") || Deno.env.get("FQDN") || "redirect.center",
     loggerLevel: Deno.env.get("LOGGER_LEVEL") || "debug",
   };
 }

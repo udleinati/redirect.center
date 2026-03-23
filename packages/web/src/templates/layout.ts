@@ -1,4 +1,5 @@
 import type { User } from "../../../shared/src/types.ts";
+import { getConfig } from "../../../shared/src/config.ts";
 
 let _sandbox: boolean | null = null;
 
@@ -11,6 +12,7 @@ export function isSandbox(): boolean {
 
 export function layout(title: string, content: string, user?: User): string {
   const sandbox = isSandbox();
+  const fqdn = getConfig().fqdn ?? "redirect.center";
   const navLinks = user
     ? `<div class="flex items-center gap-4">
          <span class="text-sm text-gray-600">${escapeHtml(user.email)}</span>
@@ -26,14 +28,14 @@ export function layout(title: string, content: string, user?: User): string {
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${escapeHtml(title)} - redirect.center</title>
+  <title>${escapeHtml(title)} - ${fqdn}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
   ${sandbox ? `<div class="bg-amber-500 text-white text-center text-xs font-semibold py-1.5 tracking-wide uppercase">Sandbox Environment &mdash; This is a test environment. No real data or charges.</div>` : ""}
   <nav class="bg-white border-b border-gray-200">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <a href="/" class="text-xl font-bold text-blue-600">redirect.center</a>
+      <a href="/" class="text-xl font-bold text-blue-600">${fqdn}</a>
       ${navLinks}
     </div>
   </nav>
@@ -42,11 +44,11 @@ export function layout(title: string, content: string, user?: User): string {
   </main>
   <footer class="border-t border-gray-200 bg-white">
     <div class="max-w-5xl mx-auto px-4 py-6 text-center text-sm text-gray-500 space-y-2">
-      <p>redirect.center &mdash; Free DNS-based redirect service</p>
+      <p>${fqdn} &mdash; Free DNS-based redirect service</p>
       <p class="flex items-center justify-center gap-3">
-        <a href="mailto:support@redirect.center" class="inline-flex items-center gap-1 hover:text-gray-700 transition">
+        <a href="mailto:support@${fqdn}" class="inline-flex items-center gap-1 hover:text-gray-700 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-          support@redirect.center
+          support@${fqdn}
         </a>
         <span class="text-gray-300">&middot;</span>
         <span class="inline-flex items-center gap-1">

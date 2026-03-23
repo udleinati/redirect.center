@@ -12,6 +12,7 @@
     "hono/compress": "jsr:@hono/hono@^4/compress",
     "hono/deno": "jsr:@hono/hono@^4/deno",
     "hono/": "jsr:@hono/hono@^4/",
-    "stripe": "npm:stripe@^14"
+    "stripe": "npm:stripe@^14",
+    "nodemailer": "npm:nodemailer@^6"
   }
 }

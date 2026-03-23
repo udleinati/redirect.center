@@ -22,11 +22,12 @@ export async function sendMagicLink(email: string): Promise<void> {
 
   // Build verification URL
   const verifyUrl = `${config.baseUrl}/auth/verify?token=${token}`;
+  console.log(`[auth] Magic link for ${email}: ${verifyUrl}`);
 
   // Send email
   const html = `
     <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #2563eb;">redirect.center</h2>
+      <h2 style="color: #2563eb;">${config.fqdn ?? "redirect.center"}</h2>
       <p>Click the link below to sign in to your account:</p>
       <p style="margin: 24px 0;">
         <a href="${verifyUrl}"
@@ -41,7 +42,7 @@ export async function sendMagicLink(email: string): Promise<void> {
     </div>
   `;
 
-  await sendEmail(email, "Sign in to redirect.center", html);
+  await sendEmail(email, `Sign in to ${config.fqdn ?? "redirect.center"}`, html);
 }
 
 export async function validateMagicLink(

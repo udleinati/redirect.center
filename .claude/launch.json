@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "redirect-center",
+      "runtimeExecutable": "deno",
+      "runtimeArgs": ["task", "dev"],
+      "port": 3000,
+      "env": {
+        "LISTEN_PORT": "3000",
+        "FQDN": "localhost",
+        "PORT": "3000",
+        "ENTRY_IP": "127.0.0.1"
+      }
+    }
+  ]
+}

@@ -1,5 +1,10 @@
 import { layout, escapeHtml } from "./layout.ts";
+import { getConfig } from "../../../shared/src/config.ts";
 import type { User, Subscription, Domain, Certificate } from "../../../shared/src/types.ts";
+
+function getFqdn(): string {
+  return getConfig().fqdn ?? "redirect.center";
+}
 
 export function landingPage(): string {
   const content = `
@@ -31,7 +36,7 @@ export function landingPage(): string {
         </div>
         <p class="text-gray-600 max-w-2xl mx-auto">
           Create HTTP redirects at no cost, with no account required. Simply point a CNAME record to
-          redirect.center and encode your target in the subdomain.
+          ${getFqdn()} and encode your target in the subdomain.
         </p>
       </div>
     </section>
@@ -49,7 +54,7 @@ export function landingPage(): string {
           <div class="bg-white p-6 rounded-xl shadow-sm">
             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold mb-4">2</div>
             <h3 class="font-semibold mb-2">Create a CNAME</h3>
-            <p class="text-sm text-gray-600">Point your domain's CNAME record to the encoded subdomain at redirect.center.</p>
+            <p class="text-sm text-gray-600">Point your domain's CNAME record to the encoded subdomain at ${getFqdn()}.</p>
           </div>
           <div class="bg-white p-6 rounded-xl shadow-sm">
             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold mb-4">3</div>
@@ -172,10 +177,10 @@ function termsContent(): string {
         <div class="prose prose-gray max-w-none space-y-6 text-sm leading-relaxed text-gray-700">
           <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Introduction &amp; Acceptance</h2>
-            <p>By accessing or using the redirect.center service ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, you must not use the Service.</p>
-            <p>The Service is operated by redirect.center ("We", "Us"). The following definitions apply throughout these Terms:</p>
+            <p>By accessing or using the ${getFqdn()} service ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, you must not use the Service.</p>
+            <p>The Service is operated by ${getFqdn()} ("We", "Us"). The following definitions apply throughout these Terms:</p>
             <ul class="list-disc pl-6 space-y-1">
-              <li><strong>Service</strong> &mdash; the DNS-based domain redirect platform provided at redirect.center.</li>
+              <li><strong>Service</strong> &mdash; the DNS-based domain redirect platform provided at ${getFqdn()}.</li>
               <li><strong>User</strong> &mdash; any person or entity that uses the Service, including the free tier.</li>
               <li><strong>Subscriber</strong> &mdash; a User who has subscribed to a paid plan.</li>
             </ul>
@@ -183,7 +188,7 @@ function termsContent(): string {
 
           <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Service Description</h2>
-            <p>redirect.center is a DNS-based domain redirect service. Users configure CNAME records pointing to redirect.center, and the Service performs HTTP redirects based on the DNS configuration.</p>
+            <p>${getFqdn()} is a DNS-based domain redirect service. Users configure CNAME records pointing to ${getFqdn()}, and the Service performs HTTP redirects based on the DNS configuration.</p>
             <p>The Service offers:</p>
             <ul class="list-disc pl-6 space-y-1">
               <li><strong>Free HTTP redirects</strong> via CNAME records, with no account required.</li>
@@ -226,7 +231,7 @@ function termsContent(): string {
           </section>
 
           <section>
-            <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Termination by redirect.center</h2>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Termination by ${getFqdn()}</h2>
             <p>We may terminate a Subscriber's access to the Service at any time.</p>
             <p>If termination is initiated by Us and is <strong>not</strong> due to a violation of these Terms by the Subscriber, We will issue a <strong>pro-rata refund</strong> for the unused portion of the current billing period.</p>
             <p>For example: if a Subscriber paid for an annual plan and the Service is terminated after 6 months, the Subscriber will receive a refund of 50% of the annual fee.</p>
@@ -271,7 +276,7 @@ function termsContent(): string {
 
           <section>
             <h2 class="text-lg font-semibold text-gray-900 mb-2">12. Contact</h2>
-            <p>For questions about these Terms, please contact us at <a href="mailto:support@redirect.center" class="text-blue-600 hover:text-blue-800">support@redirect.center</a>.</p>
+            <p>For questions about these Terms, please contact us at <a href="mailto:support@${getFqdn()}" class="text-blue-600 hover:text-blue-800">support@${getFqdn()}</a>.</p>
           </section>
         </div>`;
 }
@@ -317,7 +322,7 @@ export function magicLinkSentPage(email: string): string {
 }
 
 function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | undefined): string {
-  const acmeCname = `_acme-challenge.${d.domain}.acme.redirect.center`;
+  const acmeCname = `_acme-challenge.${d.domain}.acme.${getFqdn()}`;
 
   // No certificate yet, or cert still pending/dns_configured — show DNS instructions or progress
   if (!cert || cert.status === "pending" || cert.status === "dns_configured") {

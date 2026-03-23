@@ -78,7 +78,7 @@ export async function validateAndIssueCertificate(domain: Domain): Promise<void>
       await certificateQueries.updateStatus(
         cert.id,
         "failed",
-        `CNAME record _acme-challenge.${domain.domain} not found or not pointing to acme.redirect.center`,
+        `CNAME record _acme-challenge.${domain.domain} not found or not pointing to acme.${Deno.env.get("FQDN") ?? "redirect.center"}`,
       );
       await domainQueries.updateValidationStatus(domain.id, "failed");
       console.log(`[cert] CNAME validation failed for ${domain.domain}`);

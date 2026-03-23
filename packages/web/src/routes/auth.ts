@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { getCookie, setCookie, deleteCookie } from "hono/cookie";
 import { sendMagicLink, validateMagicLink, logout } from "../services/auth.ts";
 import { loginPage, magicLinkSentPage, errorPage } from "../templates/pages.ts";
+import { getConfig } from "../../../shared/src/config.ts";
 
 const auth = new Hono();
 
@@ -47,12 +48,13 @@ auth.get("/verify", async (c) => {
     );
   }
 
+  const config = getConfig();
   setCookie(c, "_session", sessionToken, {
     path: "/",
     httpOnly: true,
-    secure: Deno.env.get("ENVIRONMENT") === "production",
+    secure: config.baseUrl.startsWith("https://"),
     sameSite: "Lax",
-    maxAge: 3 * 60 * 60, // 3 hours
+    maxAge: config.sessionDurationHours * 60 * 60,
   });
 
   return c.redirect("/dashboard");

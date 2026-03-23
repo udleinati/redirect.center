@@ -90,6 +90,8 @@ services:
     environment:
       DATABASE_URL: postgresql://redirect_center:dev_password@postgres:5432/redirect_center
       CERT_ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
+      FQDN: redirect.center
+      WEB_UPSTREAM: http://web:8000
       CADDY_ADMIN_API: http://localhost:2019
       REDIRECT_UPSTREAM: http://redirect:80
       SYNC_INTERVAL_SECONDS: 30

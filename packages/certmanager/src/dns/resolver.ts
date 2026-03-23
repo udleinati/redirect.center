@@ -9,6 +9,8 @@ const DNS_SERVERS: Deno.NameServer[] = [
   { ipAddr: "1.1.1.1", port: 53 },
 ];
 
+const FQDN = Deno.env.get("FQDN") ?? "redirect.center";
+
 /**
  * Verify that a TXT record exists for _acme-challenge.{domain}
  * with the expected token value.
@@ -29,12 +31,12 @@ export async function verifyDnsTxtChallenge(
 
 /**
  * Verify that _acme-challenge.{domain} has a CNAME pointing to
- * _acme-challenge.{domain}.acme.redirect.center
+ * _acme-challenge.{domain}.acme.${FQDN}
  * This is used for CNAME delegation approach.
  */
 export async function verifyDnsCnameChallenge(domain: string): Promise<boolean> {
   const challengeHost = `_acme-challenge.${domain}`;
-  const expectedCname = `_acme-challenge.${domain}.acme.redirect.center`;
+  const expectedCname = `_acme-challenge.${domain}.acme.${FQDN}`;
 
   // Try each DNS server
   for (const nameServer of DNS_SERVERS) {
@@ -68,7 +70,7 @@ export async function verifyCnamePointsToRedirectCenter(domain: string): Promise
     const records = await Deno.resolveDns(domain, "CNAME", { nameServer: DNS_SERVERS[0] });
     return records.some((record) => {
       const normalized = record.replace(/\.$/, "").toLowerCase();
-      return normalized.endsWith("redirect.center");
+      return normalized.endsWith(FQDN);
     });
   } catch {
     return false;

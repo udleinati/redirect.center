@@ -8,6 +8,7 @@
   },
   "imports": {
     "acme-client": "npm:acme-client@^5",
-    "@std/encoding": "jsr:@std/encoding@^1"
+    "@std/encoding": "jsr:@std/encoding@^1",
+    "nodemailer": "npm:nodemailer@^6"
   }
 }
