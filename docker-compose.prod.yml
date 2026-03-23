@@ -1,0 +1,202 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-redirect_center}
+      POSTGRES_USER: ${POSTGRES_USER:-redirect_center}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redirect_center} -d ${POSTGRES_DB:-redirect_center}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    command:
+      - postgres
+      - -c
+      - shared_buffers=128MB
+      - -c
+      - effective_cache_size=256MB
+      - -c
+      - work_mem=4MB
+      - -c
+      - maintenance_work_mem=64MB
+      - -c
+      - max_connections=50
+      - -c
+      - wal_buffers=4MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - random_page_cost=1.1
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-redirect_center}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-redirect_center}
+      SMTP_HOST: ${SMTP_HOST:?Set SMTP_HOST in .env}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-noreply@redirect.center}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:?Set STRIPE_SECRET_KEY in .env}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY:?Set STRIPE_PUBLISHABLE_KEY in .env}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:?Set STRIPE_WEBHOOK_SECRET in .env}
+      STRIPE_PRICE_SIMPLE_MONTHLY: ${STRIPE_PRICE_SIMPLE_MONTHLY}
+      STRIPE_PRICE_SIMPLE_YEARLY: ${STRIPE_PRICE_SIMPLE_YEARLY}
+      STRIPE_PRICE_WILDCARD_MONTHLY: ${STRIPE_PRICE_WILDCARD_MONTHLY}
+      STRIPE_PRICE_WILDCARD_YEARLY: ${STRIPE_PRICE_WILDCARD_YEARLY}
+      BASE_URL: ${BASE_URL:-https://redirect.center}
+      WEB_PORT: 8000
+      SESSION_DURATION_HOURS: ${SESSION_DURATION_HOURS:-24}
+      MAGIC_LINK_DURATION_HOURS: ${MAGIC_LINK_DURATION_HOURS:-1}
+      ENVIRONMENT: production
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redirect:
+    build:
+      context: .
+      dockerfile: packages/redirect/Dockerfile
+    restart: always
+    environment:
+      FQDN: ${FQDN:-redirect.center}
+      LISTEN_PORT: 80
+      LISTEN_IP: 0.0.0.0
+      ENTRY_IP: ${ENTRY_IP:?Set ENTRY_IP in .env}
+      ENVIRONMENT: production
+      PROJECT_NAME: ${PROJECT_NAME:-redirect.center}
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  certmanager:
+    build:
+      context: .
+      dockerfile: packages/certmanager/Dockerfile
+    restart: always
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-redirect_center}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-redirect_center}
+      CERT_ENCRYPTION_KEY: ${CERT_ENCRYPTION_KEY:?Set CERT_ENCRYPTION_KEY in .env (64 hex chars)}
+      ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-https://acme-v02.api.letsencrypt.org/directory}
+      DNS_PROVIDER: ${DNS_PROVIDER:-cloudflare}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM:-noreply@redirect.center}
+      BASE_URL: ${BASE_URL:-https://redirect.center}
+      VALIDATION_WORKER_INTERVAL_SECONDS: ${VALIDATION_WORKER_INTERVAL_SECONDS:-60}
+      RENEWAL_WORKER_INTERVAL_SECONDS: ${RENEWAL_WORKER_INTERVAL_SECONDS:-3600}
+      NOTIFICATION_WORKER_INTERVAL_SECONDS: ${NOTIFICATION_WORKER_INTERVAL_SECONDS:-3600}
+      ENVIRONMENT: production
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+        reservations:
+          memory: 128M
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  proxy:
+    build:
+      context: .
+      dockerfile: packages/proxy/Dockerfile
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-redirect_center}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-redirect_center}
+      CERT_ENCRYPTION_KEY: ${CERT_ENCRYPTION_KEY}
+      CADDY_ADMIN_API: http://localhost:2019
+      REDIRECT_UPSTREAM: http://redirect:80
+      SYNC_INTERVAL_SECONDS: ${SYNC_INTERVAL_SECONDS:-30}
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redirect:
+        condition: service_started
+      web:
+        condition: service_started
+    volumes:
+      - cert-data:/certs
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 192M
+    networks:
+      - internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  pgdata:
+    driver: local
+  cert-data:
+    driver: local
+
+networks:
+  internal:
+    driver: bridge
