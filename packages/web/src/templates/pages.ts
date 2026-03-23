@@ -27,7 +27,7 @@ export function landingPage(): string {
     <section class="py-16 bg-white">
       <div class="max-w-4xl mx-auto px-4 text-center">
         <div class="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-2 rounded-full text-sm font-medium mb-6">
-          HTTP redirects are FREE &mdash; forever
+          HTTP redirects are FREE
         </div>
         <p class="text-gray-600 max-w-2xl mx-auto">
           Create HTTP redirects at no cost, with no account required. Simply point a CNAME record to
@@ -119,11 +119,161 @@ export function landingPage(): string {
             </div>
           </div>
         </div>
-        <p class="text-center text-sm text-gray-500 mt-8">HTTP redirects remain <strong>free forever</strong>. Paid plans add HTTPS support with automatic certificate management.</p>
+        <p class="text-center text-sm text-gray-500 mt-8">HTTP redirects remain <strong>free</strong>. Paid plans add HTTPS support with automatic certificate management.</p>
       </div>
     </section>
   `;
   return layout("Free DNS-Based Domain Redirect Service", content);
+}
+
+export function termsPage(): string {
+  const content = `
+    <div class="max-w-3xl mx-auto px-4 py-12">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 md:p-12">
+        ${termsContent()}
+      </div>
+    </div>
+  `;
+  return layout("Terms of Service", content);
+}
+
+export function termsAcceptPage(user: User): string {
+  const content = `
+    <div class="max-w-3xl mx-auto px-4 py-12">
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 md:p-12">
+        ${termsContent()}
+        <form method="POST" action="/terms/accept" class="mt-8 border-t border-gray-200 pt-6">
+          <label class="flex items-start gap-3 cursor-pointer">
+            <input type="checkbox" id="tos-checkbox" class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+            <span class="text-sm text-gray-700">I have read and agree to the Terms of Service</span>
+          </label>
+          <button type="submit" id="tos-submit"
+            class="mt-4 w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg font-medium transition disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700"
+            disabled>
+            Continue
+          </button>
+        </form>
+        <script>
+          document.getElementById('tos-checkbox').addEventListener('change', function() {
+            document.getElementById('tos-submit').disabled = !this.checked;
+          });
+        </script>
+      </div>
+    </div>
+  `;
+  return layout("Accept Terms of Service", content, user);
+}
+
+function termsContent(): string {
+  return `
+        <h1 class="text-3xl font-bold mb-2">Terms of Service</h1>
+        <p class="text-sm text-gray-500 mb-8">Last updated: March 23, 2026</p>
+
+        <div class="prose prose-gray max-w-none space-y-6 text-sm leading-relaxed text-gray-700">
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">1. Introduction &amp; Acceptance</h2>
+            <p>By accessing or using the redirect.center service ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree, you must not use the Service.</p>
+            <p>The Service is operated by redirect.center ("We", "Us"). The following definitions apply throughout these Terms:</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li><strong>Service</strong> &mdash; the DNS-based domain redirect platform provided at redirect.center.</li>
+              <li><strong>User</strong> &mdash; any person or entity that uses the Service, including the free tier.</li>
+              <li><strong>Subscriber</strong> &mdash; a User who has subscribed to a paid plan.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">2. Service Description</h2>
+            <p>redirect.center is a DNS-based domain redirect service. Users configure CNAME records pointing to redirect.center, and the Service performs HTTP redirects based on the DNS configuration.</p>
+            <p>The Service offers:</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li><strong>Free HTTP redirects</strong> via CNAME records, with no account required.</li>
+              <li><strong>Paid HTTPS redirects</strong> with automatic SSL/TLS certificate provisioning and renewal.</li>
+            </ul>
+            <p>Paid plans are available in two types:</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li><strong>Simple Slot</strong> &mdash; covers a single domain with HTTPS.</li>
+              <li><strong>Wildcard Slot</strong> &mdash; covers all subdomains of a domain with a wildcard HTTPS certificate.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">3. Free Tier</h2>
+            <p>HTTP redirects are offered at no cost and without requiring an account. The free tier is provided on an "as available" basis.</p>
+            <p>We reserve the right to modify, limit, or discontinue the free tier at any time, with reasonable notice posted on the Service website.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">4. Paid Plans &amp; Billing</h2>
+            <p>Paid plans are available at the following rates:</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li><strong>Simple Slot:</strong> $3/month or $32.40/year per slot.</li>
+              <li><strong>Wildcard Slot:</strong> $5/month or $54/year per slot.</li>
+            </ul>
+            <p>Subscriptions renew automatically at the end of each billing cycle unless canceled by the Subscriber. Prices may be changed with at least 30 days' prior notice. Any price change applies at the next renewal date.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">5. Service Level Agreement (SLA)</h2>
+            <p>For paid plans only, We commit to a monthly uptime of at least <strong>98%</strong>.</p>
+            <p>The uptime calculation excludes:</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li>Scheduled maintenance (with at least 24 hours' advance notice).</li>
+              <li>Circumstances beyond our reasonable control, including force majeure events, third-party DNS failures, and DDoS attacks.</li>
+            </ul>
+            <p>If monthly uptime falls below 98%, the Subscriber is entitled to a pro-rata credit for the downtime period. The maximum credit for any billing cycle is limited to the amount paid by the Subscriber for that cycle (month or year).</p>
+            <p>For example: if your monthly plan costs $5/month and uptime falls to 95% in a given month, the maximum credit you may receive is $5.</p>
+            <p>No compensation is provided for indirect, consequential, or incidental damages, or for lost profits.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">6. Termination by redirect.center</h2>
+            <p>We may terminate a Subscriber's access to the Service at any time.</p>
+            <p>If termination is initiated by Us and is <strong>not</strong> due to a violation of these Terms by the Subscriber, We will issue a <strong>pro-rata refund</strong> for the unused portion of the current billing period.</p>
+            <p>For example: if a Subscriber paid for an annual plan and the Service is terminated after 6 months, the Subscriber will receive a refund of 50% of the annual fee.</p>
+            <p>If termination is due to a violation of these Terms by the User, no refund will be issued.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">7. Termination by User</h2>
+            <p>Subscribers may cancel their subscription at any time through the dashboard. Upon cancellation, the Service remains active until the end of the current paid billing period.</p>
+            <p>No pro-rata refund is provided for voluntary cancellations, unless required by applicable law.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">8. Acceptable Use</h2>
+            <p>You may not use the Service to:</p>
+            <ul class="list-disc pl-6 space-y-1">
+              <li>Redirect to illegal, malicious, phishing, or malware-hosting content, or content that infringes third-party rights.</li>
+              <li>Artificially generate traffic or abuse the Service infrastructure.</li>
+              <li>Engage in any activity that violates applicable laws.</li>
+            </ul>
+            <p>We reserve the right to immediately suspend or terminate access for any violation of this section, without refund.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">9. Limitation of Liability</h2>
+            <p>The Service is provided <strong>"AS IS"</strong> and <strong>"AS AVAILABLE"</strong> without warranties of any kind, express or implied.</p>
+            <p>We do not guarantee that the Service will be uninterrupted or error-free, except as expressly stated in the SLA.</p>
+            <p><strong>Our total aggregate liability to any Subscriber is limited to the amount paid by the Subscriber in the current billing cycle.</strong></p>
+            <p>In no event shall We be liable for indirect, consequential, incidental, or punitive damages, including but not limited to lost profits, lost data, or loss of business.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">10. Modifications to Terms</h2>
+            <p>We may modify these Terms at any time. Material changes will be communicated with at least 30 days' advance notice by email (for Subscribers) or by notice on the Service website.</p>
+            <p>Continued use of the Service after such notice constitutes acceptance of the revised Terms.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">11. Governing Law</h2>
+            <p>These Terms are governed by applicable international law. In the event of a dispute, the parties agree to attempt amicable resolution before pursuing any legal action.</p>
+          </section>
+
+          <section>
+            <h2 class="text-lg font-semibold text-gray-900 mb-2">12. Contact</h2>
+            <p>For questions about these Terms, please contact us at <a href="mailto:support@redirect.center" class="text-blue-600 hover:text-blue-800">support@redirect.center</a>.</p>
+          </section>
+        </div>`;
 }
 
 export function loginPage(error?: string): string {

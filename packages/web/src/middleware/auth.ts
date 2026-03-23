@@ -21,6 +21,12 @@ export async function authMiddleware(c: Context, next: Next) {
     return c.redirect("/auth/login");
   }
 
+  // Enforce Terms of Service acceptance
+  const path = c.req.path;
+  if (!user.tos_accepted_at && path !== "/terms/accept") {
+    return c.redirect("/terms/accept");
+  }
+
   c.set("user" as never, user);
   await next();
 }

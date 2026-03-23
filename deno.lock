@@ -732,6 +732,11 @@
           "npm:acme-client@5"
         ]
       },
+      "packages/proxy": {
+        "dependencies": [
+          "jsr:@std/encoding@1"
+        ]
+      },
       "packages/redirect": {
         "dependencies": [
           "jsr:@hono/hono@4",

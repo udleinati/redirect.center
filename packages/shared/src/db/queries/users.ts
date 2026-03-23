@@ -26,6 +26,15 @@ export async function create(email: string): Promise<User> {
   return rows[0];
 }
 
+export async function acceptTos(id: string): Promise<User | null> {
+  return await queryOne<User>(
+    `UPDATE users SET tos_accepted_at = NOW(), updated_at = NOW()
+     WHERE id = $1
+     RETURNING *`,
+    [id],
+  );
+}
+
 export async function updateStripeCustomerId(
   id: string,
   stripeCustomerId: string,

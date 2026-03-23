@@ -2,6 +2,7 @@ export interface User {
   id: string;
   email: string;
   stripe_customer_id: string | null;
+  tos_accepted_at: Date | null;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

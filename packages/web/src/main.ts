@@ -6,6 +6,7 @@ import { runMigrations } from "../../shared/src/db/migrate.ts";
 import * as subscriptionQueries from "../../shared/src/db/queries/subscriptions.ts";
 import authRoutes from "./routes/auth.ts";
 import dashboardRoutes from "./routes/dashboard.ts";
+import termsRoutes from "./routes/terms.ts";
 import webhookRoutes from "./routes/webhook.ts";
 import { landingPage } from "./templates/pages.ts";
 
@@ -22,6 +23,7 @@ app.get("/", (c) => c.html(landingPage()));
 
 // Routes
 app.route("/auth", authRoutes);
+app.route("/terms", termsRoutes);
 app.route("/dashboard", dashboardRoutes);
 app.route("/api/webhooks", webhookRoutes);
 
