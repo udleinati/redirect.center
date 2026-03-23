@@ -37,6 +37,7 @@ services:
       WEB_PORT: 8000
       SESSION_DURATION_HOURS: 3
       MAGIC_LINK_DURATION_HOURS: 24
+      SANDBOX: "true"
     depends_on:
       postgres:
         condition: service_healthy

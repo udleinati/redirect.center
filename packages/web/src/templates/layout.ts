@@ -1,6 +1,16 @@
 import type { User } from "../../../shared/src/types.ts";
 
+let _sandbox: boolean | null = null;
+
+export function isSandbox(): boolean {
+  if (_sandbox === null) {
+    _sandbox = Deno.env.get("SANDBOX") === "true";
+  }
+  return _sandbox;
+}
+
 export function layout(title: string, content: string, user?: User): string {
+  const sandbox = isSandbox();
   const navLinks = user
     ? `<div class="flex items-center gap-4">
          <span class="text-sm text-gray-600">${escapeHtml(user.email)}</span>
@@ -20,6 +30,7 @@ export function layout(title: string, content: string, user?: User): string {
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+  ${sandbox ? `<div class="bg-amber-500 text-white text-center text-xs font-semibold py-1.5 tracking-wide uppercase">Sandbox Environment &mdash; This is a test environment. No real data or charges.</div>` : ""}
   <nav class="bg-white border-b border-gray-200">
     <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
       <a href="/" class="text-xl font-bold text-blue-600">redirect.center</a>
