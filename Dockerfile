@@ -12,4 +12,4 @@ COPY supervisor.ts .
 
 RUN deno cache src/main.ts
 
-CMD ["run", "--allow-net", "--allow-read", "--allow-env", "--unstable-kv", "supervisor.ts"]
+CMD ["run", "--allow-net", "--allow-read", "--allow-env", "supervisor.ts"]

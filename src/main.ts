@@ -6,7 +6,6 @@ import vento from "ventojs";
 import { config } from "./config.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
 import { guardian } from "./services/guardian.ts";
-import { statistic } from "./services/statistic.ts";
 import {
   HttpError,
   resolveDnsAndRedirect,
@@ -63,12 +62,9 @@ app.get("/", async (c) => {
     const ua = c.req.header("user-agent");
     if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
 
-    const statistics = await statistic.overview();
-
     const template = await env.load("index.vto");
     const result = await template({
       app: config,
-      statistics,
     });
 
     return c.html(result.content);
@@ -125,11 +121,6 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     throw new HttpError(403, "Forbidden");
   }
 
-  // Statistics (fire and forget)
-  statistic.write(host).catch((err) =>
-    logger.error(`[statistic] write error: ${err}`)
-  );
-
   // Set loop detection cookie (incremented count, expires in 10s)
   const response = c.redirect(redirect.url, redirect.status as 301);
   setCookie(c, LOOP_COOKIE, String(loopCount + 1), {
@@ -141,8 +132,6 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
 }
 
 // Start server
-await statistic.ensureReady();
-
 Deno.serve(
   {
     port: config.listenPort,
