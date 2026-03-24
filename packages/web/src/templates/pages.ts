@@ -904,47 +904,102 @@ export function subscribePage(config: {
   const hasSimple = existingSubscriptions.some(s => s.type === "simple");
   const hasWildcard = existingSubscriptions.some(s => s.type === "wildcard");
 
-  function slotCard(title: string, slotType: string, price: string, interval: string, priceId: string | undefined, hasExisting: boolean, badge?: string): string {
+  function slotCard(slotType: string, title: string, description: string, monthlyPrice: string, yearlyPrice: string, monthlyPriceId: string | undefined, yearlyPriceId: string | undefined, hasExisting: boolean, features: string[]): string {
+    const featureHtml = features.map(f => `<li class="flex items-start gap-2"><span class="text-green-500 mt-0.5">&#10003;</span> ${f}</li>`).join("");
+
     if (hasExisting) {
       return `
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 opacity-60">
           <h3 class="font-bold text-lg mb-1">${title}</h3>
-          <p class="text-sm text-gray-500 mb-3">${interval}</p>
-          <div class="text-2xl font-bold mb-4">${price}</div>
+          <p class="text-sm text-gray-500 mb-4">${description}</p>
           <p class="text-sm text-gray-500">You already have a ${slotType} subscription. Add more slots from your dashboard.</p>
         </div>`;
     }
+
     return `
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 class="font-bold text-lg mb-1">${title}${badge ? ` ${badge}` : ""}</h3>
-        <p class="text-sm text-gray-500 mb-3">${interval}</p>
-        <div class="text-2xl font-bold mb-4">${price}</div>
+        <h3 class="font-bold text-lg mb-1">${title}</h3>
+        <p class="text-sm text-gray-500 mb-4">${description}</p>
+        <div class="mb-4">
+          <div class="plan-monthly">
+            <span class="text-3xl font-bold">${monthlyPrice}</span><span class="text-gray-500">/slot/month</span>
+          </div>
+          <div class="plan-yearly hidden">
+            <span class="text-3xl font-bold">${yearlyPrice}</span><span class="text-gray-500">/slot/year</span>
+            <span class="inline-block ml-2 bg-green-100 text-green-700 text-xs font-semibold px-2 py-0.5 rounded-full">Save 10%</span>
+          </div>
+        </div>
+        <ul class="space-y-2 text-sm text-gray-600 mb-6">${featureHtml}</ul>
         <form method="POST" action="/dashboard/subscribe">
-          <input type="hidden" name="priceId" value="${escapeHtml(priceId ?? "")}" />
+          <input type="hidden" name="priceId" class="plan-price-id" value="${escapeHtml(monthlyPriceId ?? "")}"
+            data-monthly="${escapeHtml(monthlyPriceId ?? "")}" data-yearly="${escapeHtml(yearlyPriceId ?? "")}" />
           <input type="hidden" name="slotType" value="${escapeHtml(slotType)}" />
           <div class="flex items-center gap-2 mb-4">
             <label class="text-sm text-gray-600">Quantity:</label>
             <input type="number" name="quantity" value="1" min="1" max="50" class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center" />
           </div>
-          <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium" ${priceId ? "" : "disabled"}>Subscribe</button>
+          <button type="submit" class="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition font-medium" ${monthlyPriceId ? "" : "disabled"}>Subscribe</button>
         </form>
       </div>`;
   }
 
   const content = `
     <div class="max-w-3xl mx-auto px-4 py-8">
-      <h1 class="text-2xl font-bold mb-2">Choose a Plan</h1>
-      <p class="text-gray-600 mb-8">Each slot covers one domain with automatic HTTPS certificate provisioning.</p>
+      <h1 class="text-2xl font-bold mb-2 text-center">Choose a Plan</h1>
+      <p class="text-gray-600 mb-8 text-center">Each slot covers one domain with automatic HTTPS certificate provisioning.</p>
+
+      <!-- Billing toggle -->
+      <div class="flex justify-center mb-8">
+        <div class="inline-flex bg-gray-100 rounded-lg p-1">
+          <button id="toggle-monthly" onclick="setBilling('monthly')"
+            class="px-5 py-2 text-sm font-semibold rounded-md bg-white text-gray-900 shadow-sm transition">Monthly</button>
+          <button id="toggle-yearly" onclick="setBilling('yearly')"
+            class="px-5 py-2 text-sm font-semibold rounded-md text-gray-500 transition">Yearly <span class="text-green-600 text-xs font-medium">-10%</span></button>
+        </div>
+      </div>
+
       <div class="grid md:grid-cols-2 gap-6">
-        ${slotCard("Simple Slot - Monthly", "simple", '$3<span class="text-base font-normal text-gray-500">/slot/mo</span>', "Single domain with HTTPS", config.simpleMonthly, hasSimple)}
-        ${slotCard("Simple Slot - Yearly", "simple", '$32.40<span class="text-base font-normal text-gray-500">/slot/yr</span>', "Single domain with HTTPS", config.simpleYearly, hasSimple, '<span class="text-sm text-green-600 font-medium">Save 10%</span>')}
-        ${slotCard("Wildcard Slot - Monthly", "wildcard", '$5<span class="text-base font-normal text-gray-500">/slot/mo</span>', "All subdomains with wildcard HTTPS", config.wildcardMonthly, hasWildcard)}
-        ${slotCard("Wildcard Slot - Yearly", "wildcard", '$54<span class="text-base font-normal text-gray-500">/slot/yr</span>', "All subdomains with wildcard HTTPS", config.wildcardYearly, hasWildcard, '<span class="text-sm text-green-600 font-medium">Save 10%</span>')}
+        ${slotCard("simple", "Simple Slot", "Single domain with HTTPS", "$3", "$32.40", config.simpleMonthly, config.simpleYearly, hasSimple, [
+          "Automatic SSL certificate",
+          "Buy multiple slots at once",
+          "All redirect types (301, 302, 307, 308)",
+          "Path &amp; query string forwarding",
+        ])}
+        ${slotCard("wildcard", "Wildcard Slot", "All subdomains with wildcard HTTPS", "$5", "$54", config.wildcardMonthly, config.wildcardYearly, hasWildcard, [
+          "Wildcard SSL certificate",
+          "All subdomains covered",
+          "All redirect types (301, 302, 307, 308)",
+          "Path &amp; query string forwarding",
+        ])}
       </div>
       <div class="mt-6 text-center">
         <a href="/dashboard" class="text-sm text-gray-500 hover:text-gray-700">Back to Dashboard</a>
       </div>
     </div>
+
+    <script>
+    function setBilling(mode) {
+      var monthly = document.querySelectorAll('.plan-monthly');
+      var yearly = document.querySelectorAll('.plan-yearly');
+      var priceIds = document.querySelectorAll('.plan-price-id');
+      var btnM = document.getElementById('toggle-monthly');
+      var btnY = document.getElementById('toggle-yearly');
+
+      if (mode === 'monthly') {
+        monthly.forEach(function(el) { el.classList.remove('hidden'); });
+        yearly.forEach(function(el) { el.classList.add('hidden'); });
+        priceIds.forEach(function(el) { el.value = el.dataset.monthly || ''; });
+        btnM.className = 'px-5 py-2 text-sm font-semibold rounded-md bg-white text-gray-900 shadow-sm transition';
+        btnY.className = 'px-5 py-2 text-sm font-semibold rounded-md text-gray-500 transition';
+      } else {
+        monthly.forEach(function(el) { el.classList.add('hidden'); });
+        yearly.forEach(function(el) { el.classList.remove('hidden'); });
+        priceIds.forEach(function(el) { el.value = el.dataset.yearly || ''; });
+        btnY.className = 'px-5 py-2 text-sm font-semibold rounded-md bg-white text-gray-900 shadow-sm transition';
+        btnM.className = 'px-5 py-2 text-sm font-semibold rounded-md text-gray-500 transition';
+      }
+    }
+    </script>
   `;
   return layout("Choose a Plan", content, user);
 }
