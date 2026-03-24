@@ -124,6 +124,8 @@ services:
       CERT_ENCRYPTION_KEY: ${CERT_ENCRYPTION_KEY:?Set CERT_ENCRYPTION_KEY in .env (64 hex chars)}
       ACME_DIRECTORY_URL: ${ACME_DIRECTORY_URL:-https://acme-v02.api.letsencrypt.org/directory}
       DNS_PROVIDER: ${DNS_PROVIDER:-cloudflare}
+      DNS_ZONE_ID: ${DNS_ZONE_ID}
+      DNS_PROVIDER_API_KEY: ${DNS_PROVIDER_API_KEY}
       FQDN: ${FQDN:-redirect.center}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}
