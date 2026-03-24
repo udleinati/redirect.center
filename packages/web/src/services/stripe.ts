@@ -112,6 +112,31 @@ export async function createCustomerPortalSession(
   return session.url;
 }
 
+/**
+ * Extract period start/end from a Stripe Subscription object.
+ * Newer Stripe API versions moved these fields from the top-level
+ * Subscription to items.data[0], so we check both locations.
+ */
+function extractPeriodDates(
+  subscription: Stripe.Subscription,
+): { start: Date; end: Date } | null {
+  // deno-lint-ignore no-explicit-any
+  const sub = subscription as any;
+  const item = subscription.items?.data?.[0];
+
+  const rawStart = sub.current_period_start ?? item?.current_period_start;
+  const rawEnd = sub.current_period_end ?? item?.current_period_end;
+
+  if (!rawStart || !rawEnd) return null;
+
+  const start = new Date(rawStart * 1000);
+  const end = new Date(rawEnd * 1000);
+
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return null;
+
+  return { start, end };
+}
+
 export async function handleWebhook(
   body: string,
   signature: string,
@@ -160,12 +185,9 @@ export async function handleWebhook(
       );
 
       // Update period dates
-      if (subscription.current_period_start && subscription.current_period_end) {
-        await subscriptionQueries.updateStripePeriod(
-          sub.id,
-          new Date(subscription.current_period_start * 1000),
-          new Date(subscription.current_period_end * 1000),
-        );
+      const period = extractPeriodDates(subscription);
+      if (period) {
+        await subscriptionQueries.updateStripePeriod(sub.id, period.start, period.end);
       }
 
       console.log(`[stripe] Subscription created for user ${userId}, type=${slotType}, qty=${quantity}, sub=${subscriptionId}`);
@@ -182,9 +204,10 @@ export async function handleWebhook(
       }
 
       // Update period dates
-      const periodStart = new Date(subscription.current_period_start * 1000);
-      const periodEnd = new Date(subscription.current_period_end * 1000);
-      await subscriptionQueries.updateStripePeriod(sub.id, periodStart, periodEnd);
+      const period = extractPeriodDates(subscription);
+      if (period) {
+        await subscriptionQueries.updateStripePeriod(sub.id, period.start, period.end);
+      }
 
       // Update quantity
       const newQuantity = subscription.items.data[0]?.quantity ?? 1;
