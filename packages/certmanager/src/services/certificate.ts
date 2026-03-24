@@ -7,7 +7,7 @@ import * as userQueries from "../../../shared/src/db/queries/users.ts";
 import * as subscriptionQueries from "../../../shared/src/db/queries/subscriptions.ts";
 import { createAcmeClient, restoreAcmeClient, createOrderAndGetChallenge, completeAndFinalize } from "../acme/client.ts";
 import { setChallengeTxtRecord, removeChallengeTxtRecord } from "../acme/dns-challenge.ts";
-import { verifyDnsCnameChallenge } from "../dns/resolver.ts";
+import { verifyDnsCnameChallenge, waitForTxtPropagation } from "../dns/resolver.ts";
 import { encrypt } from "./crypto.ts";
 import type { Domain, Certificate } from "../../../shared/src/types.ts";
 
@@ -121,6 +121,14 @@ export async function validateAndIssueCertificate(domain: Domain): Promise<void>
       await domainQueries.setDnsChallenge(domain.id, keyAuthorization);
     }
 
+    // Step 5c: Wait for TXT record to propagate before submitting challenge
+    const currentToken = keyAuthorization;
+    console.log(`[cert] Step 5c: Waiting for TXT propagation for ${domain.domain}`);
+    const propagated = await waitForTxtPropagation(domain.domain, currentToken);
+    if (!propagated) {
+      throw new Error(`TXT record did not propagate in time for ${domain.domain}`);
+    }
+
     // Complete challenge and get certificate
     console.log(`[cert] Step 6: Completing challenge for ${domain.domain}`);
     const result = await completeAndFinalize(
@@ -192,8 +200,12 @@ export async function renewCertificate(cert: Certificate): Promise<void> {
     // Set TXT record in our DNS zone
     await setChallengeTxtRecord(cert.domain, keyAuthorization);
 
-    // Wait a bit for DNS propagation
-    await new Promise((resolve) => setTimeout(resolve, 5000));
+    // Wait for TXT record to propagate
+    console.log(`[cert] Renewal: Waiting for TXT propagation for ${cert.domain}`);
+    const propagated = await waitForTxtPropagation(cert.domain, keyAuthorization);
+    if (!propagated) {
+      throw new Error(`TXT record did not propagate in time for ${cert.domain}`);
+    }
 
     // Complete challenge and get new certificate
     const result = await completeAndFinalize(

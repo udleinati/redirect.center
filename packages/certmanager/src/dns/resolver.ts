@@ -61,6 +61,44 @@ export async function verifyDnsCnameChallenge(domain: string): Promise<boolean> 
 }
 
 /**
+ * Wait for a TXT record to propagate with the expected value.
+ * Polls all configured DNS servers until the record is visible or timeout is reached.
+ */
+export async function waitForTxtPropagation(
+  domain: string,
+  expectedToken: string,
+  {
+    maxAttempts = 30,
+    intervalMs = 10_000,
+  }: { maxAttempts?: number; intervalMs?: number } = {},
+): Promise<boolean> {
+  const challengeHost = `_acme-challenge.${domain}`;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    for (const nameServer of DNS_SERVERS) {
+      try {
+        const records = await Deno.resolveDns(challengeHost, "TXT", { nameServer });
+        const flatRecords = records.flat();
+        if (flatRecords.some((record) => record === expectedToken)) {
+          console.log(`[dns] TXT propagated for ${challengeHost} via ${nameServer.ipAddr} (attempt ${attempt}/${maxAttempts})`);
+          return true;
+        }
+        console.log(`[dns] TXT not yet propagated for ${challengeHost} via ${nameServer.ipAddr}: found ${JSON.stringify(flatRecords)} (attempt ${attempt}/${maxAttempts})`);
+      } catch {
+        console.log(`[dns] TXT lookup failed for ${challengeHost} via ${nameServer.ipAddr} (attempt ${attempt}/${maxAttempts})`);
+      }
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise((r) => setTimeout(r, intervalMs));
+    }
+  }
+
+  console.error(`[dns] TXT propagation timeout for ${challengeHost} after ${maxAttempts} attempts`);
+  return false;
+}
+
+/**
  * Verify that a domain's CNAME points to redirect.center
  * (used during certificate renewal to ensure domain still points here).
  */
