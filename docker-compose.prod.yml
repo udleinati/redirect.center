@@ -126,6 +126,7 @@ services:
       DNS_PROVIDER: ${DNS_PROVIDER:-cloudflare}
       DNS_ZONE_ID: ${DNS_ZONE_ID}
       DNS_PROVIDER_API_KEY: ${DNS_PROVIDER_API_KEY}
+      DNS_SERVERS: ${DNS_SERVERS:-1.1.1.1,1.0.0.1}
       FQDN: ${FQDN:-redirect.center}
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT:-587}

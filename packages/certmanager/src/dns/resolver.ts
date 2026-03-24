@@ -4,10 +4,9 @@
  * to avoid Docker's internal DNS cache.
  */
 
-const DNS_SERVERS: Deno.NameServer[] = [
-  { ipAddr: "8.8.8.8", port: 53 },
-  { ipAddr: "1.1.1.1", port: 53 },
-];
+const DNS_SERVERS: Deno.NameServer[] = (Deno.env.get("DNS_SERVERS") ?? "1.1.1.1,1.0.0.1")
+  .split(",")
+  .map((ip) => ({ ipAddr: ip.trim(), port: 53 }));
 
 const FQDN = Deno.env.get("FQDN") ?? "redirect.center";
 
