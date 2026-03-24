@@ -6,6 +6,10 @@ function getFqdn(): string {
   return getConfig().fqdn ?? "redirect.center";
 }
 
+function getEntryIp(): string {
+  return getConfig().entryIp ?? "127.0.0.1";
+}
+
 export function landingPage(): string {
   const content = `
     <!-- Hero -->
@@ -48,22 +52,279 @@ export function landingPage(): string {
         <div class="grid md:grid-cols-3 gap-8">
           <div class="bg-white p-6 rounded-xl shadow-sm">
             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold mb-4">1</div>
-            <h3 class="font-semibold mb-2">Encode Your Target</h3>
-            <p class="text-sm text-gray-600">Take your target URL and encode it as a subdomain. Dots become dashes, slashes become dots.</p>
+            <h3 class="font-semibold mb-2">Point Your Domain</h3>
+            <p class="text-sm text-gray-600">Create an <strong>A record</strong> pointing to <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">${getEntryIp()}</code></p>
           </div>
           <div class="bg-white p-6 rounded-xl shadow-sm">
             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold mb-4">2</div>
-            <h3 class="font-semibold mb-2">Create a CNAME</h3>
-            <p class="text-sm text-gray-600">Point your domain's CNAME record to the encoded subdomain at ${getFqdn()}.</p>
+            <h3 class="font-semibold mb-2">Set the Destination</h3>
+            <p class="text-sm text-gray-600">Create a <strong>CNAME</strong> like <code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">dest.com.${getFqdn()}</code></p>
           </div>
           <div class="bg-white p-6 rounded-xl shadow-sm">
             <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold mb-4">3</div>
             <h3 class="font-semibold mb-2">Done!</h3>
-            <p class="text-sm text-gray-600">Visitors to your domain are automatically redirected. Supports 301, 302, 307, 308 codes.</p>
+            <p class="text-sm text-gray-600">Visitors get a <strong>301 redirect</strong> automatically. Supports 301, 302, 307, 308 codes.</p>
           </div>
         </div>
       </div>
     </section>
+
+    <!-- Examples -->
+    <section class="py-16 bg-white">
+      <div class="max-w-4xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-4">How to Use</h2>
+        <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">Click each example to see the DNS records you need.</p>
+
+        <div class="space-y-3" id="examples-accordion">
+          <!-- Example 1 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+            <button onclick="toggleAccordion(this)" class="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-100 transition">
+              <svg class="w-4 h-4 text-gray-400 transition-transform flex-shrink-0 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="font-medium text-gray-900">Redirect <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">my-domain.com</code> &rarr; <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">www.my-domain.com</code></span>
+            </button>
+            <div class="accordion-body hidden px-5 pb-5 border-t border-gray-200 bg-white">
+              <p class="text-sm text-gray-600 mt-4 mb-3">Redirect your bare/root domain to the www version:</p>
+              <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm space-y-2">
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                  <span class="text-gray-500 w-16">Host:</span><span class="font-semibold">@ (or empty)</span>
+                  <span class="text-gray-500 w-16">Type:</span><span class="font-semibold">A</span>
+                  <span class="text-gray-500 w-16">Value:</span><span class="font-semibold">${getEntryIp()}</span>
+                </div>
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                  <span class="text-gray-500 w-16">Host:</span><span class="font-semibold">redirect</span>
+                  <span class="text-gray-500 w-16">Type:</span><span class="font-semibold">CNAME</span>
+                  <span class="text-gray-500 w-16">Value:</span><span class="font-semibold text-blue-600">www.my-domain.com.${getFqdn()}</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-2 mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <span class="flex-shrink-0">&#128161;</span>
+                <span>Add <code class="bg-white px-1 py-0.5 rounded text-xs border">.opts-https</code> to force HTTPS: <code class="bg-white px-1 py-0.5 rounded text-xs border">www.my-domain.com.opts-https.${getFqdn()}</code></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Example 2 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+            <button onclick="toggleAccordion(this)" class="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-100 transition">
+              <svg class="w-4 h-4 text-gray-400 transition-transform flex-shrink-0 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="font-medium text-gray-900">Redirect <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">www.my-domain.com</code> &rarr; <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">www.other-domain.com</code></span>
+            </button>
+            <div class="accordion-body hidden px-5 pb-5 border-t border-gray-200 bg-white">
+              <p class="text-sm text-gray-600 mt-4 mb-3">Redirect a subdomain to a completely different domain:</p>
+              <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm space-y-2">
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                  <span class="text-gray-500 w-16">Host:</span><span class="font-semibold">www</span>
+                  <span class="text-gray-500 w-16">Type:</span><span class="font-semibold">CNAME</span>
+                  <span class="text-gray-500 w-16">Value:</span><span class="font-semibold text-blue-600">www.other-domain.com.${getFqdn()}</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-2 mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <span class="flex-shrink-0">&#128161;</span>
+                <span>Only one DNS record needed for subdomain redirects!</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Example 3 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+            <button onclick="toggleAccordion(this)" class="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-100 transition">
+              <svg class="w-4 h-4 text-gray-400 transition-transform flex-shrink-0 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="font-medium text-gray-900">Redirect preserving the path: <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">/page</code> &rarr; <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">/page</code></span>
+            </button>
+            <div class="accordion-body hidden px-5 pb-5 border-t border-gray-200 bg-white">
+              <p class="text-sm text-gray-600 mt-4 mb-3">Keep the original URL path and query string when redirecting:</p>
+              <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm space-y-2">
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                  <span class="text-gray-500 w-16">Host:</span><span class="font-semibold">www</span>
+                  <span class="text-gray-500 w-16">Type:</span><span class="font-semibold">CNAME</span>
+                  <span class="text-gray-500 w-16">Value:</span><span class="font-semibold text-blue-600">www.other-domain.com.opts-uri.${getFqdn()}</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-2 mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <span class="flex-shrink-0">&#128161;</span>
+                <span><code class="bg-white px-1 py-0.5 rounded text-xs border">.opts-uri</code> passes the full request path and query string to the destination.</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Example 4 -->
+          <div class="border border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+            <button onclick="toggleAccordion(this)" class="w-full flex items-center gap-3 px-5 py-4 text-left hover:bg-gray-100 transition">
+              <svg class="w-4 h-4 text-gray-400 transition-transform flex-shrink-0 accordion-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="font-medium text-gray-900">Redirect <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">jobs.my-domain.com</code> &rarr; <code class="bg-white px-1.5 py-0.5 rounded text-sm text-blue-600 border">my-domain.com/careers?ref=dns</code></span>
+            </button>
+            <div class="accordion-body hidden px-5 pb-5 border-t border-gray-200 bg-white">
+              <p class="text-sm text-gray-600 mt-4 mb-3">Redirect a subdomain to a specific path with query parameters:</p>
+              <div class="bg-gray-50 rounded-lg p-4 font-mono text-sm space-y-2">
+                <div class="flex flex-wrap gap-x-6 gap-y-1">
+                  <span class="text-gray-500 w-16">Host:</span><span class="font-semibold">jobs</span>
+                  <span class="text-gray-500 w-16">Type:</span><span class="font-semibold">CNAME</span>
+                  <span class="text-gray-500 w-16">Value:</span><span class="font-semibold text-blue-600">my-domain.com.opts-slash.careers.opts-query-onswg5lsnf2a.${getFqdn()}</span>
+                </div>
+              </div>
+              <div class="flex items-start gap-2 mt-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+                <span class="flex-shrink-0">&#128161;</span>
+                <span><code class="bg-white px-1 py-0.5 rounded text-xs border">.opts-slash.careers</code> adds <code class="bg-white px-1 py-0.5 rounded text-xs border">/careers</code>. The query <code class="bg-white px-1 py-0.5 rounded text-xs border">ref=dns</code> is Base32-encoded. Use the <a href="#" onclick="openCnameModal();return false" class="text-blue-600 font-semibold hover:underline">CNAME Generator</a> to build these automatically.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CNAME Generator button -->
+        <div class="text-center mt-10">
+          <button onclick="openCnameModal()" class="inline-flex items-center gap-2 bg-blue-600 text-white px-8 py-3.5 rounded-xl font-semibold hover:bg-blue-700 transition shadow-md hover:shadow-lg">
+            &#9889; CNAME Generator
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Parameters Reference -->
+    <section class="py-16 bg-gray-50">
+      <div class="max-w-4xl mx-auto px-4">
+        <h2 class="text-3xl font-bold text-center mb-4">Parameters Reference</h2>
+        <p class="text-center text-gray-600 mb-10 max-w-2xl mx-auto">Modifiers you can add to your CNAME record to customize the redirect.</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse bg-white rounded-xl overflow-hidden shadow-sm">
+            <thead>
+              <tr class="bg-gray-50">
+                <th class="text-left px-5 py-3 font-semibold border-b-2 border-gray-200">Parameter</th>
+                <th class="text-left px-5 py-3 font-semibold border-b-2 border-gray-200">Description</th>
+                <th class="text-left px-5 py-3 font-semibold border-b-2 border-gray-200">Example</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-https</code></td><td class="px-5 py-3 text-gray-600">Force redirect to HTTPS</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-https.${getFqdn()}</code></td></tr>
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-uri</code></td><td class="px-5 py-3 text-gray-600">Preserve original path and query string</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-uri.${getFqdn()}</code></td></tr>
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-slash.{path}</code></td><td class="px-5 py-3 text-gray-600">Append a path to the destination URL</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-slash.blog.${getFqdn()}</code></td></tr>
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-path-{base32}</code></td><td class="px-5 py-3 text-gray-600">Base32-encoded path (for special characters)</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-path-mfrgg.${getFqdn()}</code></td></tr>
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-query-{base32}</code></td><td class="px-5 py-3 text-gray-600">Base32-encoded query string</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-query-nfxgg.${getFqdn()}</code></td></tr>
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-statuscode-{code}</code></td><td class="px-5 py-3 text-gray-600">HTTP status code: 301, 302, 307 or 308</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-statuscode-302.${getFqdn()}</code></td></tr>
+              <tr><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">.opts-port-{port}</code></td><td class="px-5 py-3 text-gray-600">Redirect to a specific port</td><td class="px-5 py-3"><code class="bg-gray-100 px-1.5 py-0.5 rounded text-xs">example.com.opts-port-8080.${getFqdn()}</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- CNAME Generator Modal -->
+    <div id="cnameModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4" onclick="if(event.target===this)closeCnameModal()">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-8 relative animate-[modalIn_0.2s_ease-out]">
+        <button onclick="closeCnameModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+        <h2 class="text-xl font-bold mb-1">&#9889; CNAME Generator</h2>
+        <p class="text-sm text-gray-500 mb-6">Paste your destination URL and get the CNAME value ready to use in your DNS.</p>
+        <label class="block text-sm font-semibold mb-1.5">Destination URL</label>
+        <input type="url" id="cname-url-input" placeholder="https://www.example.com/path?query=value" autocomplete="off"
+          class="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+        <div class="text-center text-gray-400 text-lg py-2">&darr;</div>
+        <label class="block text-sm font-semibold mb-1.5">CNAME value for your DNS</label>
+        <div class="relative">
+          <input type="text" id="cname-output" readonly
+            class="w-full px-4 py-3 pr-20 border border-gray-300 rounded-lg text-sm font-mono bg-gray-50 focus:outline-none" />
+          <button id="cname-copy-btn" onclick="copyCname()"
+            class="absolute right-1.5 top-1/2 -translate-y-1/2 bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-semibold hover:bg-blue-700 transition">Copy</button>
+        </div>
+        <div class="mt-5 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+          <strong>Redirecting a root/bare domain?</strong> You also need an <strong>A record</strong> pointing to <code class="bg-white px-1 py-0.5 rounded text-xs border">${getEntryIp()}</code> and the CNAME must be on the <code class="bg-white px-1 py-0.5 rounded text-xs border">redirect</code> subdomain.
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes modalIn { from { opacity:0; transform:scale(0.95) translateY(8px); } to { opacity:1; transform:scale(1) translateY(0); } }
+    </style>
+
+    <script>
+    // Accordion
+    function toggleAccordion(btn) {
+      var body = btn.nextElementSibling;
+      var arrow = btn.querySelector('.accordion-arrow');
+      var isOpen = !body.classList.contains('hidden');
+      body.classList.toggle('hidden', isOpen);
+      arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+    }
+
+    // CNAME Generator Modal
+    function openCnameModal() {
+      var m = document.getElementById('cnameModal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+      setTimeout(function(){ document.getElementById('cname-url-input').focus(); }, 100);
+    }
+    function closeCnameModal() {
+      var m = document.getElementById('cnameModal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeCnameModal(); });
+
+    // Base32 RFC 4648 encoder (lowercase, no padding)
+    function base32Encode(str) {
+      var bytes = new TextEncoder().encode(str);
+      var alphabet = 'abcdefghijklmnopqrstuvwxyz234567';
+      var bits = 0, value = 0, output = '';
+      for (var i = 0; i < bytes.length; i++) {
+        value = (value << 8) | bytes[i];
+        bits += 8;
+        while (bits >= 5) {
+          output += alphabet[(value >>> (bits - 5)) & 31];
+          bits -= 5;
+        }
+      }
+      if (bits > 0) {
+        output += alphabet[(value << (5 - bits)) & 31];
+      }
+      return output;
+    }
+
+    // URL to CNAME converter
+    function urlToCname(urlStr) {
+      if (!urlStr) return '';
+      var url;
+      try { url = new URL(urlStr); } catch(e) { return ''; }
+      var result = url.hostname;
+      if (url.pathname && url.pathname !== '/') {
+        if (/^[\\/a-z0-9\\-_\\.]+$/.test(url.pathname) && !/query/.test(url.pathname)) {
+          result += url.pathname.replace(/\\//g, '.opts-slash.').replace(/([^.])$/, '$1').replace(/\\.$/, '');
+        } else {
+          result += '.opts-path-' + base32Encode(url.pathname);
+        }
+      }
+      if (url.search) {
+        result += '.opts-query-' + base32Encode(url.search.slice(1));
+      }
+      if (url.protocol === 'https:') {
+        result += '.opts-https';
+      }
+      result += '.${getFqdn()}.';
+      return result;
+    }
+
+    // Wire up input
+    document.addEventListener('DOMContentLoaded', function() {
+      var input = document.getElementById('cname-url-input');
+      var output = document.getElementById('cname-output');
+      if (input && output) {
+        input.addEventListener('input', function() { output.value = urlToCname(this.value); });
+      }
+    });
+
+    function copyCname() {
+      var output = document.getElementById('cname-output');
+      var btn = document.getElementById('cname-copy-btn');
+      if (!output.value) return;
+      navigator.clipboard.writeText(output.value).then(function() {
+        btn.textContent = 'Copied!';
+        btn.classList.remove('bg-blue-600','hover:bg-blue-700');
+        btn.classList.add('bg-green-500');
+        setTimeout(function() {
+          btn.textContent = 'Copy';
+          btn.classList.remove('bg-green-500');
+          btn.classList.add('bg-blue-600','hover:bg-blue-700');
+        }, 2000);
+      });
+    }
+    </script>
 
     <!-- HTTPS Section -->
     <section class="py-16 bg-white">

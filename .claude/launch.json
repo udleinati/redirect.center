@@ -2,15 +2,23 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "redirect-center",
-      "runtimeExecutable": "deno",
-      "runtimeArgs": ["task", "dev"],
-      "port": 3000,
+      "name": "web",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "cd /Users/udleinati/Projects/udleinati/redirect.center && DENO_DIR=/tmp/deno-web deno run --watch --allow-net --allow-read --allow-env --allow-write --no-config packages/web/src/main.ts"],
+      "port": 8000,
       "env": {
-        "LISTEN_PORT": "3000",
         "FQDN": "localhost",
-        "PORT": "3000",
-        "ENTRY_IP": "127.0.0.1"
+        "ENTRY_IP": "127.0.0.1",
+        "WEB_PORT": "8000",
+        "DATABASE_URL": "postgresql://redirect_center:dev_password@localhost:5432/redirect_center",
+        "SMTP_HOST": "localhost",
+        "SMTP_PORT": "1025",
+        "SMTP_FROM": "noreply@redirect.center",
+        "STRIPE_SECRET_KEY": "sk_test_fake",
+        "STRIPE_PUBLISHABLE_KEY": "pk_test_fake",
+        "STRIPE_WEBHOOK_SECRET": "",
+        "BASE_URL": "http://localhost:8000",
+        "SANDBOX": "true"
       }
     }
   ]
