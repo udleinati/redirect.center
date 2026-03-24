@@ -548,64 +548,20 @@ export function loginPage(error?: string): string {
     : "";
   const content = `
     <div class="max-w-md mx-auto px-4 py-16">
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <!-- Tabs -->
-        <div class="flex border-b border-gray-200">
-          <button id="tab-login" onclick="switchTab('login')"
-            class="flex-1 py-3.5 text-sm font-semibold text-center transition border-b-2 border-blue-600 text-blue-600">
-            Log In
-          </button>
-          <button id="tab-signup" onclick="switchTab('signup')"
-            class="flex-1 py-3.5 text-sm font-semibold text-center transition border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-            Sign Up
-          </button>
-        </div>
-
-        <div class="p-8">
-          <h1 id="auth-title" class="text-2xl font-bold mb-2">Welcome back</h1>
-          <p id="auth-desc" class="text-gray-600 text-sm mb-6">Enter your email to receive a sign-in link.</p>
-          ${errorHtml}
-          <form method="POST" action="/auth/login">
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            <input type="email" id="email" name="email" required placeholder="you@example.com"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mb-4" />
-            <button type="submit" id="auth-submit"
-              class="w-full bg-blue-600 text-white py-2.5 px-4 rounded-lg hover:bg-blue-700 transition font-medium">
-              Send Magic Link
-            </button>
-          </form>
-          <p id="auth-footer" class="text-center text-sm text-gray-500 mt-5">
-            Don't have an account? <a href="#" onclick="switchTab('signup');return false" class="text-blue-600 font-medium hover:underline">Sign Up</a>
-          </p>
-        </div>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+        <h1 class="text-2xl font-bold mb-2">Log In / Sign Up</h1>
+        <p class="text-gray-600 text-sm mb-6">Enter your email to receive a magic link.</p>
+        ${errorHtml}
+        <form method="POST" action="/auth/login">
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <input type="email" id="email" name="email" required placeholder="you@example.com"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mb-4" />
+          <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition font-medium">Send Magic Link</button>
+        </form>
       </div>
     </div>
-
-    <script>
-    function switchTab(mode) {
-      var tabLogin = document.getElementById('tab-login');
-      var tabSignup = document.getElementById('tab-signup');
-      var title = document.getElementById('auth-title');
-      var desc = document.getElementById('auth-desc');
-      var footer = document.getElementById('auth-footer');
-
-      if (mode === 'login') {
-        tabLogin.className = 'flex-1 py-3.5 text-sm font-semibold text-center transition border-b-2 border-blue-600 text-blue-600';
-        tabSignup.className = 'flex-1 py-3.5 text-sm font-semibold text-center transition border-b-2 border-transparent text-gray-500 hover:text-gray-700';
-        title.textContent = 'Welcome back';
-        desc.textContent = 'Enter your email to receive a sign-in link.';
-        footer.innerHTML = 'Don\\'t have an account? <a href="#" onclick="switchTab(\\'signup\\');return false" class="text-blue-600 font-medium hover:underline">Sign Up</a>';
-      } else {
-        tabSignup.className = 'flex-1 py-3.5 text-sm font-semibold text-center transition border-b-2 border-blue-600 text-blue-600';
-        tabLogin.className = 'flex-1 py-3.5 text-sm font-semibold text-center transition border-b-2 border-transparent text-gray-500 hover:text-gray-700';
-        title.textContent = 'Create your account';
-        desc.textContent = 'Enter your email to get started. No password needed.';
-        footer.innerHTML = 'Already have an account? <a href="#" onclick="switchTab(\\'login\\');return false" class="text-blue-600 font-medium hover:underline">Log In</a>';
-      }
-    }
-    </script>
   `;
-  return layout("Sign In", content);
+  return layout("Log In / Sign Up", content);
 }
 
 export function magicLinkSentPage(email: string): string {

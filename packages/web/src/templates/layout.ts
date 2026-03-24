@@ -20,7 +20,7 @@ export function layout(title: string, content: string, user?: User): string {
          <a href="/auth/logout" class="text-sm text-gray-500 hover:text-gray-700">Logout</a>
        </div>`
     : `<div class="flex items-center gap-4">
-         <a href="/auth/login" class="text-sm font-medium text-blue-600 hover:text-blue-800">Sign In</a>
+         <a href="/auth/login" class="text-sm font-medium text-blue-600 hover:text-blue-800">Log In / Sign Up</a>
        </div>`;
 
   return `<!DOCTYPE html>
