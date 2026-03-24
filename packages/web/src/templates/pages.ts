@@ -788,12 +788,15 @@ export function dashboardPage(
 
   if (subscriptions.length === 0) {
     subscriptionSections = `
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-        <p class="text-gray-500 mb-4">You don't have any subscriptions yet.</p>
-        <div class="flex gap-3 justify-center">
-          <a href="/dashboard/subscribe" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Subscribe Simple Slots</a>
-          <a href="/dashboard/subscribe" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition text-sm font-medium">Subscribe Wildcard Slots</a>
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+        <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-5">
+          <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
         </div>
+        <h2 class="text-xl font-bold text-gray-900 mb-2">No redirects configured yet</h2>
+        <p class="text-gray-500 mb-6 max-w-sm mx-auto">Add your first domain to start redirecting with HTTPS. Choose a plan and configure your DNS in minutes.</p>
+        <a href="/dashboard/subscribe" class="inline-flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition font-medium shadow-sm">
+          Get Started &mdash; Add Your First Domain
+        </a>
       </div>`;
   }
 
