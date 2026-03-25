@@ -7,8 +7,8 @@ services:
       POSTGRES_PASSWORD: dev_password
     ports:
       - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+    # volumes:
+    #   - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U redirect_center -d redirect_center"]
       interval: 2s
@@ -101,8 +101,8 @@ services:
         condition: service_healthy
       redirect:
         condition: service_started
-    volumes:
-      - cert-data:/certs
+    # volumes:
+    #   - cert-data:/certs
 
   pebble:
     image: ghcr.io/letsencrypt/pebble:latest

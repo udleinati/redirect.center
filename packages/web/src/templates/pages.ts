@@ -582,65 +582,123 @@ export function magicLinkSentPage(email: string): string {
   return layout("Check Your Email", content);
 }
 
-function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | undefined): string {
-  const acmeCname = `_acme-challenge.${d.domain}.acme.${getFqdn()}`;
+function copyBtn(value: string): string {
+  const svgIcon = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>`;
+  return `<button onclick="copyToClip(this, '${value}')" class="text-blue-500 hover:text-blue-700 flex-shrink-0" title="Copy">${svgIcon}</button>`;
+}
 
+function dnsInstructionsBlock(d: Domain): string {
+  const entryIp = getEntryIp();
+  const fqdn = getFqdn();
+  const acmeCname = `_acme-challenge.${d.domain}.acme.${fqdn}`;
+
+  return `
+    <p class="text-gray-700 font-medium mb-3">Configure both DNS records below in your domain provider's panel. Both are required for validation.</p>
+
+    <div class="space-y-3 mb-3">
+      <!-- Record 1: A Record -->
+      <div class="bg-white p-3 rounded border border-gray-200">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-flex items-center justify-center w-5 h-5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">1</span>
+          <span class="font-medium text-gray-700 text-xs">A Record — Point your domain to our server</span>
+        </div>
+        <div class="font-mono text-xs space-y-1">
+          <div class="flex gap-2"><span class="text-gray-400 w-12">Type:</span><span class="font-semibold">A</span></div>
+          <div class="flex gap-2"><span class="text-gray-400 w-12">Name:</span><span>${escapeHtml(d.domain)}</span></div>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400 w-12">Value:</span>
+            <span class="font-semibold">${escapeHtml(entryIp)}</span>
+            ${copyBtn(escapeHtml(entryIp))}
+          </div>
+        </div>
+      </div>
+
+      <!-- Record 2: CNAME for ACME -->
+      <div class="bg-white p-3 rounded border border-gray-200">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="inline-flex items-center justify-center w-5 h-5 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">2</span>
+          <span class="font-medium text-gray-700 text-xs">CNAME Record — SSL certificate validation</span>
+        </div>
+        <div class="font-mono text-xs space-y-1">
+          <div class="flex gap-2"><span class="text-gray-400 w-12">Type:</span><span class="font-semibold">CNAME</span></div>
+          <div class="flex gap-2"><span class="text-gray-400 w-12">Name:</span><span>_acme-challenge.${escapeHtml(d.domain)}</span></div>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400 w-12">Value:</span>
+            <span class="font-semibold break-all">${escapeHtml(acmeCname)}</span>
+            ${copyBtn(escapeHtml(acmeCname))}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="text-gray-500 text-xs">The CNAME record is permanent — do not remove it after validation. It is needed for automatic certificate renewals.</p>`;
+}
+
+function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | undefined): string {
   // No certificate yet, or cert still pending/dns_configured — show DNS instructions or progress
   if (!cert || cert.status === "pending" || cert.status === "dns_configured") {
     const hasRequestedValidation = !!d.validation_requested_at;
 
-    // User clicked "Validate Domain" — show progress with auto-reload
+    // User clicked "Validate Domain" — show progress
     if (hasRequestedValidation && d.validation_status === "pending") {
       return `
-        <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-          <p class="text-gray-700 font-medium mb-2">Configure DNS for HTTPS:</p>
-          <div class="bg-white p-2 rounded border border-gray-200 font-mono text-xs mb-2">
-            <div><span class="text-gray-500">Type:</span> CNAME</div>
-            <div><span class="text-gray-500">Name:</span> _acme-challenge.${escapeHtml(d.domain)}</div>
+        <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="dns-block-${d.id}">
+          ${dnsInstructionsBlock(d)}
+          <div class="mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm" id="validate-status-${d.id}">
             <div class="flex items-center gap-2">
-              <span><span class="text-gray-500">Value:</span> ${escapeHtml(acmeCname)}</span>
-              <button onclick="navigator.clipboard.writeText('${escapeHtml(acmeCname)}')" class="text-blue-500 hover:text-blue-700" title="Copy">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-              </button>
+              <svg class="w-4 h-4 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+              <p class="text-blue-800 font-medium">Validation in progress...</p>
             </div>
-          </div>
-          <p class="text-gray-500 text-xs mb-2">This CNAME is permanent. Do not remove it after validation — it is needed for automatic certificate renewals.</p>
-          <div class="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-sm">
-            <p class="text-blue-800 font-medium mb-1">Validation in progress...</p>
-            <p class="text-blue-700 text-xs">We're verifying the DNS configuration and issuing the certificate. This may take up to 5 minutes.</p>
-            <p class="text-blue-600 text-xs mt-1">This page refreshes automatically.</p>
+            <p class="text-blue-700 text-xs mt-1">We're verifying the DNS configuration and issuing the certificate. This may take up to 5 minutes.</p>
           </div>
         </div>
-        <script>setTimeout(() => location.reload(), 15000);</script>`;
+        <script>
+        (function() {
+          var domainId = '${d.id}';
+          function poll() {
+            fetch('/dashboard/domains/' + domainId + '/status', { headers: { 'Accept': 'application/json' } })
+              .then(function(r) { return r.json(); })
+              .then(function(data) {
+                if (data.cert_status === 'issued' || data.cert_status === 'issuing' || data.validation_status === 'validated') {
+                  location.reload();
+                } else if (data.validation_status === 'failed' || data.cert_status === 'failed') {
+                  var el = document.getElementById('validate-status-' + domainId);
+                  if (el) {
+                    el.className = 'mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm';
+                    el.innerHTML = '<p class="text-red-800 font-medium">Validation failed</p>' +
+                      '<p class="text-red-700 text-xs mb-2">' + (data.error_message || 'DNS records not found or incorrect.') + '</p>' +
+                      '<button onclick="retryValidation(\\'' + domainId + '\\', this)" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button>';
+                  }
+                } else {
+                  setTimeout(poll, 10000);
+                }
+              })
+              .catch(function() { setTimeout(poll, 15000); });
+          }
+          setTimeout(poll, 10000);
+        })();
+        </script>`;
     }
 
     // No validation requested yet — show DNS instructions with Validate button
     return `
-      <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-        <p class="text-gray-700 font-medium mb-2">Configure DNS for HTTPS:</p>
-        <div class="bg-white p-2 rounded border border-gray-200 font-mono text-xs mb-2">
-          <div><span class="text-gray-500">Type:</span> CNAME</div>
-          <div><span class="text-gray-500">Name:</span> _acme-challenge.${escapeHtml(d.domain)}</div>
-          <div class="flex items-center gap-2">
-            <span><span class="text-gray-500">Value:</span> ${escapeHtml(acmeCname)}</span>
-            <button onclick="navigator.clipboard.writeText('${escapeHtml(acmeCname)}')" class="text-blue-500 hover:text-blue-700" title="Copy">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-            </button>
-          </div>
-        </div>
-        <p class="text-gray-500 text-xs mb-2">This CNAME is permanent. Do not remove it after validation — it is needed for automatic certificate renewals.</p>
-        <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline">
-          <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition">
+      <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="dns-block-${d.id}">
+        ${dnsInstructionsBlock(d)}
+        <div class="mt-3" id="validate-status-${d.id}">
+          <button onclick="startValidation('${d.id}', this)" class="bg-blue-600 text-white px-3 py-1.5 rounded text-xs hover:bg-blue-700 transition font-medium">
             Validate Domain
           </button>
-        </form>
+        </div>
       </div>`;
   }
 
   if (cert.status === "issuing") {
     return `
       <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-        <p class="text-blue-800 font-medium">DNS verified. Issuing certificate...</p>
+        <div class="flex items-center gap-2">
+          <svg class="w-4 h-4 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <p class="text-blue-800 font-medium">DNS verified. Issuing certificate...</p>
+        </div>
         <p class="text-blue-600 text-xs mt-1">This may take a few minutes.</p>
       </div>
       <script>setTimeout(() => location.reload(), 15000);</script>`;
@@ -660,39 +718,26 @@ function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | und
 
   if (cert.status === "failed") {
     return `
-      <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-        <p class="text-gray-700 font-medium mb-2">Configure DNS for HTTPS:</p>
-        <div class="bg-white p-2 rounded border border-gray-200 font-mono text-xs mb-2">
-          <div><span class="text-gray-500">Type:</span> CNAME</div>
-          <div><span class="text-gray-500">Name:</span> _acme-challenge.${escapeHtml(d.domain)}</div>
-          <div class="flex items-center gap-2">
-            <span><span class="text-gray-500">Value:</span> ${escapeHtml(acmeCname)}</span>
-            <button onclick="navigator.clipboard.writeText('${escapeHtml(acmeCname)}')" class="text-blue-500 hover:text-blue-700" title="Copy">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
-            </button>
-          </div>
-        </div>
-        <p class="text-gray-500 text-xs mb-2">This CNAME is permanent. Do not remove it after validation — it is needed for automatic certificate renewals.</p>
-        <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-sm">
+      <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg text-sm" id="dns-block-${d.id}">
+        ${dnsInstructionsBlock(d)}
+        <div class="mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm" id="validate-status-${d.id}">
           <p class="text-red-800 font-medium">Validation failed</p>
           <p class="text-red-700 text-xs mb-2">${escapeHtml(cert.error_message ?? "Unknown error")}</p>
+          <button onclick="retryValidation('${d.id}', this)" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button>
         </div>
-        <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline mt-2">
-          <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button>
-        </form>
       </div>`;
   }
 
   if (cert.status === "renewal_failed") {
     const expiryDate = cert.expires_at ? new Date(cert.expires_at).toLocaleDateString() : "N/A";
     return `
-      <div class="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm">
-        <p class="text-orange-800 font-medium">Renewal problem</p>
-        <p class="text-orange-700 text-xs">Certificate expires ${escapeHtml(expiryDate)}. Error: ${escapeHtml(cert.error_message ?? "Unknown")}</p>
-        <p class="text-orange-600 text-xs mt-1">Verify the CNAME <code>_acme-challenge</code> is still configured.</p>
-        <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline mt-1">
-          <button type="submit" class="bg-orange-600 text-white px-3 py-1 rounded text-xs hover:bg-orange-700 transition">Check DNS Now</button>
-        </form>
+      <div class="mt-2 p-3 bg-orange-50 border border-orange-200 rounded-lg text-sm" id="dns-block-${d.id}">
+        ${dnsInstructionsBlock(d)}
+        <div class="mt-3 p-2 bg-orange-50 border border-orange-200 rounded text-sm">
+          <p class="text-orange-800 font-medium">Renewal problem</p>
+          <p class="text-orange-700 text-xs">Certificate expires ${escapeHtml(expiryDate)}. Error: ${escapeHtml(cert.error_message ?? "Unknown")}</p>
+        </div>
+        <button onclick="retryValidation('${d.id}', this)" class="mt-2 bg-orange-600 text-white px-3 py-1 rounded text-xs hover:bg-orange-700 transition">Check DNS Now</button>
       </div>`;
   }
 
@@ -701,9 +746,7 @@ function renderDomainCertificateStatus(d: Domain, cert: Certificate | null | und
       <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm">
         <p class="text-red-800 font-medium">Certificate expired</p>
         <p class="text-red-700 text-xs mb-2">HTTPS redirects are no longer working for this domain.</p>
-        <form method="POST" action="/dashboard/domains/${d.id}/validate" class="inline">
-          <button type="submit" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Request New Certificate</button>
-        </form>
+        <button onclick="retryValidation('${d.id}', this)" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Request New Certificate</button>
       </div>`;
   }
 
@@ -844,11 +887,17 @@ export function dashboardPage(
       <p class="text-xs text-gray-400 mt-1">After adding, configure DNS as instructed to activate HTTPS.</p>
     ` : "";
 
+    const priceLabel = sub.billing_interval === "yearly"
+      ? (sub.type === "simple" ? "$32.40/yr" : "$54/yr")
+      : (sub.type === "simple" ? "$3/mo" : "$5/mo");
+    const cycleLabel = sub.billing_interval === "yearly" ? "yearly" : "monthly";
+
     const addSlotsForm = sub.status === "active" ? `
-      <form method="POST" action="/dashboard/subscriptions/${sub.id}/add-slots" class="flex items-center gap-2">
-        <input type="number" name="quantity" value="1" min="1" max="50" class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center" />
-        <button type="submit" class="text-sm text-blue-600 hover:text-blue-800 font-medium">Buy more slots</button>
-      </form>
+      <div class="flex items-center gap-2">
+        <input type="number" id="qty-${sub.id}" value="1" min="1" max="50" class="w-16 px-2 py-1.5 border border-gray-300 rounded-lg text-sm text-center" />
+        <button onclick="openBuyModal('${sub.id}', '${escapeHtml(typeName)}', '${priceLabel}', '${cycleLabel}')"
+          class="text-sm text-blue-600 hover:text-blue-800 font-medium">Buy more slots</button>
+      </div>
     ` : "";
 
     subscriptionSections += `
@@ -891,6 +940,181 @@ export function dashboardPage(
       ${alerts}
       ${subscriptionSections}
     </div>
+
+    <!-- Buy More Slots Modal -->
+    <div id="buy-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+      <div class="bg-white rounded-xl shadow-xl max-w-sm w-full mx-4 overflow-hidden">
+        <!-- Confirm state -->
+        <div id="buy-modal-confirm" class="p-6">
+          <h3 class="text-lg font-bold mb-2">Confirm Purchase</h3>
+          <div class="bg-gray-50 rounded-lg p-4 mb-4">
+            <p class="text-sm text-gray-700" id="buy-modal-details"></p>
+            <p class="text-sm text-gray-500 mt-1" id="buy-modal-price"></p>
+          </div>
+          <p class="text-xs text-gray-400 mb-4">The charge will be prorated for the current billing cycle.</p>
+          <div class="flex gap-3">
+            <button onclick="closeBuyModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Cancel</button>
+            <button onclick="confirmBuy()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Confirm</button>
+          </div>
+        </div>
+        <!-- Loading state -->
+        <div id="buy-modal-loading" class="p-6 text-center hidden">
+          <svg class="w-10 h-10 text-blue-600 animate-spin mx-auto mb-3" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
+          <p class="text-gray-700 font-medium">Processing your purchase...</p>
+          <p class="text-sm text-gray-500 mt-1">This may take a moment.</p>
+        </div>
+        <!-- Success state -->
+        <div id="buy-modal-success" class="p-6 text-center hidden">
+          <div class="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-1">Slot Added!</h3>
+          <p class="text-sm text-gray-600 mb-4" id="buy-modal-success-msg"></p>
+          <button onclick="location.reload()" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Back to Dashboard</button>
+        </div>
+        <!-- Error state -->
+        <div id="buy-modal-error" class="p-6 text-center hidden">
+          <div class="w-14 h-14 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+          </div>
+          <h3 class="text-lg font-bold mb-1">Something went wrong</h3>
+          <p class="text-sm text-red-600 mb-4" id="buy-modal-error-msg"></p>
+          <div class="flex gap-3">
+            <button onclick="closeBuyModal()" class="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium hover:bg-gray-50 transition">Close</button>
+            <button onclick="confirmBuy()" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">Try Again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+    // === Validate Domain (Task 2) ===
+    function startValidation(domainId, btn) {
+      var statusEl = document.getElementById('validate-status-' + domainId);
+      if (!statusEl) return;
+      statusEl.innerHTML = '<div class="p-2 bg-blue-50 border border-blue-200 rounded text-sm">' +
+        '<div class="flex items-center gap-2"><svg class="w-4 h-4 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>' +
+        '<p class="text-blue-800 font-medium">Validation in progress...</p></div>' +
+        '<p class="text-blue-700 text-xs mt-1">We\\u2019re verifying the DNS configuration. This may take up to 5 minutes.</p></div>';
+
+      fetch('/dashboard/domains/' + domainId + '/validate', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      }).then(function(r) { return r.json(); }).then(function() {
+        pollValidation(domainId);
+      }).catch(function() {
+        statusEl.innerHTML = '<div class="p-2 bg-red-50 border border-red-200 rounded text-sm">' +
+          '<p class="text-red-800 font-medium">Request failed</p>' +
+          '<p class="text-red-700 text-xs mb-2">Could not reach the server.</p>' +
+          '<button onclick="startValidation(\\'' + domainId + '\\', this)" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button></div>';
+      });
+    }
+
+    function retryValidation(domainId, btn) {
+      var statusEl = document.getElementById('validate-status-' + domainId);
+      if (statusEl) {
+        statusEl.className = 'mt-3 p-2 bg-blue-50 border border-blue-200 rounded text-sm';
+        statusEl.innerHTML = '<div class="flex items-center gap-2"><svg class="w-4 h-4 text-blue-600 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>' +
+          '<p class="text-blue-800 font-medium">Validation in progress...</p></div>' +
+          '<p class="text-blue-700 text-xs mt-1">We\\u2019re verifying the DNS configuration. This may take up to 5 minutes.</p>';
+      } else {
+        // For expired/renewal_failed — update the button area
+        btn.disabled = true;
+        btn.textContent = 'Validating...';
+      }
+
+      fetch('/dashboard/domains/' + domainId + '/validate', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' }
+      }).then(function(r) { return r.json(); }).then(function() {
+        pollValidation(domainId);
+      }).catch(function() {
+        if (statusEl) {
+          statusEl.className = 'mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm';
+          statusEl.innerHTML = '<p class="text-red-800 font-medium">Request failed</p>' +
+            '<p class="text-red-700 text-xs mb-2">Could not reach the server.</p>' +
+            '<button onclick="retryValidation(\\'' + domainId + '\\', this)" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button>';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Try Again';
+        }
+      });
+    }
+
+    function pollValidation(domainId) {
+      fetch('/dashboard/domains/' + domainId + '/status', { headers: { 'Accept': 'application/json' } })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+          if (data.cert_status === 'issued' || data.cert_status === 'issuing' || data.validation_status === 'validated') {
+            location.reload();
+          } else if (data.validation_status === 'failed' || data.cert_status === 'failed') {
+            var el = document.getElementById('validate-status-' + domainId);
+            if (el) {
+              el.className = 'mt-3 p-2 bg-red-50 border border-red-200 rounded text-sm';
+              el.innerHTML = '<p class="text-red-800 font-medium">Validation failed</p>' +
+                '<p class="text-red-700 text-xs mb-2">' + (data.error_message || 'DNS records not found or incorrect. Verify both records are configured.') + '</p>' +
+                '<button onclick="retryValidation(\\'' + domainId + '\\', this)" class="bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition">Try Again</button>';
+            }
+          } else {
+            setTimeout(function() { pollValidation(domainId); }, 10000);
+          }
+        })
+        .catch(function() { setTimeout(function() { pollValidation(domainId); }, 15000); });
+    }
+
+    // === Buy More Slots Modal (Task 3) ===
+    var _buySubId = '';
+    var _buyQty = 1;
+
+    function openBuyModal(subId, typeName, priceLabel, cycle) {
+      _buySubId = subId;
+      var qtyInput = document.getElementById('qty-' + subId);
+      _buyQty = qtyInput ? parseInt(qtyInput.value) || 1 : 1;
+
+      document.getElementById('buy-modal-details').textContent =
+        '+' + _buyQty + ' ' + typeName + ' slot' + (_buyQty > 1 ? 's' : '');
+      document.getElementById('buy-modal-price').textContent =
+        priceLabel + ' per slot · billed ' + cycle;
+
+      showModalState('confirm');
+      document.getElementById('buy-modal').classList.remove('hidden');
+    }
+
+    function closeBuyModal() {
+      document.getElementById('buy-modal').classList.add('hidden');
+    }
+
+    function showModalState(state) {
+      ['confirm', 'loading', 'success', 'error'].forEach(function(s) {
+        document.getElementById('buy-modal-' + s).classList.toggle('hidden', s !== state);
+      });
+    }
+
+    function confirmBuy() {
+      showModalState('loading');
+      fetch('/dashboard/subscriptions/' + _buySubId + '/add-slots', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quantity: _buyQty })
+      })
+      .then(function(r) { return r.json().then(function(data) { return { ok: r.ok, data: data }; }); })
+      .then(function(result) {
+        if (result.ok && result.data.ok) {
+          document.getElementById('buy-modal-success-msg').textContent =
+            _buyQty + ' slot' + (_buyQty > 1 ? 's' : '') + ' added to your subscription. You can now add domains.';
+          showModalState('success');
+        } else {
+          document.getElementById('buy-modal-error-msg').textContent =
+            result.data.error || 'An unexpected error occurred.';
+          showModalState('error');
+        }
+      })
+      .catch(function() {
+        document.getElementById('buy-modal-error-msg').textContent = 'Could not reach the server. Please check your connection.';
+        showModalState('error');
+      });
+    }
+    </script>
   `;
   return layout("Dashboard", content, user);
 }

@@ -97,36 +97,51 @@ dashboard.post("/subscribe", async (c) => {
   }
 });
 
-// Add more slots to existing subscription
+// Add more slots to existing subscription (supports both form POST and AJAX)
 dashboard.post("/subscriptions/:id/add-slots", async (c) => {
   const user = c.get("user" as never) as User;
   const subId = c.req.param("id");
-  const body = await c.req.parseBody();
-  const additionalQuantity = parseInt(body["quantity"] as string || "1", 10);
+  const isAjax = c.req.header("Accept")?.includes("application/json") ||
+    c.req.header("X-Requested-With") === "XMLHttpRequest";
+
+  let additionalQuantity: number;
+  if (isAjax) {
+    const json = await c.req.json().catch(() => ({}));
+    additionalQuantity = parseInt(json.quantity || "1", 10);
+  } else {
+    const body = await c.req.parseBody();
+    additionalQuantity = parseInt(body["quantity"] as string || "1", 10);
+  }
 
   if (additionalQuantity < 1 || isNaN(additionalQuantity)) {
+    if (isAjax) return c.json({ error: "Quantity must be at least 1." }, 400);
     return c.html(errorPage("Invalid Request", "Quantity must be at least 1."), 400);
   }
 
   const sub = await subscriptionQueries.findById(subId);
   if (!sub || sub.user_id !== user.id) {
+    if (isAjax) return c.json({ error: "Subscription not found." }, 404);
     return c.html(errorPage("Not Found", "Subscription not found."), 404);
   }
 
   if (sub.status !== "active") {
+    if (isAjax) return c.json({ error: "Cannot add slots while subscription is not active." }, 403);
     return c.html(errorPage("Not Allowed", "Cannot add slots while subscription is not active."), 403);
   }
 
   if (!sub.stripe_subscription_id) {
+    if (isAjax) return c.json({ error: "No Stripe subscription linked." }, 400);
     return c.html(errorPage("Error", "No Stripe subscription linked."), 400);
   }
 
   try {
     const newQuantity = sub.quantity + additionalQuantity;
     await updateSubscriptionQuantity(sub.stripe_subscription_id, newQuantity);
+    if (isAjax) return c.json({ ok: true, newQuantity });
     return c.redirect("/dashboard");
   } catch (error) {
     console.error("[dashboard] Add slots error:", error);
+    if (isAjax) return c.json({ error: "Failed to add slots. Please try again." }, 500);
     return c.html(
       errorPage("Error", "Failed to add slots. Please try again."),
       500,
@@ -186,19 +201,23 @@ dashboard.post("/subscriptions/:id/domains", async (c) => {
   }
 });
 
-// Request domain validation
+// Request domain validation (supports both form POST and AJAX)
 dashboard.post("/domains/:id/validate", async (c) => {
   const user = c.get("user" as never) as User;
   const domainId = c.req.param("id");
+  const isAjax = c.req.header("Accept")?.includes("application/json") ||
+    c.req.header("X-Requested-With") === "XMLHttpRequest";
 
   const domain = await domainQueries.findById(domainId);
   if (!domain) {
+    if (isAjax) return c.json({ error: "Domain not found." }, 404);
     return c.html(errorPage("Not Found", "Domain not found."), 404);
   }
 
   // Verify ownership
   const sub = await subscriptionQueries.findById(domain.subscription_id);
   if (!sub || sub.user_id !== user.id) {
+    if (isAjax) return c.json({ error: "Domain not found." }, 404);
     return c.html(errorPage("Not Found", "Domain not found."), 404);
   }
 
@@ -210,7 +229,28 @@ dashboard.post("/domains/:id/validate", async (c) => {
   // Set validation_requested_at so the certmanager picks it up
   await domainQueries.requestValidation(domain.id);
 
+  if (isAjax) return c.json({ ok: true, status: "pending" });
   return c.redirect("/dashboard");
+});
+
+// Poll domain validation status (AJAX)
+dashboard.get("/domains/:id/status", async (c) => {
+  const user = c.get("user" as never) as User;
+  const domainId = c.req.param("id");
+
+  const domain = await domainQueries.findById(domainId);
+  if (!domain) return c.json({ error: "Domain not found." }, 404);
+
+  const sub = await subscriptionQueries.findById(domain.subscription_id);
+  if (!sub || sub.user_id !== user.id) return c.json({ error: "Domain not found." }, 404);
+
+  const cert = await certificateQueries.findByDomainId(domainId);
+
+  return c.json({
+    validation_status: domain.validation_status,
+    cert_status: cert?.status ?? null,
+    error_message: cert?.error_message ?? null,
+  });
 });
 
 // Remove domain (soft delete)
