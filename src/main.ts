@@ -39,10 +39,11 @@ app.use("/", async (c, next) => {
   const contentLength = c.res.headers.get("content-length") || "-";
   const referer = c.req.header("referer") || "-";
   const ua = c.req.header("user-agent") || "-";
+  const location = c.res.headers.get("location") || "-";
   const timestamp = new Date().toISOString();
 
   console.log(
-    `${ip} - - [${timestamp}] "${method} ${path} HTTP/${protocol}" ${status} ${contentLength} "${referer}" "${ua}" host=${host} ${ms}ms`,
+    `${ip} - - [${timestamp}] "${method} ${path} HTTP/${protocol}" ${status} ${contentLength} "${referer}" "${ua}" host=${host} location=${location} ${ms}ms`,
   );
 });
 
