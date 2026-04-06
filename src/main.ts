@@ -143,7 +143,7 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   }
   const headers: Record<string, string> = {
     "Location": safeLocation,
-    "Cache-Control": "public, max-age=15",
+    "Cache-Control": "private, max-age=15",
   };
 
   // Loop detection cookie
