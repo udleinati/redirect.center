@@ -14,7 +14,6 @@ import { logger } from "./helpers/logger.ts";
 
 const MAX_REDIRECTS = 3;
 const LOOP_COOKIE = "_rc";
-
 const app = new Hono();
 const env = vento({
   includes: new URL("../views", import.meta.url).pathname,
@@ -66,7 +65,7 @@ app.get("/", async (c) => {
     const result = await template({
       app: config,
     });
-
+    c.header("Cache-Control", "public, max-age=300");
     return c.html(result.content);
   }
 
@@ -120,6 +119,9 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   if (guardian.isDenied(redirect.fqdn)) {
     throw new HttpError(403, "Forbidden");
   }
+
+  // Cache redirect responses to reduce repeated DNS lookups from the same client/proxy
+  c.header("Cache-Control", "public, max-age=15");
 
   // Set loop detection cookie (incremented count, expires in 10s)
   const response = c.redirect(redirect.url, redirect.status as 301);
