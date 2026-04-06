@@ -9,7 +9,7 @@ import {
   HttpError,
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
-import { logger } from "./helpers/logger.ts";
+
 const app = new Hono();
 const env = vento({
   includes: new URL("../views", import.meta.url).pathname,
@@ -47,23 +47,26 @@ app.use("/", async (c, next) => {
 });
 
 // Homepage - only for the FQDN host (with compression)
-app.get("/", compress(), async (c) => {
+app.get("/", async (c, next) => {
   const host = (c.req.header("host") || "").split(":")[0];
-  const ua = c.req.header("user-agent");
-  
-  if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
 
   if (host === config.fqdn) {
-    const template = await env.load("index.vto");
-    const result = await template({
-      app: config,
+    const ua = c.req.header("user-agent");
+    if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
+
+    // Apply compression only to the homepage response
+    return compress()(c, async () => {
+      const template = await env.load("index.vto");
+      const result = await template({
+        app: config,
+      });
+      c.header("Cache-Control", "public, max-age=300");
+      return c.html(result.content);
     });
-    c.header("Cache-Control", "public, max-age=300");
-    return c.html(result.content);
   }
 
-  // If not FQDN, treat as redirect
-  return handleRedirect(c);
+  // If not FQDN, skip to redirect (no compression overhead)
+  await next();
 });
 
 // robots.txt for redirect domains — tells crawlers not to follow/index redirects

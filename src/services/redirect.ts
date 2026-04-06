@@ -1,4 +1,3 @@
-import { parseDomain, ParseResultType } from "parse-domain";
 import { config } from "../config.ts";
 import { createDestination } from "../types/destination.ts";
 import type { Destination } from "../types/destination.ts";
@@ -31,38 +30,19 @@ export function getRedirectResponse(
 }
 
 export async function resolveDns(host: string): Promise<string> {
-  const parsedHost = parseDomain(host) as {
-    subDomains: string[];
-  };
-
-  let resolved: string[];
+  // Extract subdomains via simple split (avoids heavy parseDomain trie lookup)
+  const labels = host.split(".");
+  const hasRedirectSubdomain = labels.includes("redirect");
 
   try {
-    resolved = await dnsResolveCname(host);
+    const resolved = await dnsResolveCname(host);
 
     if (resolved.length > 1) {
       throw new HttpError(400, `More than one record on the host ${host}`);
     }
 
     // Remove trailing dot from CNAME if present
-    const record = resolved[0].replace(/\.$/, "");
-
-    const parsedResult = parseDomain(record);
-    if (
-      ![
-        ParseResultType.Reserved,
-        ParseResultType.Listed,
-        ParseResultType.NotListed,
-        ParseResultType.Invalid,
-      ].includes(parsedResult.type)
-    ) {
-      throw new HttpError(
-        400,
-        `The record on the host ${host} is not valid`,
-      );
-    }
-
-    return record;
+    return resolved[0].replace(/\.$/, "");
   } catch (err: unknown) {
     const error = err as { code?: string; name?: string; status?: number; message?: string };
 
@@ -73,8 +53,7 @@ export async function resolveDns(host: string): Promise<string> {
 
     if (
       isDnsNotFound &&
-      parsedHost.subDomains &&
-      !parsedHost.subDomains.includes("redirect")
+      !hasRedirectSubdomain
     ) {
       return resolveDns(`redirect.${host}`);
     }
