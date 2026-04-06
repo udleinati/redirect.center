@@ -36,6 +36,30 @@ export async function dnsResolveCname(host: string): Promise<string[]> {
   return cacheResult(host, await Deno.resolveDns(host, "CNAME"));
 }
 
+export async function dnsResolveA(host: string): Promise<string[]> {
+  const cacheKey = `A:${host}`;
+  const cached = cache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    if (cached.error) throw cached.error;
+    return cached.records!;
+  }
+
+  for (const server of DNS_SERVERS) {
+    try {
+      const records = await Deno.resolveDns(host, "A", { nameServer: { ipAddr: server, port: 53 } });
+      evictIfNeeded();
+      cache.set(cacheKey, { records, expiresAt: Date.now() + CACHE_TTL_MS });
+      return records;
+    } catch (error) {
+      if (server === DNS_SERVERS[DNS_SERVERS.length - 1]) {
+        cacheError(cacheKey, error as Error);
+        throw error;
+      }
+    }
+  }
+  return await Deno.resolveDns(host, "A");
+}
+
 function cacheResult(host: string, records: string[]): string[] {
   evictIfNeeded();
   cache.set(host, { records, expiresAt: Date.now() + CACHE_TTL_MS });

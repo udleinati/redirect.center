@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { getCookie, setCookie } from "hono/cookie";
 import { compress } from "hono/compress";
 import { getConnInfo } from "hono/deno";
 import vento from "ventojs";
@@ -10,10 +9,8 @@ import {
   HttpError,
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
+import { dnsResolveA } from "./helpers/dns.ts";
 import { logger } from "./helpers/logger.ts";
-
-const MAX_REDIRECTS = 3;
-const LOOP_COOKIE = "_rc";
 const app = new Hono();
 const env = vento({
   includes: new URL("../views", import.meta.url).pathname,
@@ -108,29 +105,29 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     throw new HttpError(403, "Forbidden");
   }
 
-  // Loop detection via cookie
-  const loopCount = parseInt(getCookie(c, LOOP_COOKIE) || "0", 10);
-  if (loopCount >= MAX_REDIRECTS) {
-    const connInfo = getConnInfo(c);
-    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-      c.req.header("x-real-ip") ||
-      (connInfo.remote.address ?? "-");
-    const referer = c.req.header("referer") || "-";
-    const ua = c.req.header("user-agent") || "-";
-    logger.warn(
-      `[loop] Redirect loop detected: host=${host} destination=${redirect.url} ip=${ip} referer=${referer} ua=${ua} count=${loopCount}`,
-    );
-    // Clear cookie and return error
-    setCookie(c, LOOP_COOKIE, "", { path: "/", maxAge: 0 });
-    return c.html(
-      `<html><head><title>Redirect Loop Detected</title></head><body style="font-family:sans-serif;text-align:center;padding:60px">` +
-      `<h1>Redirect Loop Detected</h1>` +
-      `<p>The domain <strong>${host}</strong> has a DNS misconfiguration that causes an infinite redirect loop.</p>` +
-      `<p>Please check your CNAME record — it should not point back to the same domain.</p>` +
-      `<p style="margin-top:30px;color:#888">Powered by <a href="https://${config.fqdn}">${config.projectName}</a></p>` +
-      `</body></html>`,
-      508,
-    );
+  // Server-side loop detection: check if destination resolves back to this service
+  try {
+    const destinationIps = await dnsResolveA(redirect.fqdn);
+    if (destinationIps.includes(config.entryIp)) {
+      const connInfo = getConnInfo(c);
+      const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+        c.req.header("x-real-ip") ||
+        (connInfo.remote.address ?? "-");
+      logger.warn(
+        `[loop] Redirect loop detected: host=${host} destination=${redirect.url} destination_ip=${destinationIps.join(",")} entry_ip=${config.entryIp} client_ip=${ip}`,
+      );
+      return c.html(
+        `<html><head><title>Redirect Loop Detected</title></head><body style="font-family:sans-serif;text-align:center;padding:60px">` +
+        `<h1>Redirect Loop Detected</h1>` +
+        `<p>The domain <strong>${host}</strong> redirects to <strong>${redirect.fqdn}</strong>, which points back to this service.</p>` +
+        `<p>Please check your DNS records to break the loop.</p>` +
+        `<p style="margin-top:30px;color:#888">Powered by <a href="https://${config.fqdn}">${config.projectName}</a></p>` +
+        `</body></html>`,
+        508,
+      );
+    }
+  } catch {
+    // If A record resolution fails, skip loop check (destination might not have an A record yet)
   }
 
   // Minimal redirect response: no body, just Location header
@@ -141,17 +138,13 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   } catch {
     safeLocation = encodeURI(redirect.url);
   }
-  const headers: Record<string, string> = {
-    "Location": safeLocation,
-    "Cache-Control": "private, max-age=15",
-  };
-
-  // Loop detection cookie
-  headers["Set-Cookie"] = `${LOOP_COOKIE}=${loopCount + 1}; Path=/; Max-Age=10; HttpOnly`;
 
   return new Response(null, {
     status: redirect.status,
-    headers,
+    headers: {
+      "Location": safeLocation,
+      "Cache-Control": "public, max-age=15",
+    },
   });
 }
 
