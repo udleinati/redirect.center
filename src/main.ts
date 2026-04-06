@@ -50,11 +50,8 @@ app.use("/", async (c, next) => {
   );
 });
 
-// Compression (gzip/deflate)
-app.use("*", compress());
-
-// Homepage - only for the FQDN host
-app.get("/", async (c) => {
+// Homepage - only for the FQDN host (with compression)
+app.get("/", compress(), async (c) => {
   const host = (c.req.header("host") || "").split(":")[0];
   const ua = c.req.header("user-agent");
   
@@ -71,6 +68,14 @@ app.get("/", async (c) => {
 
   // If not FQDN, treat as redirect
   return handleRedirect(c);
+});
+
+// robots.txt for redirect domains — tells crawlers not to follow/index redirects
+app.get("/robots.txt", (c) => {
+  const host = (c.req.header("host") || "").split(":")[0];
+  if (host === config.fqdn) return c.notFound();
+  c.header("Cache-Control", "public, max-age=86400");
+  return c.text("User-agent: *\nDisallow: /\n");
 });
 
 // FQDN-only routes: return 404 for non-redirect paths on the service domain
@@ -120,17 +125,19 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     throw new HttpError(403, "Forbidden");
   }
 
-  // Cache redirect responses to reduce repeated DNS lookups from the same client/proxy
-  c.header("Cache-Control", "public, max-age=15");
+  // Minimal redirect response: no body, just Location header
+  const headers: Record<string, string> = {
+    "Location": redirect.url,
+    "Cache-Control": "public, max-age=15",
+  };
 
-  // Set loop detection cookie (incremented count, expires in 10s)
-  const response = c.redirect(redirect.url, redirect.status as 301);
-  setCookie(c, LOOP_COOKIE, String(loopCount + 1), {
-    path: "/",
-    maxAge: 10,
-    httpOnly: true,
+  // Loop detection cookie
+  headers["Set-Cookie"] = `${LOOP_COOKIE}=${loopCount + 1}; Path=/; Max-Age=10; HttpOnly`;
+
+  return new Response(null, {
+    status: redirect.status,
+    headers,
   });
-  return response;
 }
 
 // Start server
