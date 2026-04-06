@@ -126,8 +126,15 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   }
 
   // Minimal redirect response: no body, just Location header
+  // Encode non-ASCII characters to avoid ByteString errors in Response headers
+  let safeLocation: string;
+  try {
+    safeLocation = new URL(redirect.url).href;
+  } catch {
+    safeLocation = encodeURI(redirect.url);
+  }
   const headers: Record<string, string> = {
-    "Location": redirect.url,
+    "Location": safeLocation,
     "Cache-Control": "public, max-age=15",
   };
 
