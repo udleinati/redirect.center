@@ -61,7 +61,7 @@ app.get("/", async (c, next) => {
         app: config,
       });
       c.header("Cache-Control", "public, max-age=300");
-      return c.html(result.content);
+      c.res = c.html(result.content);
     });
   }
 
