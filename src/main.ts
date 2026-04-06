@@ -29,7 +29,7 @@ app.use("/", async (c, next) => {
   await next();
 
   const host = c.req.header("host") || "-";
-  if (host != config.fqdn) return;
+  //if (host != config.fqdn) return;
 
   const ms = Date.now() - start;
   const connInfo = getConnInfo(c);
@@ -57,11 +57,11 @@ app.use("*", compress());
 // Homepage - only for the FQDN host
 app.get("/", async (c) => {
   const host = (c.req.header("host") || "").split(":")[0];
+  const ua = c.req.header("user-agent");
+  
+  if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
 
   if (host === config.fqdn) {
-    const ua = c.req.header("user-agent");
-    if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
-
     const template = await env.load("index.vto");
     const result = await template({
       app: config,
