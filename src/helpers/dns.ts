@@ -103,3 +103,12 @@ function evictIfNeeded(): void {
     }
   }
 }
+
+// Proactive cache cleanup — removes expired entries every 15s
+// Without this, expired entries sit in the Map until max size triggers eviction
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (entry.expiresAt <= now) cache.delete(key);
+  }
+}, 15_000);

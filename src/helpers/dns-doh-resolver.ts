@@ -32,14 +32,17 @@ interface DoHResponse {
 export async function resolveCnameDoH(host: string): Promise<string[]> {
   for (let i = 0; i < DOH_SERVERS.length; i++) {
     const server = DOH_SERVERS[i];
+    let res: Response | undefined;
     try {
       const url = `${server}?name=${encodeURIComponent(host)}&type=CNAME`;
-      const res = await fetch(url, {
+      res = await fetch(url, {
         headers: { Accept: "application/dns-json" },
         signal: AbortSignal.timeout(3000),
       });
 
       if (!res.ok) {
+        // Drain body to release native resources
+        await res.body?.cancel();
         throw new Error(`DoH HTTP error: ${res.status}`);
       }
 
@@ -66,6 +69,10 @@ export async function resolveCnameDoH(host: string): Promise<string[]> {
 
       return cnames;
     } catch (err) {
+      // Ensure body is released on any error path
+      if (res && !res.bodyUsed) {
+        res.body?.cancel().catch(() => {});
+      }
       // If it's a "no records found" error, throw immediately (don't try next server)
       if ((err as Error).message?.includes("no records found")) {
         throw err;
