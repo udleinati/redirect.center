@@ -1,7 +1,18 @@
+import { udpResolveCname } from "./dns-udp-resolver.ts";
+
 const DNS_SERVERS = (Deno.env.get("DNS_SERVERS") || "1.1.1.1,8.8.8.8")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+
+/**
+ * Toggle between resolvers:
+ *   "udp"  → manual UDP socket (explicit close, no memory leak)
+ *   "deno" → Deno.resolveDns() (native, leaks memory over time)
+ *
+ * To revert: change to "deno" or set env DNS_RESOLVER=deno
+ */
+const DNS_RESOLVER = Deno.env.get("DNS_RESOLVER") || "udp";
 
 const CACHE_TTL_MS = 15_000;
 const CACHE_MAX_SIZE = 2_000;
@@ -37,10 +48,17 @@ export async function dnsResolveCname(host: string): Promise<string[]> {
   }
 }
 
+async function resolve(host: string, server: string): Promise<string[]> {
+  if (DNS_RESOLVER === "udp") {
+    return await udpResolveCname(host, server);
+  }
+  return await Deno.resolveDns(host, "CNAME", { nameServer: { ipAddr: server, port: 53 } });
+}
+
 async function doResolve(host: string): Promise<string[]> {
   for (const server of DNS_SERVERS) {
     try {
-      return cacheResult(host, await Deno.resolveDns(host, "CNAME", { nameServer: { ipAddr: server, port: 53 } }));
+      return cacheResult(host, await resolve(host, server));
     } catch (error) {
       if (server === DNS_SERVERS[DNS_SERVERS.length - 1]) {
         cacheError(host, error as Error);
@@ -48,7 +66,7 @@ async function doResolve(host: string): Promise<string[]> {
       }
     }
   }
-  return cacheResult(host, await Deno.resolveDns(host, "CNAME"));
+  return cacheResult(host, await resolve(host, DNS_SERVERS[0]));
 }
 
 export function dnsCacheSize(): number {
