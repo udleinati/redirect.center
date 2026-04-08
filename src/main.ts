@@ -9,7 +9,7 @@ import {
   HttpError,
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
-import { dnsCacheSize } from "./helpers/dns.ts";
+import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
 
 const app = new Hono();
 const env = vento({
@@ -87,6 +87,7 @@ app.get("/healthz", (c) => {
       external: `${(mem.external / 1024 / 1024).toFixed(1)}MB`,
     },
     dnsCache: dnsCacheSize(),
+    dnsInflight: dnsInflightSize(),
   });
 });
 
@@ -150,7 +151,7 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
 setInterval(() => {
   const mem = Deno.memoryUsage();
   console.log(
-    `[health] rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}/${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB external=${(mem.external / 1024 / 1024).toFixed(1)}MB dnsCache=${dnsCacheSize()}`,
+    `[health] rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}/${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB external=${(mem.external / 1024 / 1024).toFixed(1)}MB dnsCache=${dnsCacheSize()} dnsInflight=${dnsInflightSize()}`,
   );
 }, 60_000);
 

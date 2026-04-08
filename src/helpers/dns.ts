@@ -13,31 +13,50 @@ interface CacheEntry {
 }
 
 const cache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<string[]>>();
 
 export async function dnsResolveCname(host: string): Promise<string[]> {
+  // 1. Check cache
   const cached = cache.get(host);
   if (cached && cached.expiresAt > Date.now()) {
     if (cached.errorMessage) throw new Error(cached.errorMessage);
     return cached.records!;
   }
 
+  // 2. Deduplicate in-flight requests (singleflight)
+  const existing = inflight.get(host);
+  if (existing) return existing;
+
+  // 3. Resolve and cache
+  const promise = doResolve(host);
+  inflight.set(host, promise);
+  try {
+    return await promise;
+  } finally {
+    inflight.delete(host);
+  }
+}
+
+async function doResolve(host: string): Promise<string[]> {
   for (const server of DNS_SERVERS) {
     try {
       return cacheResult(host, await Deno.resolveDns(host, "CNAME", { nameServer: { ipAddr: server, port: 53 } }));
     } catch (error) {
-      // If this server failed, try the next one
       if (server === DNS_SERVERS[DNS_SERVERS.length - 1]) {
         cacheError(host, error as Error);
-        throw error; // Last server — propagate the error
+        throw error;
       }
     }
   }
-  // Fallback (should never reach here)
   return cacheResult(host, await Deno.resolveDns(host, "CNAME"));
 }
 
 export function dnsCacheSize(): number {
   return cache.size;
+}
+
+export function dnsInflightSize(): number {
+  return inflight.size;
 }
 
 function cacheResult(host: string, records: string[]): string[] {
@@ -59,7 +78,6 @@ function evictIfNeeded(): void {
     if (entry.expiresAt <= now) cache.delete(key);
   }
 
-  // If still too big, remove the oldest entries
   if (cache.size >= CACHE_MAX_SIZE) {
     const toDelete = cache.size - CACHE_MAX_SIZE + 1000;
     let count = 0;
