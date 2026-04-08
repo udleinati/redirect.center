@@ -114,6 +114,11 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   if (!host) throw new HttpError(400, "Bad Request");
   host = host.includes(":") ? host.split(":")[0] : host;
 
+  // Block requests without User-Agent (bots that follow redirects infinitely)
+  if (!c.req.header("user-agent")) {
+    throw new HttpError(403, "Forbidden");
+  }
+
   // Source guardian check
   if (guardian.isDenied(host)) {
     throw new HttpError(403, "Forbidden");
@@ -125,6 +130,11 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   // Destination guardian check
   if (guardian.isDenied(redirect.fqdn)) {
     throw new HttpError(403, "Forbidden");
+  }
+
+  // Self-redirect loop detection: destination points back to the same host
+  if (redirect.fqdn === host) {
+    throw new HttpError(508, `Loop detected: ${host} redirects to itself`);
   }
 
   // Encode non-ASCII characters to avoid ByteString errors in Response headers
