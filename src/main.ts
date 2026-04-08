@@ -25,8 +25,8 @@ app.use("/", async (c, next) => {
     c.req.header("x-real-ip") || "-";
   const host = c.req.header("host") || "-";
   const method = c.req.method;
-  const qIdx = c.req.url.indexOf("?");
-  const path = qIdx >= 0 ? c.req.path + c.req.url.substring(qIdx) : c.req.path;
+  const url = new URL(c.req.url);
+  const path = url.pathname + url.search;
   const ua = c.req.header("user-agent") || "-";
 
   // Log BEFORE processing
@@ -128,7 +128,12 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   }
 
   // Encode non-ASCII characters to avoid ByteString errors in Response headers
-  const safeLocation = encodeURI(redirect.url);
+  let safeLocation: string;
+  try {
+    safeLocation = new URL(redirect.url).href;
+  } catch {
+    safeLocation = encodeURI(redirect.url);
+  }
 
   return new Response(null, {
     status: redirect.status,

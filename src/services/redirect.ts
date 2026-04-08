@@ -82,10 +82,12 @@ export async function resolveDns(host: string): Promise<string> {
 export function parseDestination(raw: string, reqUrl: string): Destination {
   const destination = createDestination();
 
-  // Parse reqUrl with string ops to avoid native URL allocation
-  const qIdx = reqUrl.indexOf("?");
-  const reqPathname = qIdx >= 0 ? reqUrl.substring(0, qIdx) : reqUrl;
-  const reqSearch = qIdx >= 0 ? reqUrl.substring(qIdx) : "";
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(reqUrl, "http://placeholder");
+  } catch {
+    throw new HttpError(400, "Bad Request");
+  }
 
   // Remove trailing dot and FQDN suffix
   raw = raw.replace(/\.$/, "");
@@ -117,11 +119,11 @@ export function parseDestination(raw: string, reqUrl: string): Destination {
         return "";
       }
       case !!label.match(/^(opts-|_)uri$/): {
-        if (reqSearch) {
-          destination.queries.push(reqSearch.substring(1));
+        if (parsedUrl.search) {
+          destination.queries.push(parsedUrl.search.substring(1));
         }
-        if (reqPathname && reqPathname !== "/") {
-          destination.pathnames.push(reqPathname);
+        if (parsedUrl.pathname && parsedUrl.pathname !== "/") {
+          destination.pathnames.push(parsedUrl.pathname);
         }
         return "";
       }
