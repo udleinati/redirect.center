@@ -21,9 +21,11 @@ app.onError(errorHandler);
 
 // Access log middleware
 app.use("/", async (c, next) => {
-  const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+  // remoteAddr = real TCP connection IP (can't be spoofed)
+  // x-forwarded-for/x-real-ip are only trustworthy behind a reverse proxy
+  const ip = ((c.env as Record<string, unknown>)?.remoteAddr as Deno.NetAddr | undefined)?.hostname ||
+    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
     c.req.header("x-real-ip") ||
-    ((c.env as Record<string, unknown>)?.remoteAddr as Deno.NetAddr | undefined)?.hostname ||
     "-";
   const host = c.req.header("host") || "-";
   const method = c.req.method;
