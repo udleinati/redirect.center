@@ -19,32 +19,33 @@ const env = vento({
 
 app.onError(errorHandler);
 
-// Access log middleware (Apache Combined Log Format)
+// Access log middleware
 app.use("/", async (c, next) => {
-  const start = Date.now();
-  await next();
-
-  const host = c.req.header("host") || "-";
-  //if (host != config.fqdn) return;
-
-  const ms = Date.now() - start;
   const connInfo = getConnInfo(c);
   const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
     c.req.header("x-real-ip") ||
     (connInfo.remote.address ?? "-");
+  const host = c.req.header("host") || "-";
   const method = c.req.method;
   const url = new URL(c.req.url);
   const path = url.pathname + url.search;
-  const protocol = c.req.header("x-forwarded-proto") || url.protocol.replace(":", "");
-  const status = c.res.status;
-  const contentLength = c.res.headers.get("content-length") || "-";
-  const referer = c.req.header("referer") || "-";
   const ua = c.req.header("user-agent") || "-";
+
+  // Log BEFORE processing
+  console.log(
+    `[req] ${ip} "${method} ${path}" host=${host} ua="${ua}"`,
+  );
+
+  const start = Date.now();
+  await next();
+  const ms = Date.now() - start;
+
+  // Log AFTER processing
+  const status = c.res.status;
   const location = c.res.headers.get("location") || "-";
-  const timestamp = new Date().toISOString();
 
   console.log(
-    `${ip} - - [${timestamp}] "${method} ${path} HTTP/${protocol}" ${status} ${contentLength} "${referer}" "${ua}" host=${host} location=${location} ${ms}ms`,
+    `[res] ${ip} "${method} ${path}" host=${host} ${status} location=${location} ${ms}ms`,
   );
 });
 
