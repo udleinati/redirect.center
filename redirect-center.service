@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 User=www-data
 WorkingDirectory=/opt/redirect.center
-ExecStart=/usr/bin/deno run --allow-net --allow-read --allow-env --v8-flags=--max-old-space-size=512 src/main.ts
+ExecStart=/usr/bin/deno run --allow-net --allow-read --allow-env --unstable-net --v8-flags=--max-old-space-size=512 src/main.ts
 Restart=always
 RestartSec=3
 Environment=FQDN=redirect.center
