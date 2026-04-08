@@ -4,11 +4,11 @@ const DNS_SERVERS = (Deno.env.get("DNS_SERVERS") || "1.1.1.1,8.8.8.8")
   .filter(Boolean);
 
 const CACHE_TTL_MS = 15_000;
-const CACHE_MAX_SIZE = 10_000;
+const CACHE_MAX_SIZE = 2_000;
 
 interface CacheEntry {
   records?: string[];
-  error?: Error;
+  errorMessage?: string;
   expiresAt: number;
 }
 
@@ -17,7 +17,7 @@ const cache = new Map<string, CacheEntry>();
 export async function dnsResolveCname(host: string): Promise<string[]> {
   const cached = cache.get(host);
   if (cached && cached.expiresAt > Date.now()) {
-    if (cached.error) throw cached.error;
+    if (cached.errorMessage) throw new Error(cached.errorMessage);
     return cached.records!;
   }
 
@@ -48,7 +48,7 @@ function cacheResult(host: string, records: string[]): string[] {
 
 function cacheError(host: string, error: Error): void {
   evictIfNeeded();
-  cache.set(host, { error, expiresAt: Date.now() + CACHE_TTL_MS });
+  cache.set(host, { errorMessage: error.message, expiresAt: Date.now() + CACHE_TTL_MS });
 }
 
 function evictIfNeeded(): void {
