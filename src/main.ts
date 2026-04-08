@@ -161,7 +161,7 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
 // Periodic health log — helps correlate CPU spikes in CloudWatch with memory/cache state
 // Memory watchdog — graceful restart when RSS exceeds limit (Deno native memory leak workaround)
 // See: https://github.com/denoland/deno/issues/28307
-const RSS_LIMIT = Number(Deno.env.get("RSS_LIMIT_MB") || "384") * 1024 * 1024;
+const RSS_LIMIT = Number(Deno.env.get("RSS_LIMIT_MB") || "256") * 1024 * 1024;
 
 setInterval(() => {
   const mem = Deno.memoryUsage();
@@ -173,7 +173,7 @@ setInterval(() => {
     console.warn(`[watchdog] RSS ${(mem.rss / 1024 / 1024).toFixed(0)}MB exceeded limit ${(RSS_LIMIT / 1024 / 1024).toFixed(0)}MB, restarting...`);
     Deno.exit(0);
   }
-}, 60_000);
+}, 30_000);
 
 // Start server
 Deno.serve(
