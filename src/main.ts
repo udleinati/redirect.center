@@ -1,6 +1,5 @@
 import { Hono } from "hono";
 import { compress } from "hono/compress";
-import { getConnInfo } from "hono/deno";
 import vento from "ventojs";
 import { config } from "./config.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
@@ -12,6 +11,7 @@ import {
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
 
 const app = new Hono();
+const compressMiddleware = compress();
 const env = vento({
   includes: new URL("../views", import.meta.url).pathname,
   autoescape: false,
@@ -21,14 +21,12 @@ app.onError(errorHandler);
 
 // Access log middleware
 app.use("/", async (c, next) => {
-  const connInfo = getConnInfo(c);
   const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-    c.req.header("x-real-ip") ||
-    (connInfo.remote.address ?? "-");
+    c.req.header("x-real-ip") || "-";
   const host = c.req.header("host") || "-";
   const method = c.req.method;
-  const url = new URL(c.req.url);
-  const path = url.pathname + url.search;
+  const qIdx = c.req.url.indexOf("?");
+  const path = qIdx >= 0 ? c.req.path + c.req.url.substring(qIdx) : c.req.path;
   const ua = c.req.header("user-agent") || "-";
 
   // Log BEFORE processing
@@ -58,7 +56,7 @@ app.get("/", async (c, next) => {
     if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
 
     // Apply compression only to the homepage response
-    return compress()(c, async () => {
+    return compressMiddleware(c, async () => {
       const template = await env.load("index.vto");
       const result = await template({
         app: config,
@@ -129,14 +127,8 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     throw new HttpError(403, "Forbidden");
   }
 
-  // Minimal redirect response: no body, just Location header
   // Encode non-ASCII characters to avoid ByteString errors in Response headers
-  let safeLocation: string;
-  try {
-    safeLocation = new URL(redirect.url).href;
-  } catch {
-    safeLocation = encodeURI(redirect.url);
-  }
+  const safeLocation = encodeURI(redirect.url);
 
   return new Response(null, {
     status: redirect.status,

@@ -6,6 +6,9 @@ import { dnsResolveCname } from "../helpers/dns.ts";
 import { decode } from "../helpers/base32.ts";
 import { logger } from "../helpers/logger.ts";
 
+// Reusable TextDecoder — avoids creating native objects per request
+const textDecoder = new TextDecoder();
+
 export class HttpError extends Error {
   constructor(public status: number, message: string) {
     super(message);
@@ -79,12 +82,10 @@ export async function resolveDns(host: string): Promise<string> {
 export function parseDestination(raw: string, reqUrl: string): Destination {
   const destination = createDestination();
 
-  let parsedUrl: URL;
-  try {
-    parsedUrl = new URL(reqUrl, "http://placeholder");
-  } catch {
-    throw new HttpError(400, "Bad Request");
-  }
+  // Parse reqUrl with string ops to avoid native URL allocation
+  const qIdx = reqUrl.indexOf("?");
+  const reqPathname = qIdx >= 0 ? reqUrl.substring(0, qIdx) : reqUrl;
+  const reqSearch = qIdx >= 0 ? reqUrl.substring(qIdx) : "";
 
   // Remove trailing dot and FQDN suffix
   raw = raw.replace(/\.$/, "");
@@ -103,7 +104,7 @@ export function parseDestination(raw: string, reqUrl: string): Destination {
       case !!(r = label.match(/^(?:opts-|_)(?:path)-(.*)$/)): {
         r![1] = r![1].replace(/-/g, "=");
         destination.pathnames.push(
-          new TextDecoder().decode(decode(r![1])),
+          textDecoder.decode(decode(r![1])),
         );
         return "";
       }
@@ -116,11 +117,11 @@ export function parseDestination(raw: string, reqUrl: string): Destination {
         return "";
       }
       case !!label.match(/^(opts-|_)uri$/): {
-        if (parsedUrl.search) {
-          destination.queries.push(parsedUrl.search.substring(1));
+        if (reqSearch) {
+          destination.queries.push(reqSearch.substring(1));
         }
-        if (parsedUrl.pathname && parsedUrl.pathname !== "/") {
-          destination.pathnames.push(parsedUrl.pathname);
+        if (reqPathname && reqPathname !== "/") {
+          destination.pathnames.push(reqPathname);
         }
         return "";
       }
@@ -143,7 +144,7 @@ export function parseDestination(raw: string, reqUrl: string): Destination {
 
       raw = raw.replace(r[0], "");
       r[1] = r[1].replace(/-/g, "=");
-      queries.push(new TextDecoder().decode(decode(r[1])));
+      queries.push(textDecoder.decode(decode(r[1])));
     }
 
     destination.queries = [...queries, ...destination.queries];
