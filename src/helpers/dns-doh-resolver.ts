@@ -10,7 +10,7 @@
  */
 
 const DOH_SERVERS = (Deno.env.get("DOH_SERVERS") ||
-  "https://cloudflare-dns.com/dns-query,https://dns.google/resolve")
+  "https://1.1.1.1/dns-query,https://8.8.8.8/resolve")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
