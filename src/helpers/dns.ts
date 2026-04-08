@@ -1,7 +1,12 @@
-const DNS_SERVERS = (Deno.env.get("DNS_SERVERS") || "1.1.1.1,8.8.8.8")
-  .split(",")
-  .map((s) => s.trim())
-  .filter(Boolean);
+import { resolveCnameDoH } from "./dns-doh-resolver.ts";
+
+// To revert to Deno.resolveDns(), comment the import above and
+// uncomment the DNS_SERVERS + doResolve block below marked with [NATIVE].
+
+// [NATIVE] const DNS_SERVERS = (Deno.env.get("DNS_SERVERS") || "1.1.1.1,8.8.8.8")
+// [NATIVE]   .split(",")
+// [NATIVE]   .map((s) => s.trim())
+// [NATIVE]   .filter(Boolean);
 
 const CACHE_TTL_MS = 15_000;
 const CACHE_MAX_SIZE = 2_000;
@@ -37,19 +42,30 @@ export async function dnsResolveCname(host: string): Promise<string[]> {
   }
 }
 
+// [DOH] Active resolver — uses fetch-based DNS over HTTPS
 async function doResolve(host: string): Promise<string[]> {
-  for (const server of DNS_SERVERS) {
-    try {
-      return cacheResult(host, await Deno.resolveDns(host, "CNAME", { nameServer: { ipAddr: server, port: 53 } }));
-    } catch (error) {
-      if (server === DNS_SERVERS[DNS_SERVERS.length - 1]) {
-        cacheError(host, error as Error);
-        throw error;
-      }
-    }
+  try {
+    return cacheResult(host, await resolveCnameDoH(host));
+  } catch (error) {
+    cacheError(host, error as Error);
+    throw error;
   }
-  return cacheResult(host, await Deno.resolveDns(host, "CNAME"));
 }
+
+// [NATIVE] To revert, comment the doResolve above and uncomment this block:
+// async function doResolve(host: string): Promise<string[]> {
+//   for (const server of DNS_SERVERS) {
+//     try {
+//       return cacheResult(host, await Deno.resolveDns(host, "CNAME", { nameServer: { ipAddr: server, port: 53 } }));
+//     } catch (error) {
+//       if (server === DNS_SERVERS[DNS_SERVERS.length - 1]) {
+//         cacheError(host, error as Error);
+//         throw error;
+//       }
+//     }
+//   }
+//   return cacheResult(host, await Deno.resolveDns(host, "CNAME"));
+// }
 
 export function dnsCacheSize(): number {
   return cache.size;
