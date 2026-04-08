@@ -7,7 +7,7 @@ interface GuardianData {
 
 class GuardianService {
   private filepath: string;
-  private fileContent: GuardianData = { denyFqdn: [] };
+  private denySet = new Set<string>();
 
   constructor() {
     this.filepath = new URL("../../db/guardian.json", import.meta.url).pathname;
@@ -21,29 +21,37 @@ class GuardianService {
   }
 
   isDenied(fqdn: string): boolean {
-    let isDenied = this.fileContent.denyFqdn?.includes(fqdn);
+    // O(1) check against FQDN
+    if (this.denySet.has(fqdn)) return true;
 
-    if (!isDenied) {
-      const parsed = psl.parse(fqdn);
-      if ("domain" in parsed && parsed.domain) {
-        isDenied = this.fileContent.denyFqdn?.includes(parsed.domain);
-      }
+    // Extract base domain with simple split (covers most cases: example.com from sub.example.com)
+    const parts = fqdn.split(".");
+    if (parts.length > 2) {
+      const baseDomain = parts.slice(-2).join(".");
+      if (this.denySet.has(baseDomain)) return true;
     }
 
-    return isDenied ?? false;
+    return false;
   }
 
   openAndParse(): void {
     try {
       const text = Deno.readTextFileSync(this.filepath);
-      this.fileContent = JSON.parse(text || "{}");
+      const data: GuardianData = JSON.parse(text || "{}");
+
+      // Pre-compute: add both raw entries and their psl-parsed base domains
+      const newSet = new Set<string>();
+      for (const fqdn of data.denyFqdn ?? []) {
+        newSet.add(fqdn);
+        const parsed = psl.parse(fqdn);
+        if ("domain" in parsed && parsed.domain) {
+          newSet.add(parsed.domain);
+        }
+      }
+      this.denySet = newSet;
     } catch (err) {
       logger.error(`[guardian] Failed to load guardian.json: ${err}`);
     }
-  }
-
-  getFileContent(): GuardianData {
-    return this.fileContent;
   }
 }
 
