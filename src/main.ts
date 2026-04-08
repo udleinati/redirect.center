@@ -9,6 +9,7 @@ import {
   HttpError,
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
+import { dnsCacheSize } from "./helpers/dns.ts";
 
 const app = new Hono();
 const env = vento({
@@ -70,6 +71,24 @@ app.get("/", async (c, next) => {
   await next();
 });
 
+// Diagnostic endpoint — only accessible on the FQDN
+app.get("/healthz", (c) => {
+  const host = (c.req.header("host") || "").split(":")[0];
+  if (host !== config.fqdn) return c.notFound();
+
+  const mem = Deno.memoryUsage();
+  return c.json({
+    uptime: Math.floor(performance.now() / 1000),
+    memory: {
+      rss: `${(mem.rss / 1024 / 1024).toFixed(1)}MB`,
+      heapUsed: `${(mem.heapUsed / 1024 / 1024).toFixed(1)}MB`,
+      heapTotal: `${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB`,
+      external: `${(mem.external / 1024 / 1024).toFixed(1)}MB`,
+    },
+    dnsCache: dnsCacheSize(),
+  });
+});
+
 // robots.txt for redirect domains — tells crawlers not to follow/index redirects
 app.get("/robots.txt", (c) => {
   const host = (c.req.header("host") || "").split(":")[0];
@@ -125,6 +144,14 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     },
   });
 }
+
+// Periodic health log — helps correlate CPU spikes in CloudWatch with memory/cache state
+setInterval(() => {
+  const mem = Deno.memoryUsage();
+  console.log(
+    `[health] rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}/${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB external=${(mem.external / 1024 / 1024).toFixed(1)}MB dnsCache=${dnsCacheSize()}`,
+  );
+}, 60_000);
 
 // Start server
 Deno.serve(

@@ -36,6 +36,10 @@ export async function dnsResolveCname(host: string): Promise<string[]> {
   return cacheResult(host, await Deno.resolveDns(host, "CNAME"));
 }
 
+export function dnsCacheSize(): number {
+  return cache.size;
+}
+
 function cacheResult(host: string, records: string[]): string[] {
   evictIfNeeded();
   cache.set(host, { records, expiresAt: Date.now() + CACHE_TTL_MS });
