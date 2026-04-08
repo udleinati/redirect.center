@@ -6,7 +6,13 @@ export const errorHandler: ErrorHandler = (err, c) => {
   const status = err instanceof HttpError ? err.status : 500;
   const message = err.message || "Internal Server Error";
 
-  if (status >= 500) {
+  if (err instanceof HttpError) {
+    // Known/expected errors — log without stack trace
+    if (status >= 500) {
+      logger.warn(`[error] ${status} ${message}`);
+    }
+  } else {
+    // Unexpected errors — log full stack for investigation
     logger.error(
       `[error] investigate this error: ${err.name}/${err.message}`,
       err.stack,
