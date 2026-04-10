@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { compress } from "hono/compress";
 import vento from "ventojs";
 import { config } from "./config.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
@@ -11,11 +10,26 @@ import {
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
 
 const app = new Hono();
-const compressMiddleware = compress();
-const env = vento({
-  includes: new URL("../views", import.meta.url).pathname,
-  autoescape: false,
-});
+
+// Pre-render homepage at startup (raw + gzip) to avoid per-request
+// template execution and CompressionStream allocations.
+const homepage = await (async () => {
+  const env = vento({
+    includes: new URL("../views", import.meta.url).pathname,
+    autoescape: false,
+  });
+  const template = await env.load("index.vto");
+  const result = await template({ app: config });
+  const html = result.content;
+
+  const htmlBytes = new TextEncoder().encode(html);
+  const gzipStream = new CompressionStream("gzip");
+  const compressed = await new Response(
+    new Blob([htmlBytes]).stream().pipeThrough(gzipStream),
+  ).arrayBuffer();
+
+  return { html, gzip: new Uint8Array(compressed) };
+})();
 
 app.onError(errorHandler);
 
@@ -51,7 +65,7 @@ app.use("/", async (c, next) => {
   );
 });
 
-// Homepage - only for the FQDN host (with compression)
+// Homepage - only for the FQDN host (served from pre-rendered cache)
 app.get("/", async (c, next) => {
   const host = (c.req.header("host") || "").split(":")[0];
 
@@ -59,18 +73,17 @@ app.get("/", async (c, next) => {
     const ua = c.req.header("user-agent");
     if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
 
-    // Apply compression only to the homepage response
-    return compressMiddleware(c, async () => {
-      const template = await env.load("index.vto");
-      const result = await template({
-        app: config,
-      });
-      c.header("Cache-Control", "public, max-age=300");
-      c.res = c.html(result.content);
-    });
+    const acceptsGzip = c.req.header("accept-encoding")?.includes("gzip") ?? false;
+    const headers: Record<string, string> = {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "public, max-age=300",
+    };
+    if (acceptsGzip) headers["Content-Encoding"] = "gzip";
+
+    return new Response(acceptsGzip ? homepage.gzip : homepage.html, { headers });
   }
 
-  // If not FQDN, skip to redirect (no compression overhead)
+  // If not FQDN, skip to redirect
   await next();
 });
 
