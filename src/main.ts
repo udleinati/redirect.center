@@ -162,7 +162,9 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
     safeLocation = encodeURI(redirect.url);
   }
 
-  return new Response(null, {
+  // Use " " instead of null to work around Deno.serve memory leak
+  // See: https://github.com/denoland/deno/issues/27545
+  return new Response(" ", {
     status: redirect.status,
     headers: {
       "Location": safeLocation,
