@@ -278,6 +278,8 @@
     .footer-seo-block { margin-bottom: 12px; }
     .footer-seo-block p { font-size: 0.72rem; color: #64748b; line-height: 1.5; }
     .footer-bottom { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 16px; margin-top: 16px; text-align: center; font-size: 0.78rem; color: #64748b; }
+    .footer-bottom a.muted { color: inherit; text-decoration: none; }
+    .footer-bottom a.muted:hover { text-decoration: underline; }
 
     @media (max-width: 640px) {
       .hero h1 { font-size: 1.6rem; }
@@ -677,7 +679,9 @@
 
       <div class="footer-bottom">
         &copy; {{ app.projectName }} &middot; Open source under MIT License &middot;
-        <a href="https://github.com/udleinati/redirect.center">GitHub</a>
+        Other projects:
+        <a class="muted" href="https://linkpci.com/" rel="noopener">linkpci</a> &middot;
+        <a class="muted" href="https://streamrocks.com/" rel="noopener">streamrocks</a>
       </div>
     </div>
   </footer>
