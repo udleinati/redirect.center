@@ -8,8 +8,10 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
-import { isAuthorized } from "./services/authorization.ts";
+import { isAuthorized, type Scope } from "./services/authorization.ts";
 import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.ts";
+import { verifyPolarSignature } from "./services/polar-signature.ts";
+import { mapEvent } from "./services/polar-webhook.ts";
 
 const app = new Hono();
 
@@ -85,6 +87,59 @@ if (config.httpsTierEnabled) {
     return isAuthorized(domain, store.listActive(now), now)
       ? c.text("OK", 200)
       : c.text("Forbidden", 403);
+  });
+
+  // Polar product id -> tier/scope. An event for a product not in this map can't
+  // be mapped to a scope and is treated as a noop by the state machine.
+  const productScopes = new Map<string, Scope>();
+  if (config.polarProductSingleId) productScopes.set(config.polarProductSingleId, "single");
+  if (config.polarProductWholeDomainId) productScopes.set(config.polarProductWholeDomainId, "whole-domain");
+
+  // Provider webhook: Polar is the source of truth; this keeps the local cache in
+  // sync so /tls-check answers instantly during a TLS handshake. Signature is
+  // verified against the raw body (#3a) before the pure state machine (#3b) maps
+  // the event to an action we apply to the store.
+  app.post("/webhooks/polar", async (c) => {
+    const rawBody = await c.req.text();
+    const signed = verifyPolarSignature(
+      rawBody,
+      {
+        id: c.req.header("webhook-id"),
+        timestamp: c.req.header("webhook-timestamp"),
+        signature: c.req.header("webhook-signature"),
+      },
+      config.polarWebhookSecret,
+      Date.now(),
+    );
+    if (!signed) return c.text("Invalid signature", 401);
+
+    let event: Parameters<typeof mapEvent>[0];
+    try {
+      event = JSON.parse(rawBody);
+    } catch {
+      return c.text("Bad Request", 400);
+    }
+
+    const action = mapEvent(event, { productScopes, domainFieldSlug: config.polarDomainFieldSlug });
+    const now = Date.now();
+    switch (action.type) {
+      case "activate": {
+        const s = action.subscription;
+        store.upsert({ ...s, status: "active", createdAt: now, updatedAt: now });
+        console.log(
+          `[webhook] activate ${s.domain} scope=${s.scope} until=${new Date(s.currentPeriodEnd).toISOString()}`,
+        );
+        break;
+      }
+      case "revoke":
+        // Teardown (mark inactive + delete certs from S3) lands in Phase 4.
+        console.log(`[webhook] revoke ${action.polarSubscriptionId} (teardown lands in Phase 4)`);
+        break;
+      case "noop":
+        console.log(`[webhook] noop: ${action.reason}`);
+        break;
+    }
+    return c.text("OK", 200);
   });
 }
 
