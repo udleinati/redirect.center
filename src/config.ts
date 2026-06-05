@@ -6,6 +6,12 @@ export interface AppConfig {
   environment: string;
   projectName: string;
   loggerLevel: string;
+  // Paid HTTPS tier (off by default => byte-for-byte legacy behavior).
+  httpsTierEnabled: boolean;
+  // Trust X-Forwarded-* (only when running behind a reverse proxy, e.g. Caddy).
+  trustProxy: boolean;
+  // Phase 1 stub: the single domain the on-demand TLS `ask` authorizes.
+  tlsCheckStubDomain: string;
 }
 
 export function loadConfig(): AppConfig {
@@ -17,6 +23,9 @@ export function loadConfig(): AppConfig {
     environment: Deno.env.get("ENVIRONMENT") || "dev1",
     projectName: Deno.env.get("PROJECT_NAME") || "redirect.center",
     loggerLevel: Deno.env.get("LOGGER_LEVEL") || "debug",
+    httpsTierEnabled: Deno.env.get("HTTPS_TIER_ENABLED") === "true",
+    trustProxy: Deno.env.get("TRUST_PROXY") === "true",
+    tlsCheckStubDomain: Deno.env.get("TLS_CHECK_STUB_DOMAIN") || "",
   };
 }
 

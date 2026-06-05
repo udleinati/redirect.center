@@ -1,0 +1,89 @@
+# Paid HTTPS tier stack: Caddy (front door, 80/443) -> internal Deno app, with
+# MinIO as local S3 cert storage. The whole feature is gated by HTTPS_TIER_ENABLED
+# (default false); with it off the stack serves the legacy HTTP redirects only.
+#
+#   docker compose up --build                      # flag off (legacy behavior)
+#   HTTPS_TIER_ENABLED=true docker compose up --build   # paid HTTPS tier on
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    environment:
+      FQDN: ${FQDN:-redirect.center}
+      LISTEN_PORT: "3000"
+      LISTEN_IP: 0.0.0.0
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
+      # Always behind Caddy in this stack -> trust X-Forwarded-For for the real client IP.
+      TRUST_PROXY: "true"
+      HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-false}
+      # Phase 1 stub: the single domain the on-demand `ask` authorizes.
+      TLS_CHECK_STUB_DOMAIN: ${TLS_CHECK_STUB_DOMAIN:-paid-test.redirect.center}
+    expose:
+      - "3000" # internal only — never published to the host
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-false}
+      S3_HOST: minio:9000
+      S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
+      S3_ACCESS_ID: ${S3_ACCESS_ID:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_PREFIX: ${S3_PREFIX:-certs}
+      S3_INSECURE: "true" # MinIO over plain HTTP in dev
+    volumes:
+      - ./docker/caddy:/etc/caddy:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_started
+      createbuckets:
+        condition: service_completed_successfully
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_ID:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000" # S3 API (local debugging)
+      - "9001:9001" # web console (local debugging)
+    volumes:
+      - minio-data:/data
+    restart: unless-stopped
+
+  # One-shot: create the cert bucket, then exit.
+  createbuckets:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_started
+    environment:
+      S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
+      S3_ACCESS_ID: ${S3_ACCESS_ID:-minioadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        until mc alias set local http://minio:9000 "$$S3_ACCESS_ID" "$$S3_SECRET_KEY"; do
+          echo "waiting for minio..."; sleep 1;
+        done
+        mc mb --ignore-existing "local/$$S3_BUCKET"
+        echo "bucket ready: $$S3_BUCKET"
+
+volumes:
+  caddy-data:
+  caddy-config:
+  minio-data:

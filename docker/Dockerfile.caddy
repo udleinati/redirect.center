@@ -1,0 +1,10 @@
+# Custom Caddy bundling the CertMagic S3 storage module, so issued certificates
+# persist to S3/MinIO instead of the container filesystem.
+FROM caddy:2-builder AS builder
+RUN xcaddy build --with github.com/ss098/certmagic-s3
+
+FROM caddy:2
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

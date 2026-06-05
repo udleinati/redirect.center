@@ -1,0 +1,45 @@
+# Paid HTTPS tier ENABLED.
+#
+# Caddy fronts ports 80 and 443, terminates TLS, performs on-demand certificate
+# issuance gated by the app's /tls-check endpoint, and reverse-proxies every
+# request to the internal Deno app with the original Host preserved.
+{
+	# Certificates persist to S3 (MinIO in dev), so a rebuilt box never re-issues.
+	storage s3 {
+		host {$S3_HOST}
+		bucket {$S3_BUCKET}
+		access_id {$S3_ACCESS_ID}
+		secret_key {$S3_SECRET_KEY}
+		prefix {$S3_PREFIX}
+		insecure {$S3_INSECURE}
+	}
+
+	# Before obtaining any certificate, ask the app whether the SNI has paid.
+	on_demand_tls {
+		ask http://app:3000/tls-check
+	}
+
+	# Dev/local: issue from Caddy's internal CA — never public ACME / Let's
+	# Encrypt. Phase 7 removes this and switches to LE staging -> production.
+	local_certs
+
+	# The app emits its own HTTP redirects; don't let Caddy hijack :80 with
+	# automatic HTTP->HTTPS redirects.
+	auto_https disable_redirects
+}
+
+# HTTPS: on-demand certificates for any paid SNI (gated by the ask endpoint),
+# reverse-proxied to the internal Deno app. reverse_proxy preserves the original
+# Host header and sets X-Forwarded-For / -Proto / -Host automatically.
+:443 {
+	tls {
+		on_demand
+	}
+	reverse_proxy app:3000
+}
+
+# HTTP: free redirects. With public ACME (prod) Caddy injects the HTTP-01
+# challenge handler ahead of this route on port 80.
+:80 {
+	reverse_proxy app:3000
+}

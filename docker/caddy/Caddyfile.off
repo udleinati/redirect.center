@@ -1,0 +1,8 @@
+# Paid HTTPS tier DISABLED (default).
+#
+# Caddy is a plain HTTP reverse proxy in front of the internal Deno app: no TLS,
+# no on-demand issuance, no `ask`, no datastore — byte-for-byte the legacy HTTP
+# redirect behavior. reverse_proxy preserves the original Host header.
+:80 {
+	reverse_proxy app:3000
+}

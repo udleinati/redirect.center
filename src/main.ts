@@ -8,6 +8,7 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
+import { isStubAuthorized } from "./services/tls-check.ts";
 
 const app = new Hono();
 
@@ -35,12 +36,13 @@ app.onError(errorHandler);
 
 // Access log middleware
 app.use("/", async (c, next) => {
-  // remoteAddr = real TCP connection IP (can't be spoofed)
-  // x-forwarded-for/x-real-ip are only trustworthy behind a reverse proxy
-  const ip = ((c.env as Record<string, unknown>)?.remoteAddr as Deno.NetAddr | undefined)?.hostname ||
-    c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-    c.req.header("x-real-ip") ||
-    "-";
+  // remoteAddr = real TCP connection IP (can't be spoofed).
+  // x-forwarded-for/x-real-ip are only trustworthy behind a reverse proxy, so
+  // they take precedence only when TRUST_PROXY is set (e.g. behind Caddy).
+  const remoteIp = ((c.env as Record<string, unknown>)?.remoteAddr as Deno.NetAddr | undefined)?.hostname;
+  const forwardedIp = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
+    c.req.header("x-real-ip");
+  const ip = (config.trustProxy ? (forwardedIp || remoteIp) : (remoteIp || forwardedIp)) || "-";
   const host = c.req.header("host") || "-";
   const method = c.req.method;
   const url = new URL(c.req.url);
@@ -64,6 +66,19 @@ app.use("/", async (c, next) => {
     `[res] ${ip} "${method} ${path}" host=${host} ${status} location=${location} ${ms}ms`,
   );
 });
+
+// Caddy on-demand TLS authorization (`ask`): 200 authorizes a certificate,
+// anything else denies it. Only mounted when the paid HTTPS tier is enabled —
+// with the flag off this route does not exist and no TLS/datastore code runs.
+if (config.httpsTierEnabled) {
+  app.get("/tls-check", (c) => {
+    const domain = (c.req.query("domain") || "").trim();
+    if (!domain) return c.text("Bad Request", 400);
+    return isStubAuthorized(domain, config.tlsCheckStubDomain)
+      ? c.text("OK", 200)
+      : c.text("Forbidden", 403);
+  });
+}
 
 // Homepage - only for the FQDN host (served from pre-rendered cache)
 app.get("/", async (c, next) => {
