@@ -13,6 +13,8 @@ import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.t
 import { verifyPolarSignature } from "./services/polar-signature.ts";
 import { buildProductScopes, mapEvent } from "./services/polar-webhook.ts";
 import { type CertStore, deleteCertsForSubscription } from "./services/cert-teardown.ts";
+import { IssuanceRateLimiter } from "./services/issuance-rate-limit.ts";
+import { decideTlsCheck } from "./services/tls-check.ts";
 
 const app = new Hono();
 
@@ -87,13 +89,25 @@ if (config.httpsTierEnabled) {
     console.log(`[tls-check] seeded ${seeded} subscription(s)`);
   }
 
+  // On-demand issuance rate limit (Phase 7). Caddy removed its built-in
+  // on_demand rate limit in 2.9, so the ask endpoint enforces it: even an
+  // authorized domain is throttled when new-issuance velocity spikes, so a
+  // handshake flood can't drive mass ACME issuance.
+  const issuanceLimiter = new IssuanceRateLimiter(
+    config.tlsIssuanceRateLimit,
+    config.tlsIssuanceRateWindowMs,
+    10_000, // dedup: collapse one issuance's repeated ask calls into one event
+  );
+
   app.get("/tls-check", (c) => {
     const domain = (c.req.query("domain") || "").trim();
-    if (!domain) return c.text("Bad Request", 400);
     const now = Date.now();
-    return isAuthorized(domain, subs.listActive(now), now)
-      ? c.text("OK", 200)
-      : c.text("Forbidden", 403);
+    // A 429 makes Caddy skip issuance this handshake; the next one retries and
+    // succeeds once the window drains, so legitimate domains aren't locked out.
+    const status = decideTlsCheck(domain, subs.listActive(now), issuanceLimiter, now);
+    if (status === 429) console.warn(`[tls-check] issuance rate limit hit for ${domain}`);
+    const bodies = { 400: "Bad Request", 403: "Forbidden", 429: "Rate limited", 200: "OK" } as const;
+    return c.text(bodies[status], status);
   });
 
   // Polar product id -> tier/scope. An event for a product not in this map can't
@@ -108,11 +122,11 @@ if (config.httpsTierEnabled) {
     const { S3Client } = await import("s3-lite-client");
     certStore = new S3Client({
       endPoint: `${config.s3Insecure ? "http" : "https"}://${config.s3Host}`,
-      region: "us-east-1", // ignored by MinIO; required by the client
+      region: config.s3Region, // ignored by RustFS; must match the bucket on AWS
       bucket: config.s3Bucket,
       accessKey: config.s3AccessId,
       secretKey: config.s3SecretKey,
-      pathStyle: true, // MinIO + most S3 setups; endpoint/bucket/key form
+      pathStyle: true, // RustFS + most S3 setups; endpoint/bucket/key form
     });
   }
 

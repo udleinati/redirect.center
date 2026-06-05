@@ -22,12 +22,18 @@ export interface AppConfig {
   polarDomainFieldSlug: string;
   // S3 cert storage (shared with Caddy). Phase 4 deletes a revoked domain's
   // cert objects here. Only read when httpsTierEnabled.
-  s3Host: string; // "host:port"
+  s3Host: string; // "host:port" (dev) or "s3.<region>.amazonaws.com" (prod)
   s3Bucket: string;
   s3AccessId: string;
   s3SecretKey: string;
+  s3Region: string; // SigV4 signing region; must match the bucket's region.
   s3Prefix: string;
   s3Insecure: boolean;
+  // On-demand TLS issuance rate limit (Phase 7). Caddy dropped its built-in
+  // on_demand rate limit in 2.9, so the `ask` endpoint caps how many new certs
+  // may be authorized per window to prevent mass ACME issuance.
+  tlsIssuanceRateLimit: number;
+  tlsIssuanceRateWindowMs: number;
   // Polar checkout links (Phase 5). Base hosted-checkout URLs per tier; the
   // homepage funnel appends the entered domain as a prefilled custom field.
   checkoutSingleUrl: string;
@@ -59,8 +65,11 @@ export function loadConfig(): AppConfig {
     s3Bucket: Deno.env.get("S3_BUCKET") || "",
     s3AccessId: Deno.env.get("S3_ACCESS_ID") || "",
     s3SecretKey: Deno.env.get("S3_SECRET_KEY") || "",
+    s3Region: Deno.env.get("S3_REGION") || "us-east-1",
     s3Prefix: Deno.env.get("S3_PREFIX") || "certs",
     s3Insecure: Deno.env.get("S3_INSECURE") === "true",
+    tlsIssuanceRateLimit: Number(Deno.env.get("TLS_ISSUANCE_RATE_LIMIT")) || 20,
+    tlsIssuanceRateWindowMs: Number(Deno.env.get("TLS_ISSUANCE_RATE_WINDOW_MS")) || 300_000,
     checkoutSingleUrl: Deno.env.get("POLAR_CHECKOUT_SINGLE_URL") || "",
     checkoutWholeDomainUrl: Deno.env.get("POLAR_CHECKOUT_WHOLE_DOMAIN_URL") || "",
     polarAccessToken: Deno.env.get("POLAR_ACCESS_TOKEN") || "",

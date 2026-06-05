@@ -1,4 +1,4 @@
-import psl from "psl";
+import { parse } from "psl";
 import { logger } from "../helpers/logger.ts";
 
 interface GuardianData {
@@ -43,7 +43,7 @@ class GuardianService {
       const newSet = new Set<string>();
       for (const fqdn of data.denyFqdn ?? []) {
         newSet.add(fqdn);
-        const parsed = psl.parse(fqdn);
+        const parsed = parse(fqdn);
         if ("domain" in parsed && parsed.domain) {
           newSet.add(parsed.domain);
         }

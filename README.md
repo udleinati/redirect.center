@@ -122,6 +122,63 @@ sudo journalctl --vacuum-size=1G --vacuum-time=7d
 deno task start
 ```
 
+## Paid HTTPS tier (production cutover)
+
+Free **HTTP** redirects stay free and unchanged. The optional paid **HTTPS** tier
+runs the app behind Caddy: Caddy terminates TLS, asks the app whether an SNI has
+paid (`/tls-check`), issues an on-demand Let's Encrypt cert for paid domains, and
+persists certs to S3. Payments go through Polar (Merchant of Record). The whole
+feature is gated by `HTTPS_TIER_ENABLED`; with it `false` the deployment behaves
+byte-for-byte like the legacy HTTP service.
+
+Run it with the self-contained prod stack:
+
+```sh
+cp docker/prod.env.example docker/prod.env   # fill in real values, then:
+docker compose --env-file docker/prod.env -f docker-compose.prod.yml up -d --build
+```
+
+### 1. Cert storage (S3)
+
+Create a **dedicated, private** bucket with **Block Public Access ON** and
+**default encryption** (SSE-S3/AES256 is enough). Create a least-privilege access
+key using [`docker/aws/cert-bucket-iam-policy.json`](docker/aws/cert-bucket-iam-policy.json)
+(replace `YOUR_CERT_BUCKET`). Put the bucket/region/keys in `docker/prod.env`.
+Certs persist here, so a rebuilt box never re-issues (no Let's Encrypt rate-limit
+storm), and `deno task reconcile` rebuilds the subscription cache from Polar.
+
+### 2. Validate on Let's Encrypt staging, then flip to production
+
+`docker/prod.env` defaults `CADDY_TLS_ISSUER` to the LE **staging** directory.
+Point a real paid domain at the box, confirm HTTPS works end-to-end against
+staging (the browser will warn about the staging CA — expected), then switch to
+production and recreate Caddy:
+
+```sh
+# in docker/prod.env:
+CADDY_TLS_ISSUER=acme_ca https://acme-v02.api.letsencrypt.org/directory
+docker compose --env-file docker/prod.env -f docker-compose.prod.yml up -d caddy
+```
+
+### 3. Atomic cutover (legacy systemd → Compose)
+
+The legacy service owns port 80 via systemd. Caddy needs 80 and 443, so stop one
+and start the other back-to-back:
+
+```sh
+sudo systemctl stop redirect-center && sudo systemctl disable redirect-center
+docker compose --env-file docker/prod.env -f docker-compose.prod.yml up -d --build
+```
+
+Caddy now owns 80/443 and the app moves to an internal, unpublished port. Free
+HTTP redirects keep working throughout. To roll back, stop Compose and
+`systemctl start redirect-center`.
+
+On-demand issuance is rate-limited in `/tls-check` (`TLS_ISSUANCE_RATE_LIMIT` per
+`TLS_ISSUANCE_RATE_WINDOW_MS`) because Caddy removed its built-in on-demand rate
+limit in 2.9; combined with the `ask` gate, unknown-hostname floods cannot trigger
+mass issuance.
+
 ## DNS Setup
 
 Create a wildcard entry in your DNS:

@@ -1,0 +1,89 @@
+# Production stack for the paid HTTPS tier (Phase 7). Self-contained — run it
+# directly, not as an override of docker-compose.yml:
+#
+#   cp docker/prod.env.example docker/prod.env   # then fill in real values
+#   docker compose --env-file docker/prod.env -f docker-compose.prod.yml up -d --build
+#
+# Differences from the dev docker-compose.yml:
+#   - certs persist to a real, private, server-side-encrypted S3 bucket (no RustFS);
+#   - Caddy issues from Let's Encrypt (staging by default, flip to prod once
+#     validated) instead of its internal CA.
+#
+# Required secrets fail loud (${VAR:?...}) if unset, so a half-configured box
+# never boots silently. With HTTPS_TIER_ENABLED=false the stack is byte-for-byte
+# the legacy HTTP redirect service (Caddy serves Caddyfile.off).
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    environment:
+      FQDN: ${FQDN:-redirect.center}
+      LISTEN_PORT: "3000"
+      LISTEN_IP: 0.0.0.0
+      LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
+      TRUST_PROXY: "true"
+      HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-true}
+      SUBSCRIPTIONS_DB_PATH: /data/subscriptions.db
+      # No demo seed in prod — subscriptions come from webhooks + `deno task reconcile`.
+      SEED_SUBSCRIPTIONS: ""
+      POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:?set POLAR_WEBHOOK_SECRET}
+      POLAR_PRODUCT_SINGLE_ID: ${POLAR_PRODUCT_SINGLE_ID:?set POLAR_PRODUCT_SINGLE_ID}
+      POLAR_PRODUCT_WHOLE_DOMAIN_ID: ${POLAR_PRODUCT_WHOLE_DOMAIN_ID:?set POLAR_PRODUCT_WHOLE_DOMAIN_ID}
+      POLAR_DOMAIN_FIELD_SLUG: ${POLAR_DOMAIN_FIELD_SLUG:-domain}
+      POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:?set POLAR_CHECKOUT_SINGLE_URL}
+      POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:?set POLAR_CHECKOUT_WHOLE_DOMAIN_URL}
+      POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:?set POLAR_ACCESS_TOKEN}
+      POLAR_API_BASE: ${POLAR_API_BASE:-https://api.polar.sh}
+      # Real S3 cert storage (shared with Caddy). The app deletes a revoked
+      # domain's cert objects here on revoke (Phase 4).
+      S3_HOST: ${S3_HOST:?set S3_HOST (e.g. s3.us-east-1.amazonaws.com)}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      S3_ACCESS_ID: ${S3_ACCESS_ID:?set S3_ACCESS_ID}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      S3_REGION: ${S3_REGION:?set S3_REGION (must match the bucket's region)}
+      S3_PREFIX: ${S3_PREFIX:-certs}
+      S3_INSECURE: "false"
+    expose:
+      - "3000" # internal only — never published to the host
+    volumes:
+      - app-data:/data
+    restart: unless-stopped
+
+  caddy:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-true}
+      # Let's Encrypt account email (required for a real ACME issuer).
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+      # Issuer: staging by default; flip to the production directory once a real
+      # domain has validated end-to-end (see README "Production cutover").
+      CADDY_TLS_ISSUER: ${CADDY_TLS_ISSUER:-acme_ca https://acme-staging-v02.api.letsencrypt.org/directory}
+      S3_HOST: ${S3_HOST:?set S3_HOST}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      S3_ACCESS_ID: ${S3_ACCESS_ID:?set S3_ACCESS_ID}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      S3_PREFIX: ${S3_PREFIX:-certs}
+      S3_INSECURE: "false"
+      FQDN: ${FQDN:-redirect.center}
+      POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:?set POLAR_CHECKOUT_SINGLE_URL}
+      POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:?set POLAR_CHECKOUT_WHOLE_DOMAIN_URL}
+    volumes:
+      - ./docker/caddy:/etc/caddy:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      app:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  app-data:
+  caddy-data:
+  caddy-config:

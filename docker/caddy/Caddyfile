@@ -4,7 +4,7 @@
 # issuance gated by the app's /tls-check endpoint, and reverse-proxies every
 # request to the internal Deno app with the original Host preserved.
 {
-	# Certificates persist to S3 (MinIO in dev), so a rebuilt box never re-issues.
+	# Certificates persist to S3 (RustFS in dev), so a rebuilt box never re-issues.
 	storage s3 {
 		host {$S3_HOST}
 		bucket {$S3_BUCKET}
@@ -14,14 +14,23 @@
 		insecure {$S3_INSECURE}
 	}
 
-	# Before obtaining any certificate, ask the app whether the SNI has paid.
+	# Before obtaining any certificate, ask the app whether the SNI has paid. The
+	# app also rate-limits issuance here (Caddy dropped its built-in on_demand
+	# rate limit in 2.9), so unknown-hostname / handshake floods can't trigger
+	# mass issuance.
 	on_demand_tls {
 		ask http://app:3000/tls-check
 	}
 
-	# Dev/local: issue from Caddy's internal CA — never public ACME / Let's
-	# Encrypt. Phase 7 removes this and switches to LE staging -> production.
-	local_certs
+	# Certificate issuer is environment-selected so development never touches
+	# Let's Encrypt. Default (dev): Caddy's internal CA. Production sets ACME_EMAIL
+	# and points CADDY_TLS_ISSUER at Let's Encrypt — staging until the setup is
+	# validated, then production:
+	#   ACME_EMAIL=ops@redirect.center
+	#   CADDY_TLS_ISSUER=acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+	#   CADDY_TLS_ISSUER=acme_ca https://acme-v02.api.letsencrypt.org/directory   # once validated
+	email {$ACME_EMAIL:dev@localhost}
+	{$CADDY_TLS_ISSUER:local_certs}
 
 	# The app emits its own HTTP redirects; don't let Caddy hijack :80 with
 	# automatic HTTP->HTTPS redirects.

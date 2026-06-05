@@ -1,0 +1,25 @@
+{
+  "_comment": "Least-privilege IAM policy for the dedicated paid-HTTPS cert bucket. Attach to a user/role whose access key is S3_ACCESS_ID/S3_SECRET_KEY. Replace YOUR_CERT_BUCKET. Caddy (certmagic-s3, via minio-go) needs ListBucket + GetBucketLocation + object read/write/delete; the app's revoke teardown needs list + delete. The bucket should have Block Public Access ON and default encryption (SSE-S3/AES256, or SSE-KMS). If using SSE-KMS, also grant kms:GenerateDataKey and kms:Decrypt on the key.",
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListAndLocateCertBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:ListBucket",
+        "s3:GetBucketLocation"
+      ],
+      "Resource": "arn:aws:s3:::YOUR_CERT_BUCKET"
+    },
+    {
+      "Sid": "ReadWriteCertObjects",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": "arn:aws:s3:::YOUR_CERT_BUCKET/*"
+    }
+  ]
+}
