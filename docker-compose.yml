@@ -1,5 +1,5 @@
 # Paid HTTPS tier stack: Caddy (front door, 80/443) -> internal Deno app, with
-# MinIO as local S3 cert storage. The whole feature is gated by HTTPS_TIER_ENABLED
+# RustFS as local S3 cert storage. The whole feature is gated by HTTPS_TIER_ENABLED
 # (default false); with it off the stack serves the legacy HTTP redirects only.
 #
 #   docker compose up --build                      # flag off (legacy behavior)
@@ -37,10 +37,10 @@ services:
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
       POLAR_API_BASE: ${POLAR_API_BASE:-https://api.polar.sh}
       # S3 cert storage (shared with Caddy) — Phase 4 deletes revoked certs here.
-      S3_HOST: ${S3_HOST:-minio:9000}
+      S3_HOST: ${S3_HOST:-rustfs:9000}
       S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
-      S3_ACCESS_ID: ${S3_ACCESS_ID:-minioadmin}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_ACCESS_ID: ${S3_ACCESS_ID:-rustfsadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
       S3_PREFIX: ${S3_PREFIX:-certs}
       S3_INSECURE: ${S3_INSECURE:-true}
     expose:
@@ -58,12 +58,12 @@ services:
       - "443:443"
     environment:
       HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-false}
-      S3_HOST: minio:9000
+      S3_HOST: rustfs:9000
       S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
-      S3_ACCESS_ID: ${S3_ACCESS_ID:-minioadmin}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
+      S3_ACCESS_ID: ${S3_ACCESS_ID:-rustfsadmin}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
       S3_PREFIX: ${S3_PREFIX:-certs}
-      S3_INSECURE: "true" # MinIO over plain HTTP in dev
+      S3_INSECURE: "true" # RustFS over plain HTTP in dev
       # Injected into the static fallback page (Phase 5) by Caddy's templates.
       FQDN: ${FQDN:-redirect.center}
       POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:-}
@@ -79,41 +79,61 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  minio:
-    image: minio/minio:latest
-    command: ["server", "/data", "--console-address", ":9001"]
+  # RustFS runs as non-root UID 10001 and a fresh named volume is root-owned, so
+  # chown it before RustFS starts. Keeps `docker compose up` working with nothing
+  # on the host (no bind mount to chown manually).
+  rustfs-init:
+    image: busybox:latest
+    command: ["sh", "-c", "mkdir -p /data && chown -R 10001:10001 /data"]
+    volumes:
+      - rustfs-data:/data
+
+  rustfs:
+    image: rustfs/rustfs:latest
     environment:
-      MINIO_ROOT_USER: ${S3_ACCESS_ID:-minioadmin}
-      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_ADDRESS: 0.0.0.0:9000
+      RUSTFS_CONSOLE_ENABLE: "true"
+      RUSTFS_CONSOLE_ADDRESS: 0.0.0.0:9001
+      RUSTFS_ACCESS_KEY: ${S3_ACCESS_ID:-rustfsadmin}
+      RUSTFS_SECRET_KEY: ${S3_SECRET_KEY:-rustfsadmin}
     ports:
       - "9000:9000" # S3 API (local debugging)
       - "9001:9001" # web console (local debugging)
     volumes:
-      - minio-data:/data
+      - rustfs-data:/data
+    depends_on:
+      rustfs-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
-  # One-shot: create the cert bucket, then exit.
+  # One-shot: create the cert bucket, then exit. Uses the AWS CLI as a vendor-
+  # neutral S3 client (path-style, since the endpoint is a host:port, not a real
+  # S3 DNS name). head-bucket verifies it exists so a failure blocks Caddy loudly.
   createbuckets:
-    image: minio/mc:latest
+    image: amazon/aws-cli:latest
     depends_on:
-      minio:
+      rustfs:
         condition: service_started
     environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_ID:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      AWS_DEFAULT_REGION: us-east-1
       S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
-      S3_ACCESS_ID: ${S3_ACCESS_ID:-minioadmin}
-      S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
     entrypoint:
       - /bin/sh
       - -c
       - |
-        until mc alias set local http://minio:9000 "$$S3_ACCESS_ID" "$$S3_SECRET_KEY"; do
-          echo "waiting for minio..."; sleep 1;
+        aws configure set default.s3.addressing_style path
+        until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do
+          echo "waiting for rustfs..."; sleep 1;
         done
-        mc mb --ignore-existing "local/$$S3_BUCKET"
+        aws --endpoint-url http://rustfs:9000 s3 mb "s3://$$S3_BUCKET" || true
+        aws --endpoint-url http://rustfs:9000 s3api head-bucket --bucket "$$S3_BUCKET"
         echo "bucket ready: $$S3_BUCKET"
 
 volumes:
   app-data:
   caddy-data:
   caddy-config:
-  minio-data:
+  rustfs-data:

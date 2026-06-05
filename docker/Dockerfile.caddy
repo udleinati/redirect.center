@@ -1,5 +1,5 @@
 # Custom Caddy bundling the CertMagic S3 storage module, so issued certificates
-# persist to S3/MinIO instead of the container filesystem.
+# persist to S3 (RustFS in dev) instead of the container filesystem.
 FROM caddy:2-builder AS builder
 RUN xcaddy build --with github.com/ss098/certmagic-s3
 
