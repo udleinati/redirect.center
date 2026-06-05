@@ -69,3 +69,9 @@ If you genuinely think a convention is harmful, surface it. Don't fork silently.
 "Completed" is wrong if anything was skipped silently.
 "Tests pass" is wrong if any were skipped.
 Default to surfacing uncertainty, not hiding it.
+
+## Working documents
+
+Never commit PRDs or plans. These are working documents (e.g. `./plans/`, PRD
+files) — keep them local and out of every commit. Do not add them to
+`.gitignore`; simply never stage or commit them.
