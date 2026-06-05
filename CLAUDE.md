@@ -1,153 +1,71 @@
-# redirect.center
+# CLAUDE.md
 
-## What is this project?
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this
+repository.
 
-A free, open-source DNS-based domain redirect service. Users create CNAME records pointing to `redirect.center` and the service parses the DNS record to perform HTTP redirects. No server, no hosting, no code needed by the end user.
+## Behavioral baseline (Karpathy 4 + Mnimiy 8)
 
-**Owner:** Udlei Nati (communicates in Portuguese)
+These rules apply to every task in this project unless explicitly overridden.
+Bias: caution over speed on non-trivial work. Use judgment on trivial tasks.
 
-## Tech Stack
+Rules 1-4 are the Karpathy baseline (via [forrestchang/andrej-karpathy-skills](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md)).
+Rules 5-12 are the Mnimiy extensions (via [tweet](https://x.com/Mnilax/status/2053116311132155938)).
 
-- **Runtime:** Deno (TypeScript)
-- **HTTP framework:** Hono (`jsr:@hono/hono@^4`)
-- **Template engine:** Vento (`ventojs` — `.vto` files, NOT Handlebars)
-- **Database:** Deno KV (`Deno.openKv()`) for statistics
-- **DNS resolution:** `Deno.resolveDns(host, "CNAME")`
-- **Process management:** systemd (`redirect-center.service`)
-- **Container:** Docker (`denoland/deno:latest`)
+### Rule 1 - Think Before Coding
+State assumptions explicitly. If uncertain, ask rather than guess.
+Present multiple interpretations when ambiguity exists.
+Push back when a simpler approach exists.
+Stop when confused. Name what's unclear.
 
-## Project Structure
+### Rule 2 - Simplicity First
+Minimum code that solves the problem. Nothing speculative.
+No features beyond what was asked. No abstractions for single-use code.
+Test: would a senior engineer say this is overcomplicated? If yes, simplify.
 
-```
-src/
-├── main.ts                    # Entry point — Hono app + Deno.serve()
-├── config.ts                  # AppConfig from Deno.env (FQDN, ENTRY_IP, LISTEN_PORT, etc.)
-├── services/
-│   ├── redirect.ts            # Core logic: DNS resolution + CNAME parsing → redirect URL
-│   ├── redirect_test.ts       # Tests for parseDestination (19 tests)
-│   ├── guardian.ts            # Blacklist service (reads db/guardian.json every 60s)
-│   └── statistic.ts           # Statistics via Deno KV (domains per 24h, total)
-├── helpers/
-│   ├── dns.ts                 # Wrapper for Deno.resolveDns()
-│   ├── base32.ts              # Pure TypeScript RFC 4648 base32 encode/decode
-│   └── base32_test.ts         # Tests for base32 (6 tests)
-├── types/
-│   ├── destination.ts         # Destination interface (protocol, host, pathnames, queries, status, port)
-│   └── redirect-response.ts   # RedirectResponse class — builds final URL from Destination
-├── middleware/
-│   └── error-handler.ts       # Hono onError handler (HttpError → JSON response)
-views/
-├── index.vto                  # Landing page template (Vento syntax, bilingual EN/PT)
-db/
-├── guardian.json               # Blacklist file {"denyFqdn": [...]}
-redirect-center.service        # systemd unit file for production
-Dockerfile                     # Multi-stage Docker build
-deno.json                      # Config, tasks, imports
-```
+### Rule 3 - Surgical Changes
+Touch only what you must. Clean up only your own mess.
+Don't "improve" adjacent code, comments, or formatting.
+Don't refactor what isn't broken. Match existing style.
+Exception: an automated formatter may reformat the whole codebase.
 
-## Key Commands
+### Rule 4 - Goal-Driven Execution
+Define success criteria. Loop until verified.
+Don't follow steps. Define success and iterate.
+Strong success criteria let you loop independently.
 
-```bash
-deno task dev          # Dev server with --watch (port 3000)
-deno task start        # Production server
-deno task test         # Run all tests (50 tests)
-sudo systemctl start redirect-center   # Start in background (production)
-```
+### Rule 5 - Use the model only for judgment calls
+Use me for: classification, drafting, summarization, extraction.
+Do NOT use me for: routing, retries, deterministic transforms.
+If code can answer, code answers.
 
-## Environment Variables
+### Rule 6 - Token budgets are not advisory
+Per-task: 8,000 tokens. Per-session: 60,000 tokens.
+If approaching budget, summarize and start fresh.
+Surface the breach. Do not silently overrun.
 
-| Variable | Default | Description |
-|---|---|---|
-| `FQDN` | `localhost` | Service domain (used to detect homepage vs redirect) |
-| `ENTRY_IP` | `127.0.0.1` | IP users must set in their A record |
-| `LISTEN_PORT` | `3000` | Server port |
-| `LISTEN_IP` | `0.0.0.0` | Server bind address |
-| `ENVIRONMENT` | `dev1` | Environment name |
-| `PROJECT_NAME` | `redirect.center` | Displayed in UI and meta tags |
-| `LOGGER_LEVEL` | `debug` | Log level |
+### Rule 7 - Surface conflicts, don't average them
+If two patterns contradict, pick one (more recent / more tested).
+Explain why. Flag the other for cleanup.
+Don't blend conflicting patterns.
 
-## How the Redirect Logic Works
+### Rule 8 - Read before you write
+Before adding code, read exports, immediate callers, shared utilities.
+"Looks orthogonal" is dangerous. If unsure why code is structured a way, ask.
 
-1. User creates an **A record** pointing their domain to `ENTRY_IP` (e.g., `127.0.0.1`)
-2. User creates a **CNAME record** like `redirect.my-domain.com → dest.redirect.center`
-3. When a request arrives, `redirect.ts` resolves the CNAME via DNS
-4. The CNAME target is parsed by `parseDestination()` which extracts:
-   - **Host:** the destination domain (e.g., `dest`)
-   - **Options** parsed from labels:
-     - `.opts-https` → force HTTPS
-     - `.opts-statuscode-{301|302|307|308}` → HTTP status code
-     - `.opts-port-{N}` → custom port
-     - `.opts-slash.{path}` → append path segment
-     - `.opts-query-{base32}` → append query string (Base32-encoded)
-     - `.opts-path-{base32}` → append path (Base32-encoded)
-     - `.opts-uri` → preserve original request path and query
-5. A `RedirectResponse` is built and returned as an HTTP redirect
+### Rule 9 - Tests verify intent, not just behavior
+Tests must encode WHY behavior matters, not just WHAT it does.
+A test that can't fail when business logic changes is wrong.
 
-### DNS Error Handling
+### Rule 10 - Checkpoint after every significant step
+Summarize what was done, what's verified, what's left.
+Don't continue from a state you can't describe back.
+If you lose track, stop and restate.
 
-Deno's `resolveDns()` throws errors **without** an `error.code` property (unlike Node.js). The code checks both `error.code === "ENODATA"` and `error.message?.includes("no records found")`.
+### Rule 11 - Match the codebase's conventions, even if you disagree
+Conformance > taste inside the codebase.
+If you genuinely think a convention is harmful, surface it. Don't fork silently.
 
-If no CNAME is found and the subdomain is not `redirect`, it retries with `redirect.` prefix (e.g., `example.com` → `redirect.example.com`).
-
-## Landing Page (`views/index.vto`)
-
-- **Bilingual:** EN/PT with browser language auto-detection (`navigator.language`)
-- **Language switching:** CSS-based via `body[data-lang="en"] .pt { display: none }` and vice versa
-- **Language persistence:** `localStorage.setItem('lang', lang)`
-- **`<html lang>` is updated dynamically** when language is switched
-- **SEO:** JSON-LD structured data, Open Graph, Twitter Card, canonical URL, hreflang alternates
-- **Footer:** Multilingual SEO text blocks in 12 languages (en, pt, es, de, fr, it, ja, ru, ko, zh, ar, hi) with `lang` attributes
-- **CNAME Generator:** Modal with URL-to-CNAME converter (uses base32.js from unpkg)
-- **Sections:** Hero → How it works (3 steps) → How to use (accordion examples) → CNAME Generator button → Parameters Reference table → Footer
-
-### Vento Template Syntax
-
-- Variables: `{{ app.fqdn }}`, `{{ statistics.periodDomains }}`
-- NOT Handlebars — no `{{#each}}`, no `{{> partial}}`, no `{{{ unescaped }}}`
-- Vento docs: https://vento.js.org/
-
-## Routing (main.ts)
-
-- `GET /` with `host === config.fqdn` → Render landing page
-- `ALL /*` with `host === config.fqdn` → Return 404 JSON (prevents favicon.ico errors)
-- `ALL /*` with any other host → Redirect logic
-- Static files: `/public/*` served via `hono/deno` serveStatic
-
-## Testing
-
-- Tests use `Deno.test()` natively
-- Test files: `*_test.ts` next to source files
-- Run with `deno task test` (NOT bare `deno test` — needs flags)
-- 50 tests total: 25 redirect parsing + 25 base32 (duplicated across worktree)
-
-## Guardian (Blacklist)
-
-- `db/guardian.json` contains `{"denyFqdn": ["blocked-domain.com"]}`
-- Reloaded every 60 seconds
-- Checks both the full FQDN and the base domain (via `psl` library)
-- Blocks both source (incoming) and destination (redirect target) domains
-
-## systemd (Production)
-
-- Service file: `redirect-center.service`
-- Install: `sudo cp redirect-center.service /etc/systemd/system/ && sudo systemctl daemon-reload`
-- Enable on boot: `sudo systemctl enable redirect-center`
-- Start: `sudo systemctl start redirect-center`
-- Stop: `sudo systemctl stop redirect-center`
-- Logs: `journalctl -u redirect-center -f`
-- Auto-restarts on crash (`Restart=always`, `RestartSec=3`)
-- Runs as `www-data` user with security hardening
-- Adjust `WorkingDirectory` and `User` in the service file as needed
-
-## Docker
-
-```bash
-docker build -t redirect-center .
-docker run -p 3000:3000 -e FQDN=redirect.center -e ENTRY_IP=1.2.3.4 redirect-center
-```
-
-## Important Notes
-
-- The `--watch` flag in `deno task dev` only watches `.ts` files. Changes to `.vto` templates require touching `main.ts` or restarting the server
-- Deno KV is used for statistics — no external database needed
-- The project was migrated from NestJS/Node.js to Deno in March 2026
+### Rule 12 - Fail loud
+"Completed" is wrong if anything was skipped silently.
+"Tests pass" is wrong if any were skipped.
+Default to surfacing uncertainty, not hiding it.
