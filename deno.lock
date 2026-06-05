@@ -1,6 +1,7 @@
 {
   "version": "5",
   "specifiers": {
+    "jsr:@bradenmacdonald/s3-lite-client@~0.9.6": "0.9.6",
     "jsr:@davidbonnet/astring@1.8.6": "1.8.6",
     "jsr:@hono/hono@4": "4.10.4",
     "jsr:@std/html@1.0.3": "1.0.3",
@@ -12,6 +13,9 @@
     "npm:psl@^1.9.0": "1.15.0"
   },
   "jsr": {
+    "@bradenmacdonald/s3-lite-client@0.9.6": {
+      "integrity": "5dac4eb9ce4d8574ce2eb21e1cff1e96b409ca3ba333913a8bbf918710dc50d9"
+    },
     "@davidbonnet/astring@1.8.6": {
       "integrity": "98b4914c8863cdf8c0ff83bb5c528caa67a8dca6020ad6234113499f00583e3a"
     },
@@ -142,6 +146,7 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@bradenmacdonald/s3-lite-client@~0.9.6",
       "jsr:@hono/hono@4",
       "npm:parse-domain@5",
       "npm:psl@^1.9.0"

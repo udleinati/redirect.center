@@ -12,6 +12,7 @@ import { isAuthorized, type Scope } from "./services/authorization.ts";
 import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.ts";
 import { verifyPolarSignature } from "./services/polar-signature.ts";
 import { mapEvent } from "./services/polar-webhook.ts";
+import { type CertStore, deleteCertsForSubscription } from "./services/cert-teardown.ts";
 
 const app = new Hono();
 
@@ -95,6 +96,22 @@ if (config.httpsTierEnabled) {
   if (config.polarProductSingleId) productScopes.set(config.polarProductSingleId, "single");
   if (config.polarProductWholeDomainId) productScopes.set(config.polarProductWholeDomainId, "whole-domain");
 
+  // S3 cert store for revoke teardown (Phase 4). Dynamically imported so the new
+  // remote S3 dependency never loads on the free HTTP path (flag off). Built only
+  // when S3 is configured; absent it, a revoke still marks the row inactive.
+  let certStore: CertStore | undefined;
+  if (config.s3Host && config.s3Bucket) {
+    const { S3Client } = await import("s3-lite-client");
+    certStore = new S3Client({
+      endPoint: `${config.s3Insecure ? "http" : "https"}://${config.s3Host}`,
+      region: "us-east-1", // ignored by MinIO; required by the client
+      bucket: config.s3Bucket,
+      accessKey: config.s3AccessId,
+      secretKey: config.s3SecretKey,
+      pathStyle: true, // MinIO + most S3 setups; endpoint/bucket/key form
+    });
+  }
+
   // Provider webhook: Polar is the source of truth; this keeps the local cache in
   // sync so /tls-check answers instantly during a TLS handshake. Signature is
   // verified against the raw body (#3a) before the pure state machine (#3b) maps
@@ -131,10 +148,40 @@ if (config.httpsTierEnabled) {
         );
         break;
       }
-      case "revoke":
-        // Teardown (mark inactive + delete certs from S3) lands in Phase 4.
-        console.log(`[webhook] revoke ${action.polarSubscriptionId} (teardown lands in Phase 4)`);
+      case "revoke": {
+        // Read the row before flipping it so we know which domain/scope's certs
+        // to remove. Marking inactive denies future `ask`; deleting the cert is
+        // what actually stops HTTPS (the proxy won't re-consult `ask` on renewal).
+        const existing = store.get(action.polarSubscriptionId);
+        store.markInactive(action.polarSubscriptionId, now);
+        if (existing && certStore) {
+          try {
+            const deleted = await deleteCertsForSubscription(
+              certStore,
+              config.s3Prefix,
+              existing.domain,
+              existing.scope,
+            );
+            console.log(
+              `[webhook] revoke ${existing.domain} scope=${existing.scope}: inactive, deleted ${deleted.length} cert object(s)`,
+            );
+          } catch (e) {
+            // Fail loud and let Polar retry: mark-inactive and the delete are both
+            // idempotent, so a retry safely finishes the teardown.
+            console.error(
+              `[webhook] revoke ${existing.domain}: cert teardown FAILED, requesting retry: ${
+                e instanceof Error ? e.message : e
+              }`,
+            );
+            return c.text("Cert teardown failed", 500);
+          }
+        } else if (existing) {
+          console.log(`[webhook] revoke ${existing.domain}: marked inactive (no S3 configured; cert not deleted)`);
+        } else {
+          console.log(`[webhook] revoke ${action.polarSubscriptionId}: no local row, nothing to tear down`);
+        }
         break;
+      }
       case "noop":
         console.log(`[webhook] noop: ${action.reason}`);
         break;

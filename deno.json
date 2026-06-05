@@ -12,7 +12,8 @@
     "hono/": "jsr:@hono/hono@^4/",
     "ventojs": "https://deno.land/x/vento@v1.12.12/mod.ts",
     "psl": "npm:psl@^1.9.0",
-    "parse-domain": "npm:parse-domain@^5.0.0"
+    "parse-domain": "npm:parse-domain@^5.0.0",
+    "s3-lite-client": "jsr:@bradenmacdonald/s3-lite-client@^0.9.6"
   },
   "compilerOptions": {
     "strict": true

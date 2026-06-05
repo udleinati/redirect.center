@@ -56,11 +56,17 @@ function authorizes(sub: Subscription, host: string, now: number): boolean {
   // A subscription only grants access while active and within its paid period.
   if (sub.status !== "active") return false;
   if (now >= sub.currentPeriodEnd) return false;
+  return coversHost(sub.domain, sub.scope, host);
+}
 
-  const domain = sub.domain;
+// The pure scope geometry: does a subscription for `domain` at `scope` cover the
+// host `host`? No status/period checks — those gate authorization above. Phase 4
+// teardown reuses this to decide which issued certs a revoked subscription owns,
+// so the "what a purchase covers" rule lives in exactly one place.
+export function coversHost(domain: string, scope: Scope, host: string): boolean {
   if (!domain) return false;
 
-  if (sub.scope === "single") {
+  if (scope === "single") {
     if (host === domain) return true;
     // A single-domain purchase for an apex also covers its `www` host.
     return isRegistrableDomain(domain) && host === `www.${domain}`;

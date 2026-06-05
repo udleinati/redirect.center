@@ -72,6 +72,15 @@ export class SubscriptionStore {
     return rows.map(toSubscription);
   }
 
+  // Mark a subscription inactive on revoke (Phase 4). Idempotent: re-revoking an
+  // already-inactive row is a harmless no-op. Returns true if a row was matched.
+  markInactive(polarSubscriptionId: string, updatedAt: number): boolean {
+    const res = this.#db
+      .prepare(`UPDATE subscriptions SET status = 'inactive', updated_at = ? WHERE polar_subscription_id = ?`)
+      .run(updatedAt, polarSubscriptionId);
+    return res.changes > 0;
+  }
+
   get(polarSubscriptionId: string): Subscription | undefined {
     const row = this.#db
       .prepare(`SELECT * FROM subscriptions WHERE polar_subscription_id = ?`)
