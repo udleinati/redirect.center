@@ -1,8 +1,8 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-net --allow-read --allow-env src/main.ts",
-    "start": "deno run --allow-net --allow-read --allow-env src/main.ts",
-    "test": "deno test --allow-net --allow-read --allow-env"
+    "dev": "deno run --watch --allow-net --allow-read --allow-write --allow-env src/main.ts",
+    "start": "deno run --allow-net --allow-read --allow-write --allow-env src/main.ts",
+    "test": "deno test --allow-net --allow-read --allow-write --allow-env"
   },
   "imports": {
     "hono": "jsr:@hono/hono@^4",

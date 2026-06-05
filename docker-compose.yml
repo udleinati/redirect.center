@@ -18,10 +18,15 @@ services:
       # Always behind Caddy in this stack -> trust X-Forwarded-For for the real client IP.
       TRUST_PROXY: "true"
       HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-false}
-      # Phase 1 stub: the single domain the on-demand `ask` authorizes.
-      TLS_CHECK_STUB_DOMAIN: ${TLS_CHECK_STUB_DOMAIN:-paid-test.redirect.center}
+      # SQLite subscription cache on a volume so it survives container restarts.
+      SUBSCRIPTIONS_DB_PATH: /data/subscriptions.db
+      # Demo seed (manual subscriptions) until Polar webhooks land in Phase 3.
+      # Format: "domain:scope,domain:scope" (scope = single | whole-domain).
+      SEED_SUBSCRIPTIONS: ${SEED_SUBSCRIPTIONS:-paid-test.redirect.center:single}
     expose:
       - "3000" # internal only — never published to the host
+    volumes:
+      - app-data:/data
     restart: unless-stopped
 
   caddy:
@@ -84,6 +89,7 @@ services:
         echo "bucket ready: $$S3_BUCKET"
 
 volumes:
+  app-data:
   caddy-data:
   caddy-config:
   minio-data:

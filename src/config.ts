@@ -10,8 +10,10 @@ export interface AppConfig {
   httpsTierEnabled: boolean;
   // Trust X-Forwarded-* (only when running behind a reverse proxy, e.g. Caddy).
   trustProxy: boolean;
-  // Phase 1 stub: the single domain the on-demand TLS `ask` authorizes.
-  tlsCheckStubDomain: string;
+  // Path to the SQLite subscription cache (file needs --allow-write; ":memory:" ok).
+  subscriptionsDbPath: string;
+  // Demo seed: "domain:scope,domain:scope" upserted as active subs on startup.
+  seedSubscriptions: string;
 }
 
 export function loadConfig(): AppConfig {
@@ -25,7 +27,8 @@ export function loadConfig(): AppConfig {
     loggerLevel: Deno.env.get("LOGGER_LEVEL") || "debug",
     httpsTierEnabled: Deno.env.get("HTTPS_TIER_ENABLED") === "true",
     trustProxy: Deno.env.get("TRUST_PROXY") === "true",
-    tlsCheckStubDomain: Deno.env.get("TLS_CHECK_STUB_DOMAIN") || "",
+    subscriptionsDbPath: Deno.env.get("SUBSCRIPTIONS_DB_PATH") || "db/subscriptions.db",
+    seedSubscriptions: Deno.env.get("SEED_SUBSCRIPTIONS") || "",
   };
 }
 

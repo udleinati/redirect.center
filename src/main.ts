@@ -8,7 +8,8 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
-import { isStubAuthorized } from "./services/tls-check.ts";
+import { isAuthorized } from "./services/authorization.ts";
+import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.ts";
 
 const app = new Hono();
 
@@ -71,10 +72,17 @@ app.use("/", async (c, next) => {
 // anything else denies it. Only mounted when the paid HTTPS tier is enabled —
 // with the flag off this route does not exist and no TLS/datastore code runs.
 if (config.httpsTierEnabled) {
+  const store = new SubscriptionStore(config.subscriptionsDbPath);
+  if (config.seedSubscriptions) {
+    const seeded = seedFromSpec(store, config.seedSubscriptions, Date.now());
+    console.log(`[tls-check] seeded ${seeded} subscription(s)`);
+  }
+
   app.get("/tls-check", (c) => {
     const domain = (c.req.query("domain") || "").trim();
     if (!domain) return c.text("Bad Request", 400);
-    return isStubAuthorized(domain, config.tlsCheckStubDomain)
+    const now = Date.now();
+    return isAuthorized(domain, store.listActive(now), now)
       ? c.text("OK", 200)
       : c.text("Forbidden", 403);
   });

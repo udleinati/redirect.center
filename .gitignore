@@ -17,3 +17,9 @@
 
 # Deno
 .deno/
+
+# SQLite (runtime subscription cache — disposable, rebuilt from the provider)
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
