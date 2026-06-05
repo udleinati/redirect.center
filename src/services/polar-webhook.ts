@@ -35,6 +35,15 @@ export interface MapEventOptions {
   domainFieldSlug: string;
 }
 
+// Build the product-id -> scope map from configured product ids. Shared by the
+// webhook handler and the reconcile job so both resolve a product the same way.
+export function buildProductScopes(singleId: string, wholeDomainId: string): Map<string, Scope> {
+  const scopes = new Map<string, Scope>();
+  if (singleId) scopes.set(singleId, "single");
+  if (wholeDomainId) scopes.set(wholeDomainId, "whole-domain");
+  return scopes;
+}
+
 // Minimal shape of the parsed webhook body. Unknown fields are ignored.
 interface PolarEvent {
   type?: unknown;

@@ -2,6 +2,7 @@
   "tasks": {
     "dev": "deno run --watch --allow-net --allow-read --allow-write --allow-env src/main.ts",
     "start": "deno run --allow-net --allow-read --allow-write --allow-env src/main.ts",
+    "reconcile": "deno run --allow-net --allow-read --allow-write --allow-env src/reconcile.ts",
     "test": "deno test --allow-net --allow-read --allow-write --allow-env"
   },
   "imports": {

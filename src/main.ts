@@ -8,10 +8,10 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
-import { isAuthorized, type Scope } from "./services/authorization.ts";
+import { isAuthorized } from "./services/authorization.ts";
 import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.ts";
 import { verifyPolarSignature } from "./services/polar-signature.ts";
-import { mapEvent } from "./services/polar-webhook.ts";
+import { buildProductScopes, mapEvent } from "./services/polar-webhook.ts";
 import { type CertStore, deleteCertsForSubscription } from "./services/cert-teardown.ts";
 
 const app = new Hono();
@@ -98,9 +98,7 @@ if (config.httpsTierEnabled) {
 
   // Polar product id -> tier/scope. An event for a product not in this map can't
   // be mapped to a scope and is treated as a noop by the state machine.
-  const productScopes = new Map<string, Scope>();
-  if (config.polarProductSingleId) productScopes.set(config.polarProductSingleId, "single");
-  if (config.polarProductWholeDomainId) productScopes.set(config.polarProductWholeDomainId, "whole-domain");
+  const productScopes = buildProductScopes(config.polarProductSingleId, config.polarProductWholeDomainId);
 
   // S3 cert store for revoke teardown (Phase 4). Dynamically imported so the new
   // remote S3 dependency never loads on the free HTTP path (flag off). Built only

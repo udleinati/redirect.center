@@ -32,6 +32,10 @@ export interface AppConfig {
   // homepage funnel appends the entered domain as a prefilled custom field.
   checkoutSingleUrl: string;
   checkoutWholeDomainUrl: string;
+  // Polar API (Phase 6 reconciliation). Org access token + API base; the
+  // reconcile job pulls active subscriptions and rebuilds the local cache.
+  polarAccessToken: string;
+  polarApiBase: string;
 }
 
 export function loadConfig(): AppConfig {
@@ -59,6 +63,8 @@ export function loadConfig(): AppConfig {
     s3Insecure: Deno.env.get("S3_INSECURE") === "true",
     checkoutSingleUrl: Deno.env.get("POLAR_CHECKOUT_SINGLE_URL") || "",
     checkoutWholeDomainUrl: Deno.env.get("POLAR_CHECKOUT_WHOLE_DOMAIN_URL") || "",
+    polarAccessToken: Deno.env.get("POLAR_ACCESS_TOKEN") || "",
+    polarApiBase: Deno.env.get("POLAR_API_BASE") || "https://api.polar.sh",
   };
 }
 
