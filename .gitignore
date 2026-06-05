@@ -18,3 +18,7 @@
 
 # Deno
 .deno/
+
+# Working documents (see CLAUDE.md) - PRDs and implementation plans, never committed
+docs/prd-*.md
+plans/
