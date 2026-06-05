@@ -44,6 +44,29 @@ export LISTEN_PORT=80
 deno task dev
 ```
 
+### Sandbox the paid HTTPS tier (Docker)
+
+`docker compose up` runs the whole stack (Caddy + app + RustFS) with safe
+defaults. To exercise the paid HTTPS tier locally — Caddy's internal CA, certs
+in RustFS, **no real domain/AWS/Polar needed** — copy the env template (the flag
+is already on there) and bring it up:
+
+```sh
+cp .env.example .env
+docker compose up --build
+```
+
+The authorization gate is then testable directly (Caddy proxies `:80` to the app):
+
+```sh
+curl "http://localhost/tls-check?domain=paid-test.redirect.center"  # OK (seeded)
+curl "http://localhost/tls-check?domain=unpaid.example"             # Forbidden
+```
+
+Issued certs land in RustFS — browse them at the console on `http://localhost:9001`.
+For a production-shaped sandbox (Let's Encrypt staging + real S3), use
+`docker-compose.prod.yml` (see "Paid HTTPS tier (production cutover)").
+
 ## How do I run tests?
 
 ```sh

@@ -12,9 +12,9 @@
 !.vscode/launch.json
 !.vscode/extensions.json
 
-# Environment
+# Environment — real env files ignored, the .example templates stay committed.
 .env*
-# Filled-in production env (secrets); the .example template stays committed.
+!.env.example
 docker/prod.env
 
 # Deno
