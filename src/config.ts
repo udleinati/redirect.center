@@ -28,6 +28,10 @@ export interface AppConfig {
   s3SecretKey: string;
   s3Prefix: string;
   s3Insecure: boolean;
+  // Polar checkout links (Phase 5). Base hosted-checkout URLs per tier; the
+  // homepage funnel appends the entered domain as a prefilled custom field.
+  checkoutSingleUrl: string;
+  checkoutWholeDomainUrl: string;
 }
 
 export function loadConfig(): AppConfig {
@@ -53,6 +57,8 @@ export function loadConfig(): AppConfig {
     s3SecretKey: Deno.env.get("S3_SECRET_KEY") || "",
     s3Prefix: Deno.env.get("S3_PREFIX") || "certs",
     s3Insecure: Deno.env.get("S3_INSECURE") === "true",
+    checkoutSingleUrl: Deno.env.get("POLAR_CHECKOUT_SINGLE_URL") || "",
+    checkoutWholeDomainUrl: Deno.env.get("POLAR_CHECKOUT_WHOLE_DOMAIN_URL") || "",
   };
 }
 

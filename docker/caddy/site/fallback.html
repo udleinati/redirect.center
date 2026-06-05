@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex" />
+  <title>Enable HTTPS &middot; redirect.center</title>
+  <style>
+    :root {
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --accent: #0ea5e9;
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+      --code-bg: #f1f5f9;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.08);
+      max-width: 540px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .card-head {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      color: #fff;
+      padding: 28px 32px;
+      text-align: center;
+    }
+
+    .card-head .lock { font-size: 2rem; }
+    .card-head h1 { font-size: 1.35rem; font-weight: 800; margin-top: 6px; }
+    .card-head .domain {
+      display: inline-block;
+      margin-top: 10px;
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 8px;
+      padding: 4px 12px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 0.95rem;
+      word-break: break-all;
+    }
+
+    .card-body { padding: 28px 32px; }
+    .card-body p { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 18px; }
+
+    .tiers { display: grid; gap: 12px; }
+
+    .tier {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+    }
+
+    .tier:hover { border-color: var(--primary); box-shadow: 0 6px 20px rgba(37, 99, 235, 0.12); transform: translateY(-1px); }
+    .tier h3 { font-size: 1rem; }
+    .tier span { font-size: 0.82rem; color: var(--text-secondary); }
+    .tier .go { color: var(--primary); font-weight: 700; font-size: 1.2rem; }
+
+    .note {
+      margin-top: 20px;
+      padding: 12px 14px;
+      background: var(--code-bg);
+      border-radius: 8px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .note a { color: var(--primary-dark); font-weight: 600; text-decoration: none; }
+    .note a:hover { text-decoration: underline; }
+
+    .foot { text-align: center; font-size: 0.78rem; color: var(--text-secondary); padding: 0 32px 24px; }
+    .foot a { color: var(--primary-dark); text-decoration: none; }
+  </style>
+</head>
+
+<body>
+  <main class="card">
+    <div class="card-head">
+      <div class="lock">&#128274;</div>
+      <h1>HTTPS isn&rsquo;t enabled yet</h1>
+      <div class="domain" id="domain">this domain</div>
+    </div>
+    <div class="card-body">
+      <p>
+        Your redirect works over <strong>HTTP for free</strong>. To serve it over
+        <strong>HTTPS</strong> without a certificate warning, enable the paid HTTPS
+        add-on for this domain &mdash; the certificate is issued and renewed
+        automatically, you manage nothing.
+      </p>
+      <div class="tiers">
+        <a class="tier" id="buy-single" href="#" rel="noopener">
+          <div>
+            <h3>Single host</h3>
+            <span>HTTPS for this exact hostname (and its www).</span>
+          </div>
+          <div class="go">&rarr;</div>
+        </a>
+        <a class="tier" id="buy-whole" href="#" rel="noopener">
+          <div>
+            <h3>Whole domain</h3>
+            <span>HTTPS for the domain and every subdomain.</span>
+          </div>
+          <div class="go">&rarr;</div>
+        </a>
+      </div>
+      <div class="note">
+        Already paid? HTTPS goes live on the first request after checkout. Still
+        seeing this? Your subscription may have lapsed &mdash;
+        <a id="renew" href="#">renew here</a>.
+      </div>
+    </div>
+    <div class="foot">
+      Set up a new redirect at <a href="https://{{env "FQDN"}}/">{{env "FQDN"}}</a>
+    </div>
+  </main>
+
+  <script>
+    // Checkout-link builder (module #6, client-side twin of the homepage funnel):
+    // append the visitor's own hostname as the prefilled "domain" custom field so
+    // checkout applies to the right domain. Base URLs are injected by Caddy from env.
+    var SINGLE_URL = "{{env "POLAR_CHECKOUT_SINGLE_URL"}}";
+    var WHOLE_URL = "{{env "POLAR_CHECKOUT_WHOLE_DOMAIN_URL"}}";
+    var FQDN = "{{env "FQDN"}}";
+
+    function buildCheckout(base, domain) {
+      if (!base) return "https://" + FQDN + "/?https=" + encodeURIComponent(domain);
+      return base + (base.indexOf("?") >= 0 ? "&" : "?") +
+        "custom_field_data.domain=" + encodeURIComponent(domain);
+    }
+
+    var domain = (location.hostname || "").replace(/\.$/, "").toLowerCase();
+    document.getElementById("domain").textContent = domain || "this domain";
+    document.getElementById("buy-single").href = buildCheckout(SINGLE_URL, domain);
+    document.getElementById("buy-whole").href = buildCheckout(WHOLE_URL, domain);
+    document.getElementById("renew").href = buildCheckout(SINGLE_URL, domain);
+  </script>
+</body>
+
+</html>

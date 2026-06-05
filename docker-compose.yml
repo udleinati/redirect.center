@@ -28,6 +28,10 @@ services:
       POLAR_PRODUCT_SINGLE_ID: ${POLAR_PRODUCT_SINGLE_ID:-}
       POLAR_PRODUCT_WHOLE_DOMAIN_ID: ${POLAR_PRODUCT_WHOLE_DOMAIN_ID:-}
       POLAR_DOMAIN_FIELD_SLUG: ${POLAR_DOMAIN_FIELD_SLUG:-domain}
+      # Polar hosted-checkout links per tier (Phase 5). The homepage HTTPS funnel
+      # and the proxy's fallback page prefill these with the visitor's domain.
+      POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:-}
+      POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:-}
       # S3 cert storage (shared with Caddy) — Phase 4 deletes revoked certs here.
       S3_HOST: ${S3_HOST:-minio:9000}
       S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
@@ -56,6 +60,10 @@ services:
       S3_SECRET_KEY: ${S3_SECRET_KEY:-minioadmin}
       S3_PREFIX: ${S3_PREFIX:-certs}
       S3_INSECURE: "true" # MinIO over plain HTTP in dev
+      # Injected into the static fallback page (Phase 5) by Caddy's templates.
+      FQDN: ${FQDN:-redirect.center}
+      POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:-}
+      POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:-}
     volumes:
       - ./docker/caddy:/etc/caddy:ro
       - caddy-data:/data

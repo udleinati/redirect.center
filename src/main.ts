@@ -71,13 +71,19 @@ app.use("/", async (c, next) => {
   );
 });
 
+// Subscription cache — only constructed when the paid HTTPS tier is enabled.
+// Hoisted to module scope so the redirect path can gate HTTPS on authorization
+// (the Phase 5 paywall) using the same store that answers /tls-check.
+let store: SubscriptionStore | undefined;
+
 // Caddy on-demand TLS authorization (`ask`): 200 authorizes a certificate,
 // anything else denies it. Only mounted when the paid HTTPS tier is enabled —
 // with the flag off this route does not exist and no TLS/datastore code runs.
 if (config.httpsTierEnabled) {
-  const store = new SubscriptionStore(config.subscriptionsDbPath);
+  const subs = new SubscriptionStore(config.subscriptionsDbPath);
+  store = subs;
   if (config.seedSubscriptions) {
-    const seeded = seedFromSpec(store, config.seedSubscriptions, Date.now());
+    const seeded = seedFromSpec(subs, config.seedSubscriptions, Date.now());
     console.log(`[tls-check] seeded ${seeded} subscription(s)`);
   }
 
@@ -85,7 +91,7 @@ if (config.httpsTierEnabled) {
     const domain = (c.req.query("domain") || "").trim();
     if (!domain) return c.text("Bad Request", 400);
     const now = Date.now();
-    return isAuthorized(domain, store.listActive(now), now)
+    return isAuthorized(domain, subs.listActive(now), now)
       ? c.text("OK", 200)
       : c.text("Forbidden", 403);
   });
@@ -142,7 +148,7 @@ if (config.httpsTierEnabled) {
     switch (action.type) {
       case "activate": {
         const s = action.subscription;
-        store.upsert({ ...s, status: "active", createdAt: now, updatedAt: now });
+        subs.upsert({ ...s, status: "active", createdAt: now, updatedAt: now });
         console.log(
           `[webhook] activate ${s.domain} scope=${s.scope} until=${new Date(s.currentPeriodEnd).toISOString()}`,
         );
@@ -152,8 +158,8 @@ if (config.httpsTierEnabled) {
         // Read the row before flipping it so we know which domain/scope's certs
         // to remove. Marking inactive denies future `ask`; deleting the cert is
         // what actually stops HTTPS (the proxy won't re-consult `ask` on renewal).
-        const existing = store.get(action.polarSubscriptionId);
-        store.markInactive(action.polarSubscriptionId, now);
+        const existing = subs.get(action.polarSubscriptionId);
+        subs.markInactive(action.polarSubscriptionId, now);
         if (existing && certStore) {
           try {
             const deleted = await deleteCertsForSubscription(
@@ -264,6 +270,18 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   // Source guardian check
   if (guardian.isDenied(host)) {
     throw new HttpError(403, "Forbidden");
+  }
+
+  // Paid HTTPS paywall (Phase 5). HTTP redirects stay free for every domain; only
+  // HTTPS is gated. An HTTPS request for a domain that hasn't paid returns 402,
+  // which Caddy turns into the static fallback/win-back page (the proxy intercepts
+  // 402 via handle_response). A revoked domain lands here too once its cert is gone.
+  // Flag off => store is undefined and this never runs (byte-for-byte legacy).
+  if (store && c.req.header("x-forwarded-proto") === "https") {
+    const now = Date.now();
+    if (!isAuthorized(host, store.listActive(now), now)) {
+      throw new HttpError(402, "HTTPS is not enabled for this domain");
+    }
   }
 
   // Resolve redirect
