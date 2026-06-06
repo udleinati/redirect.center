@@ -36,21 +36,12 @@
 	# automatic HTTP->HTTPS redirects.
 	auto_https disable_redirects
 
-	# Unpaid SNIs can't be issued a cert (the ask endpoint denies them), so the
-	# handshake would normally fail. fallback_sni makes Caddy present the internal
-	# cert below instead — only AFTER on-demand issuance errors — so the handshake
-	# completes (with a name mismatch the browser may warn about) and we can serve
-	# the static fallback page. Paid SNIs still issue normally and never hit this.
-	fallback_sni fallback.local
-}
-
-# Internal cert presented for unpaid SNIs via fallback_sni. Caddy must be managing
-# a cert for this name for the fallback to work; `tls internal` issues one at
-# startup (and keeps it internal even in prod, where this name has no real cert).
-# It is never reverse-proxied — the real Host routes to the :443 block below.
-https://fallback.local {
-	tls internal
-	respond 404
+	# A never-paid SNI is denied a certificate by the ask endpoint, so its TLS
+	# handshake fails by design: Caddy cannot present a fallback certificate when
+	# on-demand issuance is denied (caddyserver/caddy#5627). Those domains stay on
+	# the free HTTP redirect and are won back via the upgrade funnel on the homepage.
+	# The 402 page in the :443 block below only covers domains whose cert still
+	# exists but whose subscription has lapsed (handshake succeeds there).
 }
 
 # HTTPS: on-demand certificates for any paid SNI (gated by the ask endpoint),
@@ -60,10 +51,12 @@ https://fallback.local {
 	tls {
 		on_demand
 	}
-	# The app returns 402 for an HTTPS request to a domain that hasn't paid
-	# (Phase 5 paywall). Intercept it here and serve the static catch-all fallback
-	# page from the proxy — no app-rendered HTML. The page reads its own hostname
-	# client-side and pre-fills the checkout, so the same bytes serve every domain.
+	# A domain whose certificate still exists but whose subscription has lapsed
+	# (revoked before cert teardown, or a reconcile gap) completes the handshake,
+	# then the app returns 402 (Phase 5 paywall). Intercept it here and serve the
+	# static win-back/renew page — no app-rendered HTML. The page reads its own
+	# hostname client-side and pre-fills the checkout. Never-paid domains never
+	# reach this: their handshake fails first (see the global block note above).
 	reverse_proxy app:3000 {
 		@unpaid status 402
 		handle_response @unpaid {
