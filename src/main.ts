@@ -3,10 +3,7 @@ import vento from "ventojs";
 import { config } from "./config.ts";
 import { errorHandler } from "./middleware/error-handler.ts";
 import { guardian } from "./services/guardian.ts";
-import {
-  HttpError,
-  resolveDnsAndRedirect,
-} from "./services/redirect.ts";
+import { HttpError, resolveDnsAndRedirect } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
 import { createDb } from "./services/db.ts";
 import {
@@ -20,9 +17,13 @@ import {
 import { AuthzCache } from "./services/authz-cache.ts";
 import { verifyPolarSignature } from "./services/polar-signature.ts";
 import { buildTierLadders, mapPlanEvent } from "./services/polar-webhook.ts";
-import { type CertStore, deleteCertsForSubscription } from "./services/cert-teardown.ts";
+import {
+  type CertStore,
+  deleteCertsForSubscription,
+} from "./services/cert-teardown.ts";
 import { IssuanceRateLimiter } from "./services/issuance-rate-limit.ts";
 import { decideTlsCheck } from "./services/tls-check.ts";
+import { mountDashboard } from "./services/dashboard.ts";
 
 const app = new Hono();
 
@@ -53,10 +54,14 @@ app.use("/", async (c, next) => {
   // remoteAddr = real TCP connection IP (can't be spoofed).
   // x-forwarded-for/x-real-ip are only trustworthy behind a reverse proxy, so
   // they take precedence only when TRUST_PROXY is set (e.g. behind Caddy).
-  const remoteIp = ((c.env as Record<string, unknown>)?.remoteAddr as Deno.NetAddr | undefined)?.hostname;
+  const remoteIp =
+    ((c.env as Record<string, unknown>)?.remoteAddr as Deno.NetAddr | undefined)
+      ?.hostname;
   const forwardedIp = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
     c.req.header("x-real-ip");
-  const ip = (config.trustProxy ? (forwardedIp || remoteIp) : (remoteIp || forwardedIp)) || "-";
+  const ip = (config.trustProxy
+    ? (forwardedIp || remoteIp)
+    : (remoteIp || forwardedIp)) || "-";
   const host = c.req.header("host") || "-";
   const method = c.req.method;
   const url = new URL(c.req.url);
@@ -97,12 +102,18 @@ if (config.httpsTierEnabled) {
   await migrate(db);
   const cache = new AuthzCache(db);
   if (config.seedPlansSpec) {
-    const { plans, domains } = await seedPlans(db, config.seedPlansSpec, Date.now());
+    const { plans, domains } = await seedPlans(
+      db,
+      config.seedPlansSpec,
+      Date.now(),
+    );
     console.log(`[tls-check] seeded ${plans} plan(s), ${domains} domain(s)`);
   }
   await cache.refresh();
   authz = cache;
-  console.log(`[tls-check] authz cache loaded: ${cache.counts.plans} plan(s), ${cache.counts.domains} domain(s)`);
+  console.log(
+    `[tls-check] authz cache loaded: ${cache.counts.plans} plan(s), ${cache.counts.domains} domain(s)`,
+  );
 
   // On-demand issuance rate limit (Phase 7). Caddy removed its built-in
   // on_demand rate limit in 2.9, so the ask endpoint enforces it: even an
@@ -119,9 +130,21 @@ if (config.httpsTierEnabled) {
     const now = Date.now();
     // A 429 makes Caddy skip issuance this handshake; the next one retries and
     // succeeds once the window drains, so legitimate domains aren't locked out.
-    const status = decideTlsCheck(domain, (h, n) => cache.authorize(h, n), issuanceLimiter, now);
-    if (status === 429) console.warn(`[tls-check] issuance rate limit hit for ${domain}`);
-    const bodies = { 400: "Bad Request", 403: "Forbidden", 429: "Rate limited", 200: "OK" } as const;
+    const status = decideTlsCheck(
+      domain,
+      (h, n) => cache.authorize(h, n),
+      issuanceLimiter,
+      now,
+    );
+    if (status === 429) {
+      console.warn(`[tls-check] issuance rate limit hit for ${domain}`);
+    }
+    const bodies = {
+      400: "Bad Request",
+      403: "Forbidden",
+      429: "Rate limited",
+      200: "OK",
+    } as const;
     return c.text(bodies[status], status);
   });
 
@@ -197,14 +220,27 @@ if (config.httpsTierEnabled) {
         // re-consult `ask` on renewal). Domain rows are kept — a re-subscribe
         // reactivates them within the new cap.
         const plan = await getPlan(db, action.polarSubscriptionId);
-        const matched = await markPlanInactive(db, action.polarSubscriptionId, now);
+        const matched = await markPlanInactive(
+          db,
+          action.polarSubscriptionId,
+          now,
+        );
         if (plan) {
-          const domains = await listCustomerDomainsInScope(db, plan.customerId, plan.scope);
+          const domains = await listCustomerDomainsInScope(
+            db,
+            plan.customerId,
+            plan.scope,
+          );
           if (certStore) {
             try {
               let deleted = 0;
               for (const domain of domains) {
-                deleted += (await deleteCertsForSubscription(certStore, config.s3Prefix, domain, plan.scope)).length;
+                deleted += (await deleteCertsForSubscription(
+                  certStore,
+                  config.s3Prefix,
+                  domain,
+                  plan.scope,
+                )).length;
               }
               console.log(
                 `[webhook] revoke plan customer=${plan.customerId} scope=${plan.scope}: inactive, ` +
@@ -228,7 +264,9 @@ if (config.httpsTierEnabled) {
           }
           await cache.refresh();
         } else {
-          console.log(`[webhook] revoke ${action.polarSubscriptionId}: no local Plan, nothing to tear down`);
+          console.log(
+            `[webhook] revoke ${action.polarSubscriptionId}: no local Plan, nothing to tear down`,
+          );
           if (matched) await cache.refresh();
         }
         break;
@@ -239,6 +277,18 @@ if (config.httpsTierEnabled) {
     }
     return c.text("OK", 200);
   });
+
+  // Dashboard + passwordless auth (Phase 10, ADR-0003). Mounted only when a
+  // SESSION_SECRET is configured; without it the paid tier still runs (issuance +
+  // webhooks) but exposes no auth/dashboard surface.
+  if (config.sessionSecret) {
+    mountDashboard({ app, db, config });
+    console.log("[dashboard] passwordless auth + /portal mounted");
+  } else {
+    console.log(
+      "[dashboard] SESSION_SECRET unset — auth/dashboard routes not mounted",
+    );
+  }
 }
 
 // Homepage - only for the FQDN host (served from pre-rendered cache)
@@ -249,14 +299,17 @@ app.get("/", async (c, next) => {
     const ua = c.req.header("user-agent");
     if (!ua) return c.json({ statusCode: 403, message: "Forbidden" }, 403);
 
-    const acceptsGzip = c.req.header("accept-encoding")?.includes("gzip") ?? false;
+    const acceptsGzip = c.req.header("accept-encoding")?.includes("gzip") ??
+      false;
     const headers: Record<string, string> = {
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "public, max-age=300",
     };
     if (acceptsGzip) headers["Content-Encoding"] = "gzip";
 
-    return new Response(acceptsGzip ? homepage.gzip : homepage.html, { headers });
+    return new Response(acceptsGzip ? homepage.gzip : homepage.html, {
+      headers,
+    });
   }
 
   // If not FQDN, skip to redirect
@@ -329,7 +382,10 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   }
 
   // Resolve redirect
-  const redirect = await resolveDnsAndRedirect(host, c.req.url.replace(/^https?:\/\/[^/]+/, ""));
+  const redirect = await resolveDnsAndRedirect(
+    host,
+    c.req.url.replace(/^https?:\/\/[^/]+/, ""),
+  );
 
   // Destination guardian check
   if (guardian.isDenied(redirect.fqdn)) {
@@ -368,11 +424,19 @@ const RSS_LIMIT = Number(Deno.env.get("RSS_LIMIT_MB") || "384") * 1024 * 1024;
 setInterval(() => {
   const mem = Deno.memoryUsage();
   console.log(
-    `[health] rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB heap=${(mem.heapUsed / 1024 / 1024).toFixed(1)}/${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB external=${(mem.external / 1024 / 1024).toFixed(1)}MB dnsCache=${dnsCacheSize()} dnsInflight=${dnsInflightSize()}`,
+    `[health] rss=${(mem.rss / 1024 / 1024).toFixed(1)}MB heap=${
+      (mem.heapUsed / 1024 / 1024).toFixed(1)
+    }/${(mem.heapTotal / 1024 / 1024).toFixed(1)}MB external=${
+      (mem.external / 1024 / 1024).toFixed(1)
+    }MB dnsCache=${dnsCacheSize()} dnsInflight=${dnsInflightSize()}`,
   );
 
   if (mem.rss > RSS_LIMIT) {
-    console.warn(`[watchdog] RSS ${(mem.rss / 1024 / 1024).toFixed(0)}MB exceeded limit ${(RSS_LIMIT / 1024 / 1024).toFixed(0)}MB, restarting...`);
+    console.warn(
+      `[watchdog] RSS ${(mem.rss / 1024 / 1024).toFixed(0)}MB exceeded limit ${
+        (RSS_LIMIT / 1024 / 1024).toFixed(0)
+      }MB, restarting...`,
+    );
     Deno.exit(0);
   }
 }, 60_000);

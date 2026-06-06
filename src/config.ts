@@ -49,6 +49,16 @@ export interface AppConfig {
   // reconcile job pulls active subscriptions and rebuilds the local cache.
   polarAccessToken: string;
   polarApiBase: string;
+  // Dashboard passwordless auth (Phase 10, ADR-0003). The HMAC secret signs both
+  // magic-link and session tokens; the dashboard/auth routes only mount when it
+  // is set (and the paid tier is on). appBaseUrl is the public origin used to
+  // build absolute magic links (defaults to https://<fqdn>).
+  sessionSecret: string;
+  appBaseUrl: string;
+  // Outbound email for magic links (Phase 10). Resend by default; with no key the
+  // sandbox logs the link to the console instead of sending it.
+  resendApiKey: string;
+  emailFrom: string;
 }
 
 export function loadConfig(): AppConfig {
@@ -62,11 +72,13 @@ export function loadConfig(): AppConfig {
     loggerLevel: Deno.env.get("LOGGER_LEVEL") || "debug",
     httpsTierEnabled: Deno.env.get("HTTPS_TIER_ENABLED") === "true",
     trustProxy: Deno.env.get("TRUST_PROXY") === "true",
-    databaseUrl: Deno.env.get("DATABASE_URL") || "postgres://redirect:redirect@postgres:5432/redirect",
+    databaseUrl: Deno.env.get("DATABASE_URL") ||
+      "postgres://redirect:redirect@postgres:5432/redirect",
     seedPlansSpec: Deno.env.get("SEED_PLANS") || "",
     polarWebhookSecret: Deno.env.get("POLAR_WEBHOOK_SECRET") || "",
     polarProductSingleId: Deno.env.get("POLAR_PRODUCT_SINGLE_ID") || "",
-    polarProductWholeDomainId: Deno.env.get("POLAR_PRODUCT_WHOLE_DOMAIN_ID") || "",
+    polarProductWholeDomainId: Deno.env.get("POLAR_PRODUCT_WHOLE_DOMAIN_ID") ||
+      "",
     polarProductTiers: Deno.env.get("POLAR_PRODUCT_TIERS") || "",
     s3Host: Deno.env.get("S3_HOST") || "",
     s3Bucket: Deno.env.get("S3_BUCKET") || "",
@@ -76,11 +88,17 @@ export function loadConfig(): AppConfig {
     s3Prefix: Deno.env.get("S3_PREFIX") || "certs",
     s3Insecure: Deno.env.get("S3_INSECURE") === "true",
     tlsIssuanceRateLimit: Number(Deno.env.get("TLS_ISSUANCE_RATE_LIMIT")) || 20,
-    tlsIssuanceRateWindowMs: Number(Deno.env.get("TLS_ISSUANCE_RATE_WINDOW_MS")) || 300_000,
+    tlsIssuanceRateWindowMs:
+      Number(Deno.env.get("TLS_ISSUANCE_RATE_WINDOW_MS")) || 300_000,
     checkoutSingleUrl: Deno.env.get("POLAR_CHECKOUT_SINGLE_URL") || "",
-    checkoutWholeDomainUrl: Deno.env.get("POLAR_CHECKOUT_WHOLE_DOMAIN_URL") || "",
+    checkoutWholeDomainUrl: Deno.env.get("POLAR_CHECKOUT_WHOLE_DOMAIN_URL") ||
+      "",
     polarAccessToken: Deno.env.get("POLAR_ACCESS_TOKEN") || "",
     polarApiBase: Deno.env.get("POLAR_API_BASE") || "https://api.polar.sh",
+    sessionSecret: Deno.env.get("SESSION_SECRET") || "",
+    appBaseUrl: (Deno.env.get("APP_BASE_URL") || "").replace(/\/+$/, ""),
+    resendApiKey: Deno.env.get("RESEND_API_KEY") || "",
+    emailFrom: Deno.env.get("EMAIL_FROM") || "",
   };
 }
 

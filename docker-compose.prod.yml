@@ -39,6 +39,13 @@ services:
       POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:?set POLAR_CHECKOUT_WHOLE_DOMAIN_URL}
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:?set POLAR_ACCESS_TOKEN}
       POLAR_API_BASE: ${POLAR_API_BASE:-https://api.polar.sh}
+      # Dashboard auth (Phase 10, ADR-0003). Blank SESSION_SECRET => no dashboard
+      # surface; otherwise /login + /portal mount and login resolves the Customer
+      # via POLAR_ACCESS_TOKEN. Magic-link email logs to console unless RESEND set.
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      APP_BASE_URL: ${APP_BASE_URL:-https://redirect.center}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       # Real S3 cert storage (shared with Caddy). The app deletes a revoked
       # domain's cert objects here on revoke (Phase 4).
       S3_HOST: ${S3_HOST:?set S3_HOST (e.g. s3.us-east-1.amazonaws.com)}

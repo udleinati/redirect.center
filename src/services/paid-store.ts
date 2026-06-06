@@ -5,7 +5,12 @@
 // Epoch-ms timestamps are stored as bigint; reads go through Number() (epoch ms is
 // well within Number.MAX_SAFE_INTEGER), so the pure authorizer sees plain numbers.
 
-import { type Domain, normalizeDomain, type Plan, type Scope } from "./authorization.ts";
+import {
+  type Domain,
+  normalizeDomain,
+  type Plan,
+  type Scope,
+} from "./authorization.ts";
 import type { Sql } from "./db.ts";
 
 export async function migrate(sql: Sql): Promise<void> {
@@ -63,7 +68,11 @@ export async function listActiveDomains(sql: Sql): Promise<Domain[]> {
 }
 
 // Idempotent on the provider subscription id (mirrors the v1 store contract).
-export async function upsertPlan(sql: Sql, p: Plan, now: number): Promise<void> {
+export async function upsertPlan(
+  sql: Sql,
+  p: Plan,
+  now: number,
+): Promise<void> {
   await sql`
     INSERT INTO plans
       (polar_subscription_id, customer_id, scope, cap, status, current_period_end, created_at, updated_at)
@@ -80,7 +89,11 @@ export async function upsertPlan(sql: Sql, p: Plan, now: number): Promise<void> 
 
 // Idempotent on (customer_id, domain); created_at is preserved across updates so
 // the cap's oldest-first ordering stays stable.
-export async function upsertDomain(sql: Sql, d: Domain, now: number): Promise<void> {
+export async function upsertDomain(
+  sql: Sql,
+  d: Domain,
+  now: number,
+): Promise<void> {
   await sql`
     INSERT INTO domains (customer_id, domain, scope, status, created_at, updated_at)
     VALUES (${d.customerId}, ${d.domain}, ${d.scope}, ${d.status}, ${d.createdAt}, ${now})
@@ -95,11 +108,20 @@ export async function upsertDomain(sql: Sql, d: Domain, now: number): Promise<vo
 export async function getPlan(
   sql: Sql,
   polarSubscriptionId: string,
-): Promise<{ customerId: string; scope: Scope; status: "active" | "inactive" } | undefined> {
+): Promise<
+  | { customerId: string; scope: Scope; status: "active" | "inactive" }
+  | undefined
+> {
   const rows = await sql`
     SELECT customer_id, scope, status FROM plans WHERE polar_subscription_id = ${polarSubscriptionId}`;
   const r = rows[0];
-  return r ? { customerId: r.customer_id, scope: r.scope as Scope, status: r.status as "active" | "inactive" } : undefined;
+  return r
+    ? {
+      customerId: r.customer_id,
+      scope: r.scope as Scope,
+      status: r.status as "active" | "inactive",
+    }
+    : undefined;
 }
 
 // Mark a Plan inactive on revoke. Idempotent: re-revoking an already-inactive row
@@ -107,7 +129,11 @@ export async function getPlan(
 // rows are intentionally LEFT active — the now-inactive Plan denies authorization
 // (entitledDomains needs an active Plan), and a re-subscribe reactivates the
 // Domains within the new cap with no extra work.
-export async function markPlanInactive(sql: Sql, polarSubscriptionId: string, now: number): Promise<boolean> {
+export async function markPlanInactive(
+  sql: Sql,
+  polarSubscriptionId: string,
+  now: number,
+): Promise<boolean> {
   const rows = await sql`
     UPDATE plans SET status = 'inactive', updated_at = ${now}
     WHERE polar_subscription_id = ${polarSubscriptionId}
@@ -116,7 +142,8 @@ export async function markPlanInactive(sql: Sql, polarSubscriptionId: string, no
 }
 
 // A Customer's active Domains in one Scope — the set whose certs a revoke of that
-// Scope's Plan must tear down (#5). Returns the normalized domain strings.
+// Scope's Plan must tear down (#5), and what the dashboard lists. Oldest-first
+// (then by name) so the order matches the cap's oldest-first entitlement slice.
 export async function listCustomerDomainsInScope(
   sql: Sql,
   customerId: string,
@@ -124,8 +151,25 @@ export async function listCustomerDomainsInScope(
 ): Promise<string[]> {
   const rows = await sql`
     SELECT domain FROM domains
-    WHERE customer_id = ${customerId} AND scope = ${scope} AND status = 'active'`;
+    WHERE customer_id = ${customerId} AND scope = ${scope} AND status = 'active'
+    ORDER BY created_at, domain`;
   return rows.map((r) => r.domain as string);
+}
+
+// The cap of a Customer's active, unexpired Plan in one Scope, or 0 when none —
+// the dashboard's "used / cap" and the add-capacity check (Phase 11) read this.
+export async function getActivePlanCap(
+  sql: Sql,
+  customerId: string,
+  scope: Scope,
+  now: number,
+): Promise<number> {
+  const rows = await sql`
+    SELECT cap FROM plans
+    WHERE customer_id = ${customerId} AND scope = ${scope}
+      AND status = 'active' AND current_period_end > ${now}
+    ORDER BY cap DESC LIMIT 1`;
+  return rows[0] ? Number(rows[0].cap) : 0;
 }
 
 // Demo seeding (v2). Spec: plan blocks separated by ";", each
@@ -142,9 +186,13 @@ export async function seedPlans(
   let plans = 0;
   let domains = 0;
   for (const block of spec.split(";").map((s) => s.trim()).filter(Boolean)) {
-    const [customerId, rawScope, rawCap, domainsCsv] = block.split("|").map((s) => s.trim());
+    const [customerId, rawScope, rawCap, domainsCsv] = block.split("|").map((
+      s,
+    ) => s.trim());
     if (!customerId || !rawScope) continue;
-    const scope: Scope = rawScope === "whole-domain" ? "whole-domain" : "single";
+    const scope: Scope = rawScope === "whole-domain"
+      ? "whole-domain"
+      : "single";
     const cap = Number(rawCap) || 0;
     await upsertPlan(sql, {
       polarSubscriptionId: `seed:${customerId}:${scope}`,
@@ -155,11 +203,19 @@ export async function seedPlans(
       currentPeriodEnd: now + 365 * 24 * 60 * 60 * 1000,
     }, now);
     plans++;
-    const list = (domainsCsv ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+    const list = (domainsCsv ?? "").split(",").map((s) => s.trim()).filter(
+      Boolean,
+    );
     for (let i = 0; i < list.length; i++) {
       const domain = normalizeDomain(list[i]);
       if (!domain) continue;
-      await upsertDomain(sql, { customerId, domain, scope, status: "active", createdAt: now + i }, now);
+      await upsertDomain(sql, {
+        customerId,
+        domain,
+        scope,
+        status: "active",
+        createdAt: now + i,
+      }, now);
       domains++;
     }
   }

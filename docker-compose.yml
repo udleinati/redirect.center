@@ -37,6 +37,12 @@ services:
       # rebuilds the Postgres `plans` table from the provider (source of truth for Plans).
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
       POLAR_API_BASE: ${POLAR_API_BASE:-https://api.polar.sh}
+      # Dashboard auth (Phase 10, ADR-0003). Blank SESSION_SECRET => no dashboard
+      # surface; magic-link email logs to console unless RESEND_API_KEY is set.
+      SESSION_SECRET: ${SESSION_SECRET:-}
+      APP_BASE_URL: ${APP_BASE_URL:-}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      EMAIL_FROM: ${EMAIL_FROM:-}
       # S3 cert storage (shared with Caddy) — Phase 4 deletes revoked certs here.
       S3_HOST: ${S3_HOST:-rustfs:9000}
       S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
