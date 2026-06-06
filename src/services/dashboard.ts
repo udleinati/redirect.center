@@ -63,9 +63,42 @@ export function mountDashboard(deps: DashboardDeps): void {
     accessToken: config.polarAccessToken,
   };
   const email: EmailSender = createEmailSender({
+    smtpHost: config.smtpHost,
+    smtpPort: config.smtpPort,
     resendApiKey: config.resendApiKey,
     emailFrom: config.emailFrom,
   });
+
+  // Local magic-link directory ("email:customerId,…"), used ONLY when Polar isn't
+  // configured — Polar is the real customer directory, so this can never shadow
+  // it. Lets the dashboard be exercised end-to-end without a Polar account.
+  const devDirectory = new Map<string, string>();
+  for (
+    const entry of config.devAuthCustomers.split(",").map((s) => s.trim())
+      .filter(Boolean)
+  ) {
+    const i = entry.indexOf(":");
+    if (i <= 0) continue;
+    devDirectory.set(
+      entry.slice(0, i).trim().toLowerCase(),
+      entry.slice(i + 1).trim(),
+    );
+  }
+  if (devDirectory.size && !config.polarAccessToken) {
+    console.warn(
+      `[auth] DEV magic-link directory active (${devDirectory.size} email(s)) — local testing only, no Polar`,
+    );
+  }
+
+  // Resolve an email to a customer_id: Polar's directory when configured, else the
+  // local dev directory. Returns null for an unknown email (anti-enumeration: the
+  // route responds the same either way).
+  async function resolveCustomerId(addr: string): Promise<string | null> {
+    if (config.polarAccessToken) {
+      return await findCustomerIdByEmail(polarOpts, addr);
+    }
+    return devDirectory.get(addr) ?? null;
+  }
 
   // Single-use guard for magic-link jtis: a spent jti maps to its expiry so the
   // set self-prunes. In-process is enough — a link is consumed within ~15 min and
@@ -106,7 +139,7 @@ export function mountDashboard(deps: DashboardDeps): void {
     );
     setCookie(c, SESSION_COOKIE, token, {
       httpOnly: true,
-      secure: true,
+      secure: config.cookieSecure,
       sameSite: "Lax",
       path: "/",
       maxAge: Math.floor(SESSION_TTL_MS / 1000),
@@ -169,9 +202,9 @@ export function mountDashboard(deps: DashboardDeps): void {
     fqdnRoute(async (c) => {
       const body = await c.req.parseBody();
       const addr = String(body.email ?? "").trim().toLowerCase();
-      if (addr && config.polarAccessToken) {
+      if (addr) {
         try {
-          const customerId = await findCustomerIdByEmail(polarOpts, addr);
+          const customerId = await resolveCustomerId(addr);
           if (customerId) {
             const jti = crypto.randomUUID();
             const token = signToken(

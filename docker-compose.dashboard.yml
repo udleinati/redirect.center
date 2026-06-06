@@ -1,0 +1,70 @@
+# Local "My Domains" dashboard sandbox (Phases 10–12) — NO Caddy, NO Polar, NO
+# real email. It SIMULATES a completed purchase (SEED_PLANS) and lets you sign in
+# with a passwordless magic link captured in Mailpit's web UI (the maintained,
+# arm64-native MailHog successor; same SMTP :1025 + web :8025).
+#
+#   docker compose -f docker-compose.dashboard.yml up --build
+#   open http://localhost:8080/login    # sign in as demo@redirect.center
+#   open http://localhost:8025          # Mailpit — click the magic link in the email
+#
+# The seeded "demo" customer already "bought" a single Tier (cap 5) + a
+# whole-domain Tier (cap 1), so after signing in you can add/remove domains and
+# open the (Polar-less here) billing button. Tear down with:
+#   docker compose -f docker-compose.dashboard.yml down -v
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.app
+    environment:
+      HTTPS_TIER_ENABLED: "true"
+      FQDN: localhost # dashboard answers on this Host; app is reached directly here
+      LISTEN_PORT: "3000"
+      LISTEN_IP: 0.0.0.0
+      LOGGER_LEVEL: info
+      DATABASE_URL: postgres://redirect:redirect@postgres:5432/redirect
+      # Dashboard auth (Phase 10).
+      SESSION_SECRET: dev-dashboard-secret-change-me
+      APP_BASE_URL: http://localhost:8080 # absolute base for the magic link
+      COOKIE_SECURE: "false" # served over plain http://localhost in this sandbox
+      # No Polar here: resolve the magic-link email via this local directory.
+      DEV_AUTH_CUSTOMERS: demo@redirect.center:demo
+      # Simulate a completed purchase: one single Tier (cap 5) + one whole (cap 1).
+      SEED_PLANS: demo|single|5|;demo|whole-domain|1|
+      # Magic-link email -> Mailpit SMTP, readable at http://localhost:8025.
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      EMAIL_FROM: redirect.center <noreply@redirect.center>
+      # No S3 in this sandbox: removing a domain still deauthorizes it, the cert
+      # teardown is just a no-op (there's no Caddy issuing certs here anyway).
+    ports:
+      - "8080:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: redirect
+      POSTGRES_PASSWORD: redirect
+      POSTGRES_DB: redirect
+    volumes:
+      - dashboard-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redirect -d redirect"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025" # web UI — read the magic-link emails here
+    restart: unless-stopped
+
+volumes:
+  dashboard-postgres-data:

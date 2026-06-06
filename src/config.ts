@@ -55,10 +55,19 @@ export interface AppConfig {
   // build absolute magic links (defaults to https://<fqdn>).
   sessionSecret: string;
   appBaseUrl: string;
-  // Outbound email for magic links (Phase 10). Resend by default; with no key the
-  // sandbox logs the link to the console instead of sending it.
+  // Outbound email for magic links (Phase 10). SMTP (MailHog/Mailpit) when smtpHost
+  // is set, else Resend, else the console logger.
   resendApiKey: string;
   emailFrom: string;
+  smtpHost: string;
+  smtpPort: number;
+  // Session cookie Secure attribute. True in prod (HTTPS); set false only for the
+  // local http://localhost dashboard sandbox.
+  cookieSecure: boolean;
+  // Local magic-link directory for the dashboard sandbox: "email:customerId,…".
+  // Used ONLY when Polar isn't configured (Polar is the real customer directory),
+  // so it can never override real auth. Lets the dashboard be tried without Polar.
+  devAuthCustomers: string;
 }
 
 export function loadConfig(): AppConfig {
@@ -99,6 +108,10 @@ export function loadConfig(): AppConfig {
     appBaseUrl: (Deno.env.get("APP_BASE_URL") || "").replace(/\/+$/, ""),
     resendApiKey: Deno.env.get("RESEND_API_KEY") || "",
     emailFrom: Deno.env.get("EMAIL_FROM") || "",
+    smtpHost: Deno.env.get("SMTP_HOST") || "",
+    smtpPort: Number(Deno.env.get("SMTP_PORT")) || 1025,
+    cookieSecure: Deno.env.get("COOKIE_SECURE") !== "false",
+    devAuthCustomers: Deno.env.get("DEV_AUTH_CUSTOMERS") || "",
   };
 }
 

@@ -44,6 +44,27 @@ export LISTEN_PORT=80
 deno task dev
 ```
 
+### Try the dashboard locally (magic link in Mailpit)
+
+To exercise the "My Domains" dashboard end-to-end without Polar or a real mailbox:
+
+```sh
+docker compose -f docker-compose.dashboard.yml up --build
+```
+
+Then:
+
+1. Open <http://localhost:8080/login> and sign in as `demo@redirect.center`.
+2. Open <http://localhost:8025> (Mailpit) and click the magic link in the email.
+3. You land in the dashboard already "owning" a single Tier (cap 5) + a
+   whole-domain Tier (cap 1) — add/remove domains to see capacity, redundancy,
+   and the `used / cap` counters.
+
+This sandbox runs the app directly over `http://localhost` (no Caddy/TLS), uses a
+local login directory instead of Polar (`DEV_AUTH_CUSTOMERS`), and simulates the
+purchase with `SEED_PLANS`. Tear it down with
+`docker compose -f docker-compose.dashboard.yml down -v`.
+
 ### Sandbox the paid HTTPS tier (Docker)
 
 `docker compose up` runs the whole stack (Caddy + app + RustFS) with safe
