@@ -10,7 +10,11 @@ import type { Context, Hono, Next } from "hono";
 import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { type Claims, signToken, verifyToken } from "./signed-token.ts";
 import { createEmailSender, type EmailSender } from "./email.ts";
-import { findCustomerIdByEmail, getCheckoutCustomer } from "./polar-api.ts";
+import {
+  createCustomerSession,
+  findCustomerIdByEmail,
+  getCheckoutCustomer,
+} from "./polar-api.ts";
 import {
   getActivePlanCap,
   listCustomerDomainsInScope,
@@ -148,7 +152,7 @@ export function mountDashboard(deps: DashboardDeps): void {
         email: session.email,
         scopes,
         canAddRemove: true,
-        canBilling: false,
+        canBilling: Boolean(config.polarAccessToken),
         notice,
       }),
     );
@@ -372,4 +376,35 @@ export function mountDashboard(deps: DashboardDeps): void {
 
   app.post("/domains/:domain/delete", fqdnRoute(handleRemove));
   app.delete("/domains/:domain", fqdnRoute(handleRemove));
+
+  // POST /billing/portal — deep-link into Polar's hosted portal (Tier change,
+  // card, invoices, cancel). Mints a short-lived Polar customer session server-
+  // side and redirects there, so no billing UI is built (Phase 12, ADR-0001/0003).
+  app.post(
+    "/billing/portal",
+    fqdnRoute(async (c) => {
+      const session = rollSession(c);
+      if (!session) return c.redirect("/login", 302);
+      if (!config.polarAccessToken) {
+        return renderPortal(c, session, {
+          kind: "err",
+          text: "The billing portal isn't available right now.",
+        });
+      }
+      try {
+        const url = await createCustomerSession(polarOpts, session.customerId);
+        return c.redirect(url, 302);
+      } catch (e) {
+        console.error(
+          `[billing] portal session for ${session.customerId} failed: ${
+            e instanceof Error ? e.message : e
+          }`,
+        );
+        return renderPortal(c, session, {
+          kind: "err",
+          text: "Couldn't open the billing portal. Please try again.",
+        });
+      }
+    }),
+  );
 }

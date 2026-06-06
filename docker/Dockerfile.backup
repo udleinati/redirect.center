@@ -1,0 +1,8 @@
+# pg_dump + aws-cli in one image for the Phase 12 durability backup (ADR-0002).
+# postgres:16-alpine matches the server's pg_dump major version (the prod Postgres
+# is postgres:16-alpine) and Alpine ships aws-cli v2, so one image does dump+upload.
+FROM postgres:16-alpine
+RUN apk add --no-cache aws-cli
+COPY backup.sh /usr/local/bin/backup.sh
+RUN chmod +x /usr/local/bin/backup.sh
+ENTRYPOINT ["/usr/local/bin/backup.sh"]

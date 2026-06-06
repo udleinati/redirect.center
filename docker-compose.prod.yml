@@ -62,9 +62,10 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # v2 durable store (ADR-0002): Plans + Domains. On-box single-instance. NOTE:
-  # disaster-recovery durability (periodic pg_dump -> S3) is Phase 12 — until then,
-  # losing this volume loses the app-owned Domain list (Plans rebuild via reconcile).
+  # v2 durable store (ADR-0002): Plans + Domains. On-box single-instance.
+  # Disaster recovery = the pg-backup service below (pg_dump -> S3). Losing this
+  # volume WITHOUT a recent dump loses the app-owned Domain list (Plans rebuild
+  # from Polar via `deno task reconcile`; certs already persist in S3).
   postgres:
     image: postgres:16-alpine
     environment:
@@ -113,6 +114,30 @@ services:
       app:
         condition: service_started
     restart: unless-stopped
+
+  # Phase 12 durability: on-demand pg_dump -> the real S3 bucket (ADR-0002). Under
+  # the "backup" profile so it never starts on a normal `up`. Schedule from the
+  # host (daily cron):
+  #   docker compose --env-file docker/prod.env -f docker-compose.prod.yml run --rm pg-backup
+  pg-backup:
+    profiles: ["backup"]
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.backup
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+      S3_BACKUP_PREFIX: ${S3_BACKUP_PREFIX:-backups}
+      # Real AWS S3 by default (no endpoint override). Set S3_ENDPOINT_URL only for
+      # an S3-compatible non-AWS endpoint.
+      S3_ENDPOINT_URL: ${S3_ENDPOINT_URL:-}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_ID:?set S3_ACCESS_ID}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY}
+      AWS_DEFAULT_REGION: ${S3_REGION:?set S3_REGION}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
 
 volumes:
   caddy-data:

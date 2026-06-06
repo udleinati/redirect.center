@@ -204,6 +204,44 @@ On-demand issuance is rate-limited in `/tls-check` (`TLS_ISSUANCE_RATE_LIMIT` pe
 limit in 2.9; combined with the `ask` gate, unknown-hostname floods cannot trigger
 mass issuance.
 
+### 4. Dashboard (optional, passwordless)
+
+Set `SESSION_SECRET` (e.g. `openssl rand -hex 32`) to mount the "My Domains"
+dashboard at `/login` + `/portal`. Customers sign in with a passwordless magic
+link — the email is looked up in Polar (so `POLAR_ACCESS_TOKEN` is required) and a
+signed, single-use link is emailed (via Resend when `RESEND_API_KEY`/`EMAIL_FROM`
+are set, otherwise logged to the container). Point the Polar checkout's
+`success_url` at `https://<FQDN>/auth/checkout?checkout_id={CHECKOUT_ID}` for
+post-checkout auto-login. With `SESSION_SECRET` unset, no dashboard/auth routes
+exist and issuance + webhooks run exactly as before.
+
+### 5. Durability & backup (Postgres → S3)
+
+The `domains` table is **app-owned and not rebuildable from Polar** (ADR-0002), so
+it is the one piece of state that needs its own backup. The `pg-backup` service
+(under the `backup` Compose profile) runs `pg_dump` and uploads a gzipped dump to
+the same S3 bucket that holds the certs:
+
+```sh
+# one-off; schedule from host cron (e.g. daily 0 4 * * *)
+docker compose --env-file docker/prod.env -f docker-compose.prod.yml run --rm pg-backup
+```
+
+**Restore** into a fresh Postgres (certs already live in S3; Plans rebuild from
+Polar via `deno task reconcile`):
+
+```sh
+aws s3 cp s3://<bucket>/backups/redirect-<stamp>.sql.gz - \
+  | gunzip \
+  | psql "$DATABASE_URL"
+docker compose ... run --rm app deno task reconcile   # repopulate Plans from Polar
+```
+
+**Durability boundary (explicit):** recovery needs **certs in S3 + Plans from
+Polar + the Domain list from a dump**. Losing the Postgres volume *without* a
+recent dump loses the app-owned Domain list — Plans and certs survive, but each
+Customer must re-add their Domains. Schedule the backup accordingly.
+
 ## DNS Setup
 
 Create a wildcard entry in your DNS:

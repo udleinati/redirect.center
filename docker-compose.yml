@@ -161,6 +161,29 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # On-demand pg_dump -> S3 of the durable store (Plans + Domains), Phase 12.
+  # Under the "backup" profile so a normal `up` never starts it. Run it manually:
+  #   docker compose run --rm pg-backup
+  # then check the object in the RustFS console (:9001) under certs bucket /backups.
+  pg-backup:
+    profiles: ["backup"]
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.backup
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
+      S3_BUCKET: ${S3_BUCKET:-redirect-center-certs}
+      S3_BACKUP_PREFIX: ${S3_BACKUP_PREFIX:-backups}
+      # Dev S3 is RustFS over plain HTTP, path-style.
+      S3_ENDPOINT_URL: http://rustfs:9000
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_ID:-rustfsadmin}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-rustfsadmin}
+      AWS_DEFAULT_REGION: ${S3_REGION:-us-east-1}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   caddy-data:
   caddy-config:
