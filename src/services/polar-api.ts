@@ -6,8 +6,8 @@
 //   Authorization: Bearer <org access token>
 //
 // Items come back in the same shape Polar sends on webhooks, so the reconcile
-// job feeds them straight through the pure event->action mapping (mapEvent),
-// keeping domain/scope/period extraction in exactly one place.
+// job feeds them straight through the pure event->action mapping (mapPlanEvent),
+// keeping customer/scope/cap/period extraction in exactly one place.
 
 export interface PolarApiOptions {
   apiBase: string;
@@ -20,9 +20,8 @@ export interface PolarSubscriptionItem {
   id?: unknown;
   status?: unknown;
   product_id?: unknown;
+  customer_id?: unknown;
   current_period_end?: unknown;
-  custom_field_data?: Record<string, unknown> | null;
-  metadata?: Record<string, unknown> | null;
 }
 
 interface ListResponse {

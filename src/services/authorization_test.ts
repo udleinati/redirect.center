@@ -4,71 +4,56 @@ import {
   assertFalse,
 } from "https://deno.land/std@0.224.0/assert/mod.ts";
 import {
-  isAuthorized,
+  coversHost,
   isRegistrableDomain,
   normalizeDomain,
-  type Subscription,
 } from "./authorization.ts";
 
-const NOW = 1_700_000_000_000; // fixed "now" so period checks are deterministic
-const FUTURE = NOW + 86_400_000;
-const PAST = NOW - 86_400_000;
-
-function sub(partial: Partial<Subscription> & Pick<Subscription, "domain" | "scope">): Subscription {
-  return {
-    polarSubscriptionId: `sub-${partial.domain}-${partial.scope}`,
-    status: "active",
-    currentPeriodEnd: FUTURE,
-    createdAt: NOW,
-    updatedAt: NOW,
-    ...partial,
-  };
-}
+// The pure scope geometry shared by both authorization (v2 `authorizeHost`) and
+// cert teardown. The v2 union/cap/per-Customer rules are covered in
+// authorization_v2_test.ts; here we pin the "what a purchase covers" primitives
+// (status/period live above this layer).
 
 // WHY: a `single` apex purchase must protect exactly the apex and its www host —
 // the two forms a visitor types — and nothing else, or it would leak free certs
 // to sibling hosts the customer never paid for.
-Deno.test("single apex authorizes apex and www, denies siblings", () => {
-  const subs = [sub({ domain: "example.com", scope: "single" })];
-  assert(isAuthorized("example.com", subs, NOW));
-  assert(isAuthorized("www.example.com", subs, NOW));
-  assertFalse(isAuthorized("blog.example.com", subs, NOW));
-  assertFalse(isAuthorized("other.com", subs, NOW));
+Deno.test("single apex covers apex and www, denies siblings", () => {
+  assert(coversHost("example.com", "single", "example.com"));
+  assert(coversHost("example.com", "single", "www.example.com"));
+  assertFalse(coversHost("example.com", "single", "blog.example.com"));
+  assertFalse(coversHost("example.com", "single", "other.com"));
 });
 
 // WHY: a `single` purchase for a non-apex host (a subdomain) covers only that
 // exact host — there is no apex, so the www convenience does not apply.
-Deno.test("single non-apex authorizes only the exact host", () => {
-  const subs = [sub({ domain: "blog.example.com", scope: "single" })];
-  assert(isAuthorized("blog.example.com", subs, NOW));
-  assertFalse(isAuthorized("www.blog.example.com", subs, NOW));
-  assertFalse(isAuthorized("example.com", subs, NOW));
+Deno.test("single non-apex covers only the exact host", () => {
+  assert(coversHost("blog.example.com", "single", "blog.example.com"));
+  assertFalse(coversHost("blog.example.com", "single", "www.blog.example.com"));
+  assertFalse(coversHost("blog.example.com", "single", "example.com"));
 });
 
 // WHY: `whole-domain` is the premium tier — it must cover the apex and any
 // subdomain at any depth, which is the whole point a customer pays more for.
-Deno.test("whole-domain authorizes apex and arbitrary-depth subdomains", () => {
-  const subs = [sub({ domain: "example.com", scope: "whole-domain" })];
-  assert(isAuthorized("example.com", subs, NOW));
-  assert(isAuthorized("www.example.com", subs, NOW));
-  assert(isAuthorized("a.b.c.example.com", subs, NOW));
+Deno.test("whole-domain covers apex and arbitrary-depth subdomains", () => {
+  assert(coversHost("example.com", "whole-domain", "example.com"));
+  assert(coversHost("example.com", "whole-domain", "www.example.com"));
+  assert(coversHost("example.com", "whole-domain", "a.b.c.example.com"));
   // ...but never a different registrable domain that merely shares a suffix.
-  assertFalse(isAuthorized("example.com.attacker.com", subs, NOW));
-  assertFalse(isAuthorized("notexample.com", subs, NOW));
+  assertFalse(coversHost("example.com", "whole-domain", "example.com.attacker.com"));
+  assertFalse(coversHost("example.com", "whole-domain", "notexample.com"));
 });
 
 // WHY: Caddy passes the raw SNI; without normalization a mixed-case, dotted, or
-// IDN hostname would silently miss its subscription and be denied a cert.
+// IDN hostname would silently miss its Domain and be denied a cert. Coverage is
+// only meaningful once both sides are normalized to the same form.
 Deno.test("SNI is normalized (case, trailing dot, IDN) before matching", () => {
-  const subs = [sub({ domain: "example.com", scope: "single" })];
   assertEquals(normalizeDomain("EXAMPLE.com."), "example.com");
-  assert(isAuthorized("EXAMPLE.com.", subs, NOW));
-  assert(isAuthorized("WWW.Example.COM", subs, NOW));
+  assert(coversHost("example.com", "single", normalizeDomain("EXAMPLE.com.")));
+  assert(coversHost("example.com", "single", normalizeDomain("WWW.Example.COM")));
 
   // IDN apex stored in punycode is matched from its Unicode SNI form.
-  const idn = [sub({ domain: "xn--bcher-kva.example", scope: "single" })];
   assertEquals(normalizeDomain("Bücher.example"), "xn--bcher-kva.example");
-  assert(isAuthorized("Bücher.example", idn, NOW));
+  assert(coversHost("xn--bcher-kva.example", "single", normalizeDomain("Bücher.example")));
 });
 
 // WHY: a whole-domain target that is a public suffix (e.g. *.com) would let one
@@ -76,22 +61,6 @@ Deno.test("SNI is normalized (case, trailing dot, IDN) before matching", () => {
 Deno.test("whole-domain targeting a public suffix is rejected", () => {
   assertFalse(isRegistrableDomain("com"));
   assertFalse(isRegistrableDomain("co.uk"));
-  const subs = [sub({ domain: "com", scope: "whole-domain" })];
-  assertFalse(isAuthorized("anything.com", subs, NOW));
-  assertFalse(isAuthorized("com", subs, NOW));
-});
-
-// WHY: authorization gates a real cert; an expired or cancelled subscription
-// must stop authorizing immediately, otherwise unpaid domains keep HTTPS.
-Deno.test("expired or inactive subscriptions are denied", () => {
-  assertFalse(
-    isAuthorized("example.com", [sub({ domain: "example.com", scope: "single", currentPeriodEnd: PAST })], NOW),
-  );
-  assertFalse(
-    isAuthorized("example.com", [sub({ domain: "example.com", scope: "single", status: "inactive" })], NOW),
-  );
-  // Boundary: authorization requires now < period end (not <=).
-  assertFalse(
-    isAuthorized("example.com", [sub({ domain: "example.com", scope: "single", currentPeriodEnd: NOW })], NOW),
-  );
+  assertFalse(coversHost("com", "whole-domain", "anything.com"));
+  assertFalse(coversHost("com", "whole-domain", "com"));
 });

@@ -168,7 +168,9 @@ Create a **dedicated, private** bucket with **Block Public Access ON** and
 key using [`docker/aws/cert-bucket-iam-policy.json`](docker/aws/cert-bucket-iam-policy.json)
 (replace `YOUR_CERT_BUCKET`). Put the bucket/region/keys in `docker/prod.env`.
 Certs persist here, so a rebuilt box never re-issues (no Let's Encrypt rate-limit
-storm), and `deno task reconcile` rebuilds the subscription cache from Polar.
+storm), and `deno task reconcile` rebuilds the **Plans** in Postgres from Polar.
+The app-owned **Domains** live durably in the on-box Postgres (their off-box
+disaster-recovery backup is a later phase).
 
 ### 2. Validate on Let's Encrypt staging, then flip to production
 

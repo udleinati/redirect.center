@@ -75,3 +75,7 @@ Default to surfacing uncertainty, not hiding it.
 Never commit PRDs or plans. These are working documents (e.g. `./plans/`, PRD
 files) — keep them local and out of every commit. Do not add them to
 `.gitignore`; simply never stage or commit them.
+
+## Instructions
+
+Use the fff MCP tools for all file search operations instead of default tools.

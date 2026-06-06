@@ -8,12 +8,18 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
-import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.ts";
 import { createDb } from "./services/db.ts";
-import { migrate, seedPlans } from "./services/paid-store.ts";
+import {
+  getPlan,
+  listCustomerDomainsInScope,
+  markPlanInactive,
+  migrate,
+  seedPlans,
+  upsertPlan,
+} from "./services/paid-store.ts";
 import { AuthzCache } from "./services/authz-cache.ts";
 import { verifyPolarSignature } from "./services/polar-signature.ts";
-import { buildProductScopes, mapEvent } from "./services/polar-webhook.ts";
+import { buildTierLadders, mapPlanEvent } from "./services/polar-webhook.ts";
 import { type CertStore, deleteCertsForSubscription } from "./services/cert-teardown.ts";
 import { IssuanceRateLimiter } from "./services/issuance-rate-limit.ts";
 import { decideTlsCheck } from "./services/tls-check.ts";
@@ -75,30 +81,18 @@ app.use("/", async (c, next) => {
   );
 });
 
-// Subscription cache — only constructed when the paid HTTPS tier is enabled.
-// Hoisted to module scope so the redirect path can gate HTTPS on authorization
-// (the Phase 5 paywall) using the same store that answers /tls-check.
-let store: SubscriptionStore | undefined;
 // v2 authorization cache (ADR-0002): the redirect paywall and /tls-check both gate
 // HTTPS on this in-process snapshot of Plans + Domains (no DB round-trip on the
-// handshake hot path).
+// handshake hot path). Hoisted to module scope so the redirect path can reach it.
 let authz: AuthzCache | undefined;
 
 // Caddy on-demand TLS authorization (`ask`): 200 authorizes a certificate,
 // anything else denies it. Only mounted when the paid HTTPS tier is enabled —
 // with the flag off this route does not exist and no TLS/datastore code runs.
 if (config.httpsTierEnabled) {
-  const subs = new SubscriptionStore(config.subscriptionsDbPath);
-  store = subs;
-  if (config.seedSubscriptions) {
-    const seeded = seedFromSpec(subs, config.seedSubscriptions, Date.now());
-    console.log(`[tls-check] seeded ${seeded} subscription(s)`);
-  }
-
   // v2 durable store (ADR-0002): Postgres holds Plans + Domains; the in-process
   // AuthzCache answers /tls-check and the paywall off the handshake hot path.
-  // migrate is idempotent. The v1 SQLite store above is left for the v1 webhook
-  // until Phase 9 rewrites it to write Plans/Domains here.
+  // migrate is idempotent.
   const db = createDb(config.databaseUrl);
   await migrate(db);
   const cache = new AuthzCache(db);
@@ -131,9 +125,14 @@ if (config.httpsTierEnabled) {
     return c.text(bodies[status], status);
   });
 
-  // Polar product id -> tier/scope. An event for a product not in this map can't
-  // be mapped to a scope and is treated as a noop by the state machine.
-  const productScopes = buildProductScopes(config.polarProductSingleId, config.polarProductWholeDomainId);
+  // Polar product id -> Tier {scope, cap}. The v1 single / whole-domain products
+  // are the cap-1 Tier of each Scope; larger bundles come from POLAR_PRODUCT_TIERS.
+  // An event for a product not in this map is a noop (the cap is never guessed).
+  const productTiers = buildTierLadders(
+    config.polarProductSingleId,
+    config.polarProductWholeDomainId,
+    config.polarProductTiers,
+  );
 
   // S3 cert store for revoke teardown (Phase 4). Dynamically imported so the new
   // remote S3 dependency never loads on the free HTTP path (flag off). Built only
@@ -151,10 +150,11 @@ if (config.httpsTierEnabled) {
     });
   }
 
-  // Provider webhook: Polar is the source of truth; this keeps the local cache in
-  // sync so /tls-check answers instantly during a TLS handshake. Signature is
-  // verified against the raw body (#3a) before the pure state machine (#3b) maps
-  // the event to an action we apply to the store.
+  // Provider webhook: Polar is the source of truth for Plans; this keeps the
+  // in-process cache in sync so /tls-check answers instantly during a TLS
+  // handshake. Signature is verified against the raw body (#3a) before the pure
+  // state machine (#3b) maps the event to a Plan action we apply to Postgres. The
+  // cache is refreshed after every write so a Tier change takes effect in seconds.
   app.post("/webhooks/polar", async (c) => {
     const rawBody = await c.req.text();
     const signed = verifyPolarSignature(
@@ -169,55 +169,67 @@ if (config.httpsTierEnabled) {
     );
     if (!signed) return c.text("Invalid signature", 401);
 
-    let event: Parameters<typeof mapEvent>[0];
+    let event: Parameters<typeof mapPlanEvent>[0];
     try {
       event = JSON.parse(rawBody);
     } catch {
       return c.text("Bad Request", 400);
     }
 
-    const action = mapEvent(event, { productScopes, domainFieldSlug: config.polarDomainFieldSlug });
+    const action = mapPlanEvent(event, { productTiers });
     const now = Date.now();
     switch (action.type) {
-      case "activate": {
-        const s = action.subscription;
-        subs.upsert({ ...s, status: "active", createdAt: now, updatedAt: now });
+      case "upsert": {
+        const p = action.plan;
+        await upsertPlan(db, { ...p, status: "active" }, now);
+        await cache.refresh();
         console.log(
-          `[webhook] activate ${s.domain} scope=${s.scope} until=${new Date(s.currentPeriodEnd).toISOString()}`,
+          `[webhook] upsert plan customer=${p.customerId} scope=${p.scope} cap=${p.cap} until=${
+            new Date(p.currentPeriodEnd).toISOString()
+          }`,
         );
         break;
       }
       case "revoke": {
-        // Read the row before flipping it so we know which domain/scope's certs
-        // to remove. Marking inactive denies future `ask`; deleting the cert is
-        // what actually stops HTTPS (the proxy won't re-consult `ask` on renewal).
-        const existing = subs.get(action.polarSubscriptionId);
-        subs.markInactive(action.polarSubscriptionId, now);
-        if (existing && certStore) {
-          try {
-            const deleted = await deleteCertsForSubscription(
-              certStore,
-              config.s3Prefix,
-              existing.domain,
-              existing.scope,
-            );
+        // Read the Plan before flipping it so we know whose Domains (in which
+        // Scope) own the certs to remove. Marking the Plan inactive denies future
+        // `ask`; deleting the certs is what actually stops HTTPS (the proxy won't
+        // re-consult `ask` on renewal). Domain rows are kept — a re-subscribe
+        // reactivates them within the new cap.
+        const plan = await getPlan(db, action.polarSubscriptionId);
+        const matched = await markPlanInactive(db, action.polarSubscriptionId, now);
+        if (plan) {
+          const domains = await listCustomerDomainsInScope(db, plan.customerId, plan.scope);
+          if (certStore) {
+            try {
+              let deleted = 0;
+              for (const domain of domains) {
+                deleted += (await deleteCertsForSubscription(certStore, config.s3Prefix, domain, plan.scope)).length;
+              }
+              console.log(
+                `[webhook] revoke plan customer=${plan.customerId} scope=${plan.scope}: inactive, ` +
+                  `tore down ${domains.length} domain(s), deleted ${deleted} cert object(s)`,
+              );
+            } catch (e) {
+              // Fail loud and let Polar retry: mark-inactive and the deletes are all
+              // idempotent, so a retry safely finishes the teardown.
+              console.error(
+                `[webhook] revoke ${action.polarSubscriptionId}: cert teardown FAILED, requesting retry: ${
+                  e instanceof Error ? e.message : e
+                }`,
+              );
+              return c.text("Cert teardown failed", 500);
+            }
+          } else {
             console.log(
-              `[webhook] revoke ${existing.domain} scope=${existing.scope}: inactive, deleted ${deleted.length} cert object(s)`,
+              `[webhook] revoke plan customer=${plan.customerId} scope=${plan.scope}: ` +
+                `marked inactive (no S3 configured; ${domains.length} domain cert(s) not deleted)`,
             );
-          } catch (e) {
-            // Fail loud and let Polar retry: mark-inactive and the delete are both
-            // idempotent, so a retry safely finishes the teardown.
-            console.error(
-              `[webhook] revoke ${existing.domain}: cert teardown FAILED, requesting retry: ${
-                e instanceof Error ? e.message : e
-              }`,
-            );
-            return c.text("Cert teardown failed", 500);
           }
-        } else if (existing) {
-          console.log(`[webhook] revoke ${existing.domain}: marked inactive (no S3 configured; cert not deleted)`);
+          await cache.refresh();
         } else {
-          console.log(`[webhook] revoke ${action.polarSubscriptionId}: no local row, nothing to tear down`);
+          console.log(`[webhook] revoke ${action.polarSubscriptionId}: no local Plan, nothing to tear down`);
+          if (matched) await cache.refresh();
         }
         break;
       }
@@ -309,7 +321,7 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   // HTTPS is gated. An HTTPS request for a domain that hasn't paid returns 402,
   // which Caddy turns into the static fallback/win-back page (the proxy intercepts
   // 402 via handle_response). A revoked domain lands here too once its cert is gone.
-  // Flag off => store is undefined and this never runs (byte-for-byte legacy).
+  // Flag off => authz is undefined and this never runs (byte-for-byte legacy).
   if (authz && c.req.header("x-forwarded-proto") === "https") {
     if (!authz.authorize(host, Date.now())) {
       throw new HttpError(402, "HTTPS is not enabled for this domain");

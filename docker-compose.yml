@@ -18,26 +18,23 @@ services:
       # Always behind Caddy in this stack -> trust X-Forwarded-For for the real client IP.
       TRUST_PROXY: "true"
       HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-false}
-      # SQLite subscription cache on a volume so it survives container restarts.
-      SUBSCRIPTIONS_DB_PATH: /data/subscriptions.db
-      # Demo seed (manual subscriptions); webhooks (Phase 3) upsert real ones.
-      # Format: "domain:scope,domain:scope" (scope = single | whole-domain).
-      SEED_SUBSCRIPTIONS: ${SEED_SUBSCRIPTIONS:-paid-test.redirect.center:single}
       # v2 durable store (ADR-0002): Postgres holds Plans + Domains.
       DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
       # v2 demo seed: plan blocks "customer|scope|cap|domain,domain;…"
       SEED_PLANS: ${SEED_PLANS:-}
-      # Polar webhook (Phase 3) — signature secret, product->scope ids, field slug.
+      # Polar webhook (Phase 3/9) — signature secret + the per-Scope Tier ladders.
       POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
+      # The v1 single / whole-domain products are reused as each Scope's cap-1 Tier.
       POLAR_PRODUCT_SINGLE_ID: ${POLAR_PRODUCT_SINGLE_ID:-}
       POLAR_PRODUCT_WHOLE_DOMAIN_ID: ${POLAR_PRODUCT_WHOLE_DOMAIN_ID:-}
-      POLAR_DOMAIN_FIELD_SLUG: ${POLAR_DOMAIN_FIELD_SLUG:-domain}
+      # Larger bundles: "prodId:scope:cap,…" (e.g. the single "up to 5" Tier).
+      POLAR_PRODUCT_TIERS: ${POLAR_PRODUCT_TIERS:-}
       # Polar hosted-checkout links per tier (Phase 5). The homepage HTTPS funnel
       # and the proxy's fallback page prefill these with the visitor's domain.
       POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:-}
       POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:-}
-      # Polar API (Phase 6). `docker compose run --rm app deno task reconcile`
-      # rebuilds the SQLite cache from the provider (the source of truth).
+      # Polar API (Phase 6/9). `docker compose run --rm app deno task reconcile`
+      # rebuilds the Postgres `plans` table from the provider (source of truth for Plans).
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:-}
       POLAR_API_BASE: ${POLAR_API_BASE:-https://api.polar.sh}
       # S3 cert storage (shared with Caddy) — Phase 4 deletes revoked certs here.
@@ -53,8 +50,6 @@ services:
       TLS_ISSUANCE_RATE_WINDOW_MS: ${TLS_ISSUANCE_RATE_WINDOW_MS:-300000}
     expose:
       - "3000" # internal only — never published to the host
-    volumes:
-      - app-data:/data
     depends_on:
       postgres:
         condition: service_healthy
@@ -161,7 +156,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  app-data:
   caddy-data:
   caddy-config:
   rustfs-data:

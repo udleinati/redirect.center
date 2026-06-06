@@ -25,13 +25,16 @@ services:
       LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
       TRUST_PROXY: "true"
       HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-true}
-      SUBSCRIPTIONS_DB_PATH: /data/subscriptions.db
-      # No demo seed in prod — subscriptions come from webhooks + `deno task reconcile`.
-      SEED_SUBSCRIPTIONS: ""
+      # v2 durable store (ADR-0002): on-box Postgres holds Plans + Domains.
+      DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
+      # No demo seed in prod — Plans come from webhooks + `deno task reconcile`.
+      SEED_PLANS: ""
       POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:?set POLAR_WEBHOOK_SECRET}
+      # The v1 single / whole-domain products are reused as each Scope's cap-1 Tier.
       POLAR_PRODUCT_SINGLE_ID: ${POLAR_PRODUCT_SINGLE_ID:?set POLAR_PRODUCT_SINGLE_ID}
       POLAR_PRODUCT_WHOLE_DOMAIN_ID: ${POLAR_PRODUCT_WHOLE_DOMAIN_ID:?set POLAR_PRODUCT_WHOLE_DOMAIN_ID}
-      POLAR_DOMAIN_FIELD_SLUG: ${POLAR_DOMAIN_FIELD_SLUG:-domain}
+      # Larger bundles: "prodId:scope:cap,…" (e.g. the single "up to 5" Tier).
+      POLAR_PRODUCT_TIERS: ${POLAR_PRODUCT_TIERS:-}
       POLAR_CHECKOUT_SINGLE_URL: ${POLAR_CHECKOUT_SINGLE_URL:?set POLAR_CHECKOUT_SINGLE_URL}
       POLAR_CHECKOUT_WHOLE_DOMAIN_URL: ${POLAR_CHECKOUT_WHOLE_DOMAIN_URL:?set POLAR_CHECKOUT_WHOLE_DOMAIN_URL}
       POLAR_ACCESS_TOKEN: ${POLAR_ACCESS_TOKEN:?set POLAR_ACCESS_TOKEN}
@@ -47,8 +50,29 @@ services:
       S3_INSECURE: "false"
     expose:
       - "3000" # internal only — never published to the host
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # v2 durable store (ADR-0002): Plans + Domains. On-box single-instance. NOTE:
+  # disaster-recovery durability (periodic pg_dump -> S3) is Phase 12 — until then,
+  # losing this volume loses the app-owned Domain list (Plans rebuild via reconcile).
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      # Internal-only (never published to the host). Override together with
+      # DATABASE_URL via prod.env if you want non-default credentials.
+      POSTGRES_USER: ${POSTGRES_USER:-redirect}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-redirect}
+      POSTGRES_DB: ${POSTGRES_DB:-redirect}
     volumes:
-      - app-data:/data
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redirect} -d ${POSTGRES_DB:-redirect}"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
     restart: unless-stopped
 
   caddy:
@@ -84,6 +108,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  app-data:
   caddy-data:
   caddy-config:
+  postgres-data:

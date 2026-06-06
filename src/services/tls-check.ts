@@ -12,9 +12,9 @@ import type { IssuanceRateLimiter } from "./issuance-rate-limit.ts";
 
 export type TlsCheckStatus = 400 | 403 | 429 | 200;
 
-// `isAuthorized(host, now)` is injected (v2: the in-process AuthzCache; v1: a
-// closure over the subscription list) so this gate stays decoupled from the data
-// model and the authorization read never touches I/O on the handshake hot path.
+// `isAuthorized(host, now)` is injected (the in-process AuthzCache) so this gate
+// stays decoupled from the data model and the authorization read never touches
+// I/O on the handshake hot path.
 export function decideTlsCheck(
   domain: string,
   isAuthorized: (host: string, now: number) => boolean,

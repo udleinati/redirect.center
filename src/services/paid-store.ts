@@ -90,6 +90,44 @@ export async function upsertDomain(sql: Sql, d: Domain, now: number): Promise<vo
       updated_at = EXCLUDED.updated_at`;
 }
 
+// A Plan's owner + scope, read before a revoke so teardown knows which Customer's
+// Domains (in which Scope) own the certs to delete. Undefined when no row exists.
+export async function getPlan(
+  sql: Sql,
+  polarSubscriptionId: string,
+): Promise<{ customerId: string; scope: Scope; status: "active" | "inactive" } | undefined> {
+  const rows = await sql`
+    SELECT customer_id, scope, status FROM plans WHERE polar_subscription_id = ${polarSubscriptionId}`;
+  const r = rows[0];
+  return r ? { customerId: r.customer_id, scope: r.scope as Scope, status: r.status as "active" | "inactive" } : undefined;
+}
+
+// Mark a Plan inactive on revoke. Idempotent: re-revoking an already-inactive row
+// is a harmless no-op. Returns true if a row was matched. The Customer's Domain
+// rows are intentionally LEFT active — the now-inactive Plan denies authorization
+// (entitledDomains needs an active Plan), and a re-subscribe reactivates the
+// Domains within the new cap with no extra work.
+export async function markPlanInactive(sql: Sql, polarSubscriptionId: string, now: number): Promise<boolean> {
+  const rows = await sql`
+    UPDATE plans SET status = 'inactive', updated_at = ${now}
+    WHERE polar_subscription_id = ${polarSubscriptionId}
+    RETURNING polar_subscription_id`;
+  return rows.length > 0;
+}
+
+// A Customer's active Domains in one Scope — the set whose certs a revoke of that
+// Scope's Plan must tear down (#5). Returns the normalized domain strings.
+export async function listCustomerDomainsInScope(
+  sql: Sql,
+  customerId: string,
+  scope: Scope,
+): Promise<string[]> {
+  const rows = await sql`
+    SELECT domain FROM domains
+    WHERE customer_id = ${customerId} AND scope = ${scope} AND status = 'active'`;
+  return rows.map((r) => r.domain as string);
+}
+
 // Demo seeding (v2). Spec: plan blocks separated by ";", each
 //   "customerId|scope|cap|domain,domain,…"
 // e.g. "c1|single|2|a.test,b.test,c.test;c1|whole-domain|1|acme.test".

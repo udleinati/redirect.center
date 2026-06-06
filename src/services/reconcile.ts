@@ -1,110 +1,110 @@
-// Reconciliation (module #4). Polar is the source of truth; the SQLite store is
-// a disposable cache. This job pulls the provider's active subscriptions and
-// makes the local store match: add the missing, refresh the changed, and
-// deactivate rows that are no longer active at the provider. Running it after
-// wiping SQLite restores full authorization state (the certs already live in S3).
+// Reconciliation (module #4), v2. Polar is the source of truth for Plans; the
+// Postgres `plans` table is rebuildable from it. This job pulls the provider's
+// active subscriptions and makes the local Plans match: add the missing, refresh
+// the changed (e.g. a Tier upgrade's new cap), and deactivate Plans no longer
+// active at the provider. It NEVER touches the `domains` table — Domains are
+// app-owned and durable, not rebuildable from Polar (ADR-0002). Running it after
+// wiping `plans` restores full authorization (certs already live in S3).
 //
 // The decision is split into a PURE plan (planReconcile) — exhaustively testable,
-// it encodes "what should change" — and a thin orchestrator that performs the
-// I/O. Mapping each remote subscription to scope/domain/period reuses the same
-// pure mapEvent the webhook uses, so the rules live in exactly one place.
+// it encodes "what should change" — and a thin async orchestrator that performs
+// the I/O. Mapping each remote subscription to scope/cap/period reuses the same
+// pure mapPlanEvent the webhook uses, so the rules live in exactly one place.
 
-import type { ActivationFields, MapEventOptions } from "./polar-webhook.ts";
-import { mapEvent } from "./polar-webhook.ts";
-import type { Subscription } from "./authorization.ts";
+import type { PlanFields, TierInfo } from "./polar-webhook.ts";
+import { mapPlanEvent } from "./polar-webhook.ts";
+import type { Plan } from "./authorization.ts";
 import type { PolarSubscriptionItem } from "./polar-api.ts";
-import type { SubscriptionStore } from "./subscription-store.ts";
+import type { Sql } from "./db.ts";
+import { listActivePlans, markPlanInactive, upsertPlan } from "./paid-store.ts";
 
-// Manually-seeded demo rows (see seedFromSpec) have no provider counterpart, so
+// Manually-seeded demo Plans (see seedPlans) have no provider counterpart, so
 // reconciliation leaves them alone instead of treating them as "stale at Polar".
 const SEED_PREFIX = "seed:";
 
 export interface ReconcilePlan {
-  // Active rows to write — new subscriptions or ones whose domain/scope/period
-  // changed at the provider. Unchanged rows are omitted so a re-run is a no-op.
-  upserts: Subscription[];
-  // Provider ids of local-active rows to mark inactive (gone from Polar's set).
+  // Active Plans to write — new subscriptions or ones whose customer/scope/cap/
+  // period changed at the provider. Unchanged Plans are omitted so a re-run is a no-op.
+  upserts: Plan[];
+  // Provider ids of local-active Plans to mark inactive (gone from Polar's set).
   deactivate: string[];
 }
 
 export interface ReconcileResult {
   remoteTotal: number; // raw active subscriptions returned by Polar
-  activated: number; // rows written (new or changed)
-  deactivated: number; // local rows marked inactive
-  skipped: number; // remote items that didn't map to a scope/domain
+  activated: number; // Plans written (new or changed)
+  deactivated: number; // local Plans marked inactive
+  skipped: number; // remote items that didn't map to a Tier (unknown product, …)
 }
 
-// Pure: given the provider's active subscriptions (already mapped to activation
-// fields), the full set of provider-active ids, and the current local-active
-// rows, decide what to upsert and what to deactivate.
+// Pure: given the provider's active subscriptions (already mapped to Plan fields),
+// the full set of provider-active ids, and the current local-active Plans, decide
+// what to upsert and what to deactivate.
 //
 // `remoteActiveIds` is EVERY id Polar returned as active — including ones we
-// couldn't map (unknown product, missing domain). We deactivate only rows absent
-// from that full set, so a still-active-but-unmappable subscription is never
-// torn down by reconciliation.
+// couldn't map (unknown product). We deactivate only Plans absent from that full
+// set, so a still-active-but-unmappable subscription is never torn down here.
 export function planReconcile(
-  activations: readonly ActivationFields[],
+  activations: readonly PlanFields[],
   remoteActiveIds: ReadonlySet<string>,
-  localActive: readonly Subscription[],
-  now: number,
+  localActive: readonly Plan[],
 ): ReconcilePlan {
-  const localById = new Map(localActive.map((s) => [s.polarSubscriptionId, s]));
+  const localById = new Map(localActive.map((p) => [p.polarSubscriptionId, p]));
 
-  const upserts: Subscription[] = [];
+  const upserts: Plan[] = [];
   for (const a of activations) {
     const existing = localById.get(a.polarSubscriptionId);
     const unchanged = existing &&
-      existing.domain === a.domain &&
+      existing.customerId === a.customerId &&
       existing.scope === a.scope &&
+      existing.cap === a.cap &&
       existing.currentPeriodEnd === a.currentPeriodEnd;
     if (unchanged) continue;
     upserts.push({
       polarSubscriptionId: a.polarSubscriptionId,
-      domain: a.domain,
+      customerId: a.customerId,
       scope: a.scope,
+      cap: a.cap,
       status: "active",
       currentPeriodEnd: a.currentPeriodEnd,
-      // The store preserves the original created_at on conflict; for a new row
-      // this stamps it.
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
     });
   }
 
   const deactivate = localActive
-    .filter((s) =>
-      !s.polarSubscriptionId.startsWith(SEED_PREFIX) &&
-      !remoteActiveIds.has(s.polarSubscriptionId)
+    .filter((p) =>
+      !p.polarSubscriptionId.startsWith(SEED_PREFIX) &&
+      !remoteActiveIds.has(p.polarSubscriptionId)
     )
-    .map((s) => s.polarSubscriptionId);
+    .map((p) => p.polarSubscriptionId);
 
   return { upserts, deactivate };
 }
 
-// Orchestrate the reconcile: map remote items, compute the plan against the
-// current store, then apply it. The caller fetches `remoteItems` first and only
-// reaches here on success, so a provider outage never deactivates local rows.
-export function reconcile(
-  store: SubscriptionStore,
-  mapOpts: MapEventOptions,
+// Orchestrate the reconcile: map remote items to Plans, compute the plan against
+// the current `plans` table, then apply it. The caller fetches `remoteItems` first
+// and only reaches here on success, so a provider outage never deactivates Plans.
+export async function reconcilePlans(
+  sql: Sql,
+  productTiers: ReadonlyMap<string, TierInfo>,
   remoteItems: readonly PolarSubscriptionItem[],
   now: number,
-): ReconcileResult {
+): Promise<ReconcileResult> {
   const remoteActiveIds = new Set<string>();
-  const activations: ActivationFields[] = [];
+  const activations: PlanFields[] = [];
 
   for (const item of remoteItems) {
     if (typeof item.id === "string" && item.id) remoteActiveIds.add(item.id);
     // Polar already filtered to active=true, so treat the API as authoritative on
-    // "active" and let mapEvent extract scope/domain/period exactly as on a webhook.
-    const action = mapEvent({ type: "subscription.active", data: { ...item, status: "active" } }, mapOpts);
-    if (action.type === "activate") activations.push(action.subscription);
+    // "active" and let mapPlanEvent extract customer/scope/cap/period as on a webhook.
+    const action = mapPlanEvent({ type: "subscription.active", data: { ...item, status: "active" } }, { productTiers });
+    if (action.type === "upsert") activations.push(action.plan);
   }
 
-  const plan = planReconcile(activations, remoteActiveIds, store.listActive(now), now);
+  const localActive = await listActivePlans(sql);
+  const plan = planReconcile(activations, remoteActiveIds, localActive);
 
-  for (const sub of plan.upserts) store.upsert(sub);
-  for (const id of plan.deactivate) store.markInactive(id, now);
+  for (const p of plan.upserts) await upsertPlan(sql, p, now);
+  for (const id of plan.deactivate) await markPlanInactive(sql, id, now);
 
   return {
     remoteTotal: remoteItems.length,
