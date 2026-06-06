@@ -282,7 +282,7 @@ if (config.httpsTierEnabled) {
   // SESSION_SECRET is configured; without it the paid tier still runs (issuance +
   // webhooks) but exposes no auth/dashboard surface.
   if (config.sessionSecret) {
-    mountDashboard({ app, db, config });
+    mountDashboard({ app, db, config, cache, certStore });
     console.log("[dashboard] passwordless auth + /portal mounted");
   } else {
     console.log(

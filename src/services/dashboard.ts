@@ -11,14 +11,22 @@ import { deleteCookie, getCookie, setCookie } from "hono/cookie";
 import { type Claims, signToken, verifyToken } from "./signed-token.ts";
 import { createEmailSender, type EmailSender } from "./email.ts";
 import { findCustomerIdByEmail, getCheckoutCustomer } from "./polar-api.ts";
-import { getActivePlanCap, listCustomerDomainsInScope } from "./paid-store.ts";
+import {
+  getActivePlanCap,
+  listCustomerDomainsInScope,
+  removeDomain,
+  upsertDomain,
+} from "./paid-store.ts";
+import { decideAddDomain } from "./domain-rules.ts";
 import {
   loginPage,
   portalPage,
   type ScopeView,
   verifyErrorPage,
 } from "./dashboard-views.ts";
-import type { Scope } from "./authorization.ts";
+import { normalizeDomain, type Scope } from "./authorization.ts";
+import { type CertStore, deleteCertsForSubscription } from "./cert-teardown.ts";
+import type { AuthzCache } from "./authz-cache.ts";
 import type { Sql } from "./db.ts";
 import type { AppConfig } from "../config.ts";
 
@@ -35,10 +43,16 @@ export interface DashboardDeps {
   app: Hono;
   db: Sql;
   config: AppConfig;
+  // The in-process authorization cache, refreshed after every Domain change so a
+  // /tls-check / paywall decision reflects the dashboard within the same request.
+  cache: AuthzCache;
+  // S3 cert store for teardown on remove (#5). Absent when S3 isn't configured —
+  // the Domain is still deactivated, the cert just isn't deleted.
+  certStore?: CertStore;
 }
 
 export function mountDashboard(deps: DashboardDeps): void {
-  const { app, db, config } = deps;
+  const { app, db, config, cache, certStore } = deps;
   const baseUrl = config.appBaseUrl || `https://${config.fqdn}`;
   const polarOpts = {
     apiBase: config.polarApiBase,
@@ -118,6 +132,26 @@ export function mountDashboard(deps: DashboardDeps): void {
       views.push({ scope, label, cap, domains, overCap: domains.length > cap });
     }
     return views;
+  }
+
+  // Render the dashboard for the session, optionally with a one-shot notice. Used
+  // by GET /portal and by the add/remove handlers (re-render in place, so the
+  // result of an action shows immediately). Billing controls arrive in Phase 12.
+  async function renderPortal(
+    c: Context,
+    session: Claims,
+    notice?: { kind: "ok" | "err" | "warn"; text: string },
+  ): Promise<Response> {
+    const scopes = await buildScopeViews(session.customerId);
+    return c.html(
+      portalPage({
+        email: session.email,
+        scopes,
+        canAddRemove: true,
+        canBilling: false,
+        notice,
+      }),
+    );
   }
 
   // GET /login — email entry for a magic link.
@@ -225,22 +259,117 @@ export function mountDashboard(deps: DashboardDeps): void {
     }),
   );
 
-  // GET /portal — the authenticated "My Domains" dashboard. Read-only in Phase 10
-  // (add/remove arrive in Phase 11, billing in Phase 12).
+  // GET /portal — the authenticated "My Domains" dashboard.
   app.get(
     "/portal",
+    fqdnRoute((c) => {
+      const session = rollSession(c);
+      if (!session) return c.redirect("/login", 302);
+      return renderPortal(c, session);
+    }),
+  );
+
+  // POST /domains — add a Domain. Capacity + redundancy are decided by the pure
+  // decideAddDomain against the Customer's current Plan/Domains; on success the
+  // write refreshes the cache so HTTPS is authorized on the next handshake.
+  app.post(
+    "/domains",
     fqdnRoute(async (c) => {
       const session = rollSession(c);
       if (!session) return c.redirect("/login", 302);
-      const scopes = await buildScopeViews(session.customerId);
-      return c.html(
-        portalPage({
-          email: session.email,
-          scopes,
-          canAddRemove: false,
-          canBilling: false,
-        }),
+      const body = await c.req.parseBody();
+      const scope: Scope = body.scope === "whole-domain"
+        ? "whole-domain"
+        : "single";
+      const raw = String(body.domain ?? "");
+      const now = Date.now();
+
+      const [cap, existingInScope, wholeDomains] = await Promise.all([
+        getActivePlanCap(db, session.customerId, scope, now),
+        listCustomerDomainsInScope(db, session.customerId, scope),
+        listCustomerDomainsInScope(db, session.customerId, "whole-domain"),
+      ]);
+
+      const decision = decideAddDomain({
+        raw,
+        scope,
+        cap,
+        existingInScope,
+        wholeDomains,
+      });
+      if (!decision.ok) {
+        return renderPortal(c, session, {
+          kind: "err",
+          text: decision.message,
+        });
+      }
+
+      await upsertDomain(
+        db,
+        {
+          customerId: session.customerId,
+          domain: decision.domain,
+          scope,
+          status: "active",
+          createdAt: now,
+        },
+        now,
       );
+      await cache.refresh();
+      return renderPortal(c, session, {
+        kind: "ok",
+        text: `Added ${decision.domain}.`,
+      });
     }),
   );
+
+  // Remove a Domain: deactivate it, tear down its cert (#5 — what actually stops
+  // HTTPS), then refresh the cache so it's denied immediately. Shared by the HTML
+  // form (POST /domains/:domain/delete) and the REST contract (DELETE /domains/:domain).
+  async function handleRemove(c: Context): Promise<Response> {
+    const session = rollSession(c);
+    if (!session) return c.redirect("/login", 302);
+    const domain = normalizeDomain(
+      decodeURIComponent(c.req.param("domain") ?? ""),
+    );
+    if (!domain) {
+      return renderPortal(c, session, { kind: "err", text: "Unknown domain." });
+    }
+
+    const removed = await removeDomain(
+      db,
+      session.customerId,
+      domain,
+      Date.now(),
+    );
+    if (!removed) {
+      return renderPortal(c, session, {
+        kind: "err",
+        text: `${domain} is not on your list.`,
+      });
+    }
+    if (certStore) {
+      try {
+        await deleteCertsForSubscription(
+          certStore,
+          config.s3Prefix,
+          domain,
+          removed.scope,
+        );
+      } catch (e) {
+        // The Domain is already inactive (authorization stops regardless); a stale
+        // cert object is harmless until renewal. Log loud, don't fail the request.
+        console.error(
+          `[dashboard] cert teardown for ${domain} failed: ${
+            e instanceof Error ? e.message : e
+          }`,
+        );
+      }
+    }
+    await cache.refresh();
+    return renderPortal(c, session, { kind: "ok", text: `Removed ${domain}.` });
+  }
+
+  app.post("/domains/:domain/delete", fqdnRoute(handleRemove));
+  app.delete("/domains/:domain", fqdnRoute(handleRemove));
 }

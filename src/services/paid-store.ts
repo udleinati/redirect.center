@@ -172,6 +172,22 @@ export async function getActivePlanCap(
   return rows[0] ? Number(rows[0].cap) : 0;
 }
 
+// Remove a Domain from the dashboard: mark the active row inactive (the row is
+// kept so history/re-add is clean). Returns its Scope so the caller can tear down
+// the right certs (#5), or undefined when no active Domain matched (idempotent).
+export async function removeDomain(
+  sql: Sql,
+  customerId: string,
+  domain: string,
+  now: number,
+): Promise<{ scope: Scope } | undefined> {
+  const rows = await sql`
+    UPDATE domains SET status = 'inactive', updated_at = ${now}
+    WHERE customer_id = ${customerId} AND domain = ${domain} AND status = 'active'
+    RETURNING scope`;
+  return rows[0] ? { scope: rows[0].scope as Scope } : undefined;
+}
+
 // Demo seeding (v2). Spec: plan blocks separated by ";", each
 //   "customerId|scope|cap|domain,domain,…"
 // e.g. "c1|single|2|a.test,b.test,c.test;c1|whole-domain|1|acme.test".
