@@ -23,6 +23,10 @@ services:
       # Demo seed (manual subscriptions); webhooks (Phase 3) upsert real ones.
       # Format: "domain:scope,domain:scope" (scope = single | whole-domain).
       SEED_SUBSCRIPTIONS: ${SEED_SUBSCRIPTIONS:-paid-test.redirect.center:single}
+      # v2 durable store (ADR-0002): Postgres holds Plans + Domains.
+      DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
+      # v2 demo seed: plan blocks "customer|scope|cap|domain,domain;…"
+      SEED_PLANS: ${SEED_PLANS:-}
       # Polar webhook (Phase 3) — signature secret, product->scope ids, field slug.
       POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:-}
       POLAR_PRODUCT_SINGLE_ID: ${POLAR_PRODUCT_SINGLE_ID:-}
@@ -51,6 +55,9 @@ services:
       - "3000" # internal only — never published to the host
     volumes:
       - app-data:/data
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
 
   caddy:
@@ -136,8 +143,26 @@ services:
         aws --endpoint-url http://rustfs:9000 s3api head-bucket --bucket "$$S3_BUCKET"
         echo "bucket ready: $$S3_BUCKET"
 
+  # v2 durable store (ADR-0002): Plans + Domains. On-box single-instance; recovery
+  # via pg_dump -> S3 (Phase 12). Domains are a source of truth, not a cache.
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: redirect
+      POSTGRES_PASSWORD: redirect
+      POSTGRES_DB: redirect
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U redirect -d redirect"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   app-data:
   caddy-data:
   caddy-config:
   rustfs-data:
+  postgres-data:

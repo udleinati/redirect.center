@@ -11,9 +11,17 @@ export interface AppConfig {
   // Trust X-Forwarded-* (only when running behind a reverse proxy, e.g. Caddy).
   trustProxy: boolean;
   // Path to the SQLite subscription cache (file needs --allow-write; ":memory:" ok).
+  // v1 store; superseded by Postgres in v2 (kept until the v1 webhook is removed).
   subscriptionsDbPath: string;
-  // Demo seed: "domain:scope,domain:scope" upserted as active subs on startup.
+  // v2 durable store (ADR-0002): Postgres connection URL. Holds Plans + Domains;
+  // the in-process authorization cache is loaded from here. Only read when the
+  // paid HTTPS tier is enabled.
+  databaseUrl: string;
+  // Demo seed (v1): "domain:scope,domain:scope" upserted as active subs on startup.
   seedSubscriptions: string;
+  // Demo seed (v2): plan blocks "customerId|scope|cap|domain,domain;…" seeded as
+  // active Plans + Domains on startup (see paid-store.seedPlans).
+  seedPlansSpec: string;
   // Polar webhook (Phase 3/4). Secret signs deliveries; product ids map to a
   // tier/scope; the domain custom-field slug locates the purchased domain.
   polarWebhookSecret: string;
@@ -56,7 +64,9 @@ export function loadConfig(): AppConfig {
     httpsTierEnabled: Deno.env.get("HTTPS_TIER_ENABLED") === "true",
     trustProxy: Deno.env.get("TRUST_PROXY") === "true",
     subscriptionsDbPath: Deno.env.get("SUBSCRIPTIONS_DB_PATH") || "db/subscriptions.db",
+    databaseUrl: Deno.env.get("DATABASE_URL") || "postgres://redirect:redirect@postgres:5432/redirect",
     seedSubscriptions: Deno.env.get("SEED_SUBSCRIPTIONS") || "",
+    seedPlansSpec: Deno.env.get("SEED_PLANS") || "",
     polarWebhookSecret: Deno.env.get("POLAR_WEBHOOK_SECRET") || "",
     polarProductSingleId: Deno.env.get("POLAR_PRODUCT_SINGLE_ID") || "",
     polarProductWholeDomainId: Deno.env.get("POLAR_PRODUCT_WHOLE_DOMAIN_ID") || "",

@@ -8,8 +8,10 @@ import {
   resolveDnsAndRedirect,
 } from "./services/redirect.ts";
 import { dnsCacheSize, dnsInflightSize } from "./helpers/dns.ts";
-import { isAuthorized } from "./services/authorization.ts";
 import { seedFromSpec, SubscriptionStore } from "./services/subscription-store.ts";
+import { createDb } from "./services/db.ts";
+import { migrate, seedPlans } from "./services/paid-store.ts";
+import { AuthzCache } from "./services/authz-cache.ts";
 import { verifyPolarSignature } from "./services/polar-signature.ts";
 import { buildProductScopes, mapEvent } from "./services/polar-webhook.ts";
 import { type CertStore, deleteCertsForSubscription } from "./services/cert-teardown.ts";
@@ -77,6 +79,10 @@ app.use("/", async (c, next) => {
 // Hoisted to module scope so the redirect path can gate HTTPS on authorization
 // (the Phase 5 paywall) using the same store that answers /tls-check.
 let store: SubscriptionStore | undefined;
+// v2 authorization cache (ADR-0002): the redirect paywall and /tls-check both gate
+// HTTPS on this in-process snapshot of Plans + Domains (no DB round-trip on the
+// handshake hot path).
+let authz: AuthzCache | undefined;
 
 // Caddy on-demand TLS authorization (`ask`): 200 authorizes a certificate,
 // anything else denies it. Only mounted when the paid HTTPS tier is enabled —
@@ -88,6 +94,21 @@ if (config.httpsTierEnabled) {
     const seeded = seedFromSpec(subs, config.seedSubscriptions, Date.now());
     console.log(`[tls-check] seeded ${seeded} subscription(s)`);
   }
+
+  // v2 durable store (ADR-0002): Postgres holds Plans + Domains; the in-process
+  // AuthzCache answers /tls-check and the paywall off the handshake hot path.
+  // migrate is idempotent. The v1 SQLite store above is left for the v1 webhook
+  // until Phase 9 rewrites it to write Plans/Domains here.
+  const db = createDb(config.databaseUrl);
+  await migrate(db);
+  const cache = new AuthzCache(db);
+  if (config.seedPlansSpec) {
+    const { plans, domains } = await seedPlans(db, config.seedPlansSpec, Date.now());
+    console.log(`[tls-check] seeded ${plans} plan(s), ${domains} domain(s)`);
+  }
+  await cache.refresh();
+  authz = cache;
+  console.log(`[tls-check] authz cache loaded: ${cache.counts.plans} plan(s), ${cache.counts.domains} domain(s)`);
 
   // On-demand issuance rate limit (Phase 7). Caddy removed its built-in
   // on_demand rate limit in 2.9, so the ask endpoint enforces it: even an
@@ -104,7 +125,7 @@ if (config.httpsTierEnabled) {
     const now = Date.now();
     // A 429 makes Caddy skip issuance this handshake; the next one retries and
     // succeeds once the window drains, so legitimate domains aren't locked out.
-    const status = decideTlsCheck(domain, subs.listActive(now), issuanceLimiter, now);
+    const status = decideTlsCheck(domain, (h, n) => cache.authorize(h, n), issuanceLimiter, now);
     if (status === 429) console.warn(`[tls-check] issuance rate limit hit for ${domain}`);
     const bodies = { 400: "Bad Request", 403: "Forbidden", 429: "Rate limited", 200: "OK" } as const;
     return c.text(bodies[status], status);
@@ -289,9 +310,8 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   // which Caddy turns into the static fallback/win-back page (the proxy intercepts
   // 402 via handle_response). A revoked domain lands here too once its cert is gone.
   // Flag off => store is undefined and this never runs (byte-for-byte legacy).
-  if (store && c.req.header("x-forwarded-proto") === "https") {
-    const now = Date.now();
-    if (!isAuthorized(host, store.listActive(now), now)) {
+  if (authz && c.req.header("x-forwarded-proto") === "https") {
+    if (!authz.authorize(host, Date.now())) {
       throw new HttpError(402, "HTTPS is not enabled for this domain");
     }
   }

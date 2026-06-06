@@ -8,20 +8,22 @@
 // cheaply (403) and never consumes issuance budget — otherwise an attacker could
 // starve the limiter and block legitimate paid domains from ever issuing.
 
-import { isAuthorized, type Subscription } from "./authorization.ts";
 import type { IssuanceRateLimiter } from "./issuance-rate-limit.ts";
 
 export type TlsCheckStatus = 400 | 403 | 429 | 200;
 
+// `isAuthorized(host, now)` is injected (v2: the in-process AuthzCache; v1: a
+// closure over the subscription list) so this gate stays decoupled from the data
+// model and the authorization read never touches I/O on the handshake hot path.
 export function decideTlsCheck(
   domain: string,
-  subscriptions: readonly Subscription[],
+  isAuthorized: (host: string, now: number) => boolean,
   limiter: IssuanceRateLimiter,
   now: number,
 ): TlsCheckStatus {
   const host = domain.trim();
   if (!host) return 400;
-  if (!isAuthorized(host, subscriptions, now)) return 403;
+  if (!isAuthorized(host, now)) return 403;
   // Paid — gate the actual issuance on the rolling rate limit.
   if (!limiter.tryAcquire(host, now)) return 429;
   return 200;
