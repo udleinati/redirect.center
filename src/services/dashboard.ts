@@ -24,6 +24,7 @@ import {
 import { decideAddDomain } from "./domain-rules.ts";
 import {
   loginPage,
+  magicLinkEmail,
   portalPage,
   type ScopeView,
   verifyErrorPage,
@@ -220,13 +221,12 @@ export function mountDashboard(deps: DashboardDeps): void {
             const link = `${baseUrl}/auth/verify?token=${
               encodeURIComponent(token)
             }`;
+            const { html, text } = magicLinkEmail(link);
             await email.send({
               to: addr,
               subject: "Your redirect.center sign-in link",
-              html:
-                `<p>Click to sign in to your redirect.center dashboard:</p><p><a href="${link}">Sign in</a></p><p>This link expires in 15 minutes and can be used once. If you didn't request it, ignore this email.</p>`,
-              text:
-                `Sign in to redirect.center: ${link}\n\nThis link expires in 15 minutes and can be used once.`,
+              html,
+              text,
             });
           }
         } catch (e) {
