@@ -34,7 +34,9 @@ if (productTiers.size === 0) {
   Deno.exit(1);
 }
 
-console.log(`[reconcile] fetching active subscriptions from ${config.polarApiBase} ...`);
+console.log(
+  `[reconcile] fetching active subscriptions from ${config.polarApiBase} ...`,
+);
 const items = await listActiveSubscriptions({
   apiBase: config.polarApiBase,
   accessToken: config.polarAccessToken,

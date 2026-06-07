@@ -1,7 +1,4 @@
-import {
-  assert,
-  assertEquals,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assert, assertEquals } from "@std/assert";
 import { type Claims, signToken, verifyToken } from "./signed-token.ts";
 
 const SECRET = "test-signing-secret";

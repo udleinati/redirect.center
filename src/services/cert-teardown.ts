@@ -41,7 +41,11 @@ export function certHostFromKey(key: string): string | null {
 // the dangerous decision — deleting too much would kill another customer's cert,
 // deleting too little would leave HTTPS up after a revoke — so it is pure and
 // unit-tested, reusing the same scope geometry that authorized issuance.
-export function certKeyBelongsToScope(key: string, domain: string, scope: Scope): boolean {
+export function certKeyBelongsToScope(
+  key: string,
+  domain: string,
+  scope: Scope,
+): boolean {
   const host = certHostFromKey(key);
   return host !== null && coversHost(domain, scope, host);
 }
@@ -60,8 +64,14 @@ export async function deleteCertsForSubscription(
   if (!normalized) return [];
 
   const toDelete: string[] = [];
-  for await (const obj of store.listObjects({ prefix: certificatesPrefix(storagePrefix) })) {
-    if (certKeyBelongsToScope(obj.key, normalized, scope)) toDelete.push(obj.key);
+  for await (
+    const obj of store.listObjects({
+      prefix: certificatesPrefix(storagePrefix),
+    })
+  ) {
+    if (certKeyBelongsToScope(obj.key, normalized, scope)) {
+      toDelete.push(obj.key);
+    }
   }
 
   const deleted: string[] = [];

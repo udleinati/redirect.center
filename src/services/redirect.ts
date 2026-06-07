@@ -47,7 +47,12 @@ export async function resolveDns(host: string): Promise<string> {
     // Remove trailing dot from CNAME if present
     return resolved[0].replace(/\.$/, "");
   } catch (err: unknown) {
-    const error = err as { code?: string; name?: string; status?: number; message?: string };
+    const error = err as {
+      code?: string;
+      name?: string;
+      status?: number;
+      message?: string;
+    };
 
     // Deno's DNS resolver may throw errors without a `code` property
     // (e.g., "no records found for Query ..."). Detect and normalize them.

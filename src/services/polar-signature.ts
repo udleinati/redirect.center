@@ -50,7 +50,10 @@ export function verifyPolarSignature(
     if (comma < 0) continue;
     if (token.slice(0, comma) !== "v1") continue;
     const sigBytes = enc.encode(token.slice(comma + 1));
-    if (sigBytes.length === expectedBytes.length && timingSafeEqual(sigBytes, expectedBytes)) {
+    if (
+      sigBytes.length === expectedBytes.length &&
+      timingSafeEqual(sigBytes, expectedBytes)
+    ) {
       return true;
     }
   }

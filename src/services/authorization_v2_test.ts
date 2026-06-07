@@ -1,14 +1,9 @@
-import {
-  assert,
-  assertEquals,
-  assertFalse,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assert, assertEquals, assertFalse } from "@std/assert";
 import {
   authorizeHost,
   type Domain,
   entitledDomains,
   type Plan,
-  type Scope,
 } from "./authorization.ts";
 
 const NOW = 1_700_000_000_000; // fixed "now" so period checks are deterministic
@@ -58,13 +53,34 @@ Deno.test("plan cap covers all domains within it (apex + www each)", () => {
 Deno.test("over-cap denies the newest excess Domains (defensive bound)", () => {
   const plans = [plan({ customerId: "c1", scope: "single", cap: 2 })];
   const domains = [
-    dom({ customerId: "c1", domain: "old.com", scope: "single", createdAt: NOW - 3000 }),
-    dom({ customerId: "c1", domain: "mid.com", scope: "single", createdAt: NOW - 2000 }),
-    dom({ customerId: "c1", domain: "new.com", scope: "single", createdAt: NOW - 1000 }),
+    dom({
+      customerId: "c1",
+      domain: "old.com",
+      scope: "single",
+      createdAt: NOW - 3000,
+    }),
+    dom({
+      customerId: "c1",
+      domain: "mid.com",
+      scope: "single",
+      createdAt: NOW - 2000,
+    }),
+    dom({
+      customerId: "c1",
+      domain: "new.com",
+      scope: "single",
+      createdAt: NOW - 1000,
+    }),
   ];
   assert(authorizeHost("old.com", plans, domains, NOW), "oldest within cap");
-  assert(authorizeHost("mid.com", plans, domains, NOW), "second-oldest within cap");
-  assertFalse(authorizeHost("new.com", plans, domains, NOW), "newest exceeds cap");
+  assert(
+    authorizeHost("mid.com", plans, domains, NOW),
+    "second-oldest within cap",
+  );
+  assertFalse(
+    authorizeHost("new.com", plans, domains, NOW),
+    "newest exceeds cap",
+  );
   assertEquals(entitledDomains(plans, domains, NOW).length, 2);
 });
 
@@ -81,9 +97,18 @@ Deno.test("whole-domain covers subdomains; union spans scopes", () => {
     dom({ customerId: "c1", domain: "acme.com", scope: "whole-domain" }),
   ];
   assert(authorizeHost("exact.com", plans, domains, NOW));
-  assert(authorizeHost("deep.sub.acme.com", plans, domains, NOW), "any-depth subdomain");
-  assert(authorizeHost("acme.com", plans, domains, NOW), "apex of whole-domain");
-  assertFalse(authorizeHost("sub.exact.com", plans, domains, NOW), "single does not cover subdomains");
+  assert(
+    authorizeHost("deep.sub.acme.com", plans, domains, NOW),
+    "any-depth subdomain",
+  );
+  assert(
+    authorizeHost("acme.com", plans, domains, NOW),
+    "apex of whole-domain",
+  );
+  assertFalse(
+    authorizeHost("sub.exact.com", plans, domains, NOW),
+    "single does not cover subdomains",
+  );
 });
 
 // WHY: a lapsed/revoked Plan must stop serving every Domain in its Scope — that
@@ -91,11 +116,26 @@ Deno.test("whole-domain covers subdomains; union spans scopes", () => {
 Deno.test("inactive or expired plan denies its domains", () => {
   const domains = [dom({ customerId: "c1", domain: "a.com", scope: "single" })];
   assertFalse(
-    authorizeHost("a.com", [plan({ customerId: "c1", scope: "single", cap: 5, status: "inactive" })], domains, NOW),
+    authorizeHost(
+      "a.com",
+      [plan({ customerId: "c1", scope: "single", cap: 5, status: "inactive" })],
+      domains,
+      NOW,
+    ),
     "inactive plan",
   );
   assertFalse(
-    authorizeHost("a.com", [plan({ customerId: "c1", scope: "single", cap: 5, currentPeriodEnd: PAST })], domains, NOW),
+    authorizeHost(
+      "a.com",
+      [plan({
+        customerId: "c1",
+        scope: "single",
+        cap: 5,
+        currentPeriodEnd: PAST,
+      })],
+      domains,
+      NOW,
+    ),
     "expired plan (safety net against a missed revoke)",
   );
 });
@@ -105,11 +145,25 @@ Deno.test("inactive or expired plan denies its domains", () => {
 Deno.test("inactive domain is denied and frees a cap slot", () => {
   const plans = [plan({ customerId: "c1", scope: "single", cap: 1 })];
   const domains = [
-    dom({ customerId: "c1", domain: "gone.com", scope: "single", status: "inactive", createdAt: NOW - 2000 }),
-    dom({ customerId: "c1", domain: "live.com", scope: "single", createdAt: NOW - 1000 }),
+    dom({
+      customerId: "c1",
+      domain: "gone.com",
+      scope: "single",
+      status: "inactive",
+      createdAt: NOW - 2000,
+    }),
+    dom({
+      customerId: "c1",
+      domain: "live.com",
+      scope: "single",
+      createdAt: NOW - 1000,
+    }),
   ];
   assertFalse(authorizeHost("gone.com", plans, domains, NOW));
-  assert(authorizeHost("live.com", plans, domains, NOW), "the only active domain fits the cap of 1");
+  assert(
+    authorizeHost("live.com", plans, domains, NOW),
+    "the only active domain fits the cap of 1",
+  );
 });
 
 // WHY: each Scope is backed by its own Plan — a Domain in a Scope the Customer has
@@ -124,7 +178,9 @@ Deno.test("a domain with no active plan in its scope is denied", () => {
 // entire TLD. The PSL guard from v1 still applies through `coversHost`.
 Deno.test("whole-domain over a public suffix is rejected", () => {
   const plans = [plan({ customerId: "c1", scope: "whole-domain", cap: 1 })];
-  const domains = [dom({ customerId: "c1", domain: "com", scope: "whole-domain" })];
+  const domains = [
+    dom({ customerId: "c1", domain: "com", scope: "whole-domain" }),
+  ];
   assertFalse(authorizeHost("anything.com", plans, domains, NOW));
 });
 

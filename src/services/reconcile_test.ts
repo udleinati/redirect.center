@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 import { planReconcile } from "./reconcile.ts";
 import type { PlanFields } from "./polar-webhook.ts";
 import type { Plan } from "./authorization.ts";
@@ -12,12 +12,29 @@ const NOW = 1_700_000_000_000;
 const YEAR = 365 * 24 * 60 * 60 * 1000;
 const FUTURE = NOW + YEAR;
 
-function activation(over: Partial<PlanFields> & Pick<PlanFields, "polarSubscriptionId">): PlanFields {
-  return { customerId: "c1", scope: "single", cap: 1, currentPeriodEnd: FUTURE, ...over };
+function activation(
+  over: Partial<PlanFields> & Pick<PlanFields, "polarSubscriptionId">,
+): PlanFields {
+  return {
+    customerId: "c1",
+    scope: "single",
+    cap: 1,
+    currentPeriodEnd: FUTURE,
+    ...over,
+  };
 }
 
-function localPlan(over: Partial<Plan> & Pick<Plan, "polarSubscriptionId">): Plan {
-  return { customerId: "c1", scope: "single", cap: 1, status: "active", currentPeriodEnd: FUTURE, ...over };
+function localPlan(
+  over: Partial<Plan> & Pick<Plan, "polarSubscriptionId">,
+): Plan {
+  return {
+    customerId: "c1",
+    scope: "single",
+    cap: 1,
+    status: "active",
+    currentPeriodEnd: FUTURE,
+    ...over,
+  };
 }
 
 // WHY: the whole point of reconciliation is disposability — after the `plans`
@@ -25,11 +42,17 @@ function localPlan(over: Partial<Plan> & Pick<Plan, "polarSubscriptionId">): Pla
 // HTTPS silently breaks on recovery.
 Deno.test("planReconcile: rebuilds every Plan in an empty local set", () => {
   const plan = planReconcile(
-    [activation({ polarSubscriptionId: "sub_a" }), activation({ polarSubscriptionId: "sub_b", cap: 5 })],
+    [
+      activation({ polarSubscriptionId: "sub_a" }),
+      activation({ polarSubscriptionId: "sub_b", cap: 5 }),
+    ],
     new Set(["sub_a", "sub_b"]),
     [],
   );
-  assertEquals(plan.upserts.map((p) => p.polarSubscriptionId), ["sub_a", "sub_b"]);
+  assertEquals(plan.upserts.map((p) => p.polarSubscriptionId), [
+    "sub_a",
+    "sub_b",
+  ]);
   assertEquals(plan.upserts[1].cap, 5);
   assertEquals(plan.deactivate, []);
 });
@@ -38,7 +61,9 @@ Deno.test("planReconcile: rebuilds every Plan in an empty local set", () => {
 // even if the revoke webhook was missed — reconciliation is the safety net that
 // makes Polar the source of truth for Plans.
 Deno.test("planReconcile: deactivates a local Plan no longer active at the provider", () => {
-  const plan = planReconcile([], new Set(), [localPlan({ polarSubscriptionId: "sub_gone" })]);
+  const plan = planReconcile([], new Set(), [
+    localPlan({ polarSubscriptionId: "sub_gone" }),
+  ]);
   assertEquals(plan.deactivate, ["sub_gone"]);
   assertEquals(plan.upserts, []);
 });
@@ -47,8 +72,14 @@ Deno.test("planReconcile: deactivates a local Plan no longer active at the provi
 // state must change nothing, or every run would churn the store and we could
 // never tell real drift from noise.
 Deno.test("planReconcile: is idempotent — unchanged provider state yields no writes", () => {
-  const local = [localPlan({ polarSubscriptionId: "sub_a" }), localPlan({ polarSubscriptionId: "sub_b", cap: 5 })];
-  const acts = [activation({ polarSubscriptionId: "sub_a" }), activation({ polarSubscriptionId: "sub_b", cap: 5 })];
+  const local = [
+    localPlan({ polarSubscriptionId: "sub_a" }),
+    localPlan({ polarSubscriptionId: "sub_b", cap: 5 }),
+  ];
+  const acts = [
+    activation({ polarSubscriptionId: "sub_a" }),
+    activation({ polarSubscriptionId: "sub_b", cap: 5 }),
+  ];
   const plan = planReconcile(acts, new Set(["sub_a", "sub_b"]), local);
   assertEquals(plan.upserts, []);
   assertEquals(plan.deactivate, []);

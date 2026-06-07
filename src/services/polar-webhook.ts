@@ -55,7 +55,9 @@ export function buildProductTiers(spec: string): Map<string, TierInfo> {
   for (const entry of spec.split(",").map((s) => s.trim()).filter(Boolean)) {
     const [id, rawScope, rawCap] = entry.split(":").map((s) => s.trim());
     if (!id || !rawScope) continue;
-    const scope: Scope = rawScope === "whole-domain" ? "whole-domain" : "single";
+    const scope: Scope = rawScope === "whole-domain"
+      ? "whole-domain"
+      : "single";
     const cap = Number(rawCap);
     if (!Number.isFinite(cap) || cap <= 0) continue;
     tiers.set(id, { scope, cap });
@@ -75,7 +77,9 @@ export function buildTierLadders(
 ): Map<string, TierInfo> {
   const tiers = new Map<string, TierInfo>();
   if (singleId) tiers.set(singleId, { scope: "single", cap: 1 });
-  if (wholeDomainId) tiers.set(wholeDomainId, { scope: "whole-domain", cap: 1 });
+  if (wholeDomainId) {
+    tiers.set(wholeDomainId, { scope: "whole-domain", cap: 1 });
+  }
   for (const [id, info] of buildProductTiers(extraSpec)) tiers.set(id, info);
   return tiers;
 }
@@ -94,7 +98,9 @@ export function mapPlanEvent(
     case "subscription.uncanceled":
       // Only an actually-active subscription provisions; a Tier change arrives as
       // an `updated` with a different product → the new cap flows through here.
-      return data && data.status === "active" ? planUpsert(data, opts) : planNoop(`status=${data?.status}`);
+      return data && data.status === "active"
+        ? planUpsert(data, opts)
+        : planNoop(`status=${data?.status}`);
 
     case "subscription.canceled":
       // The provider keeps it active until period end, then emits revoked.
@@ -115,18 +121,30 @@ function planUpsert(
   const id = typeof data.id === "string" ? data.id : "";
   if (!id) return planNoop("missing subscription id");
 
-  const customerId = typeof data.customer_id === "string" ? data.customer_id : "";
+  const customerId = typeof data.customer_id === "string"
+    ? data.customer_id
+    : "";
   if (!customerId) return planNoop("missing customer id");
 
-  const tier = typeof data.product_id === "string" ? opts.productTiers.get(data.product_id) : undefined;
+  const tier = typeof data.product_id === "string"
+    ? opts.productTiers.get(data.product_id)
+    : undefined;
   if (!tier) return planNoop(`unknown product: ${String(data.product_id)}`);
 
   const currentPeriodEnd = parseEpochMs(data.current_period_end);
-  if (currentPeriodEnd === null) return planNoop("missing/invalid current_period_end");
+  if (currentPeriodEnd === null) {
+    return planNoop("missing/invalid current_period_end");
+  }
 
   return {
     type: "upsert",
-    plan: { polarSubscriptionId: id, customerId, scope: tier.scope, cap: tier.cap, currentPeriodEnd },
+    plan: {
+      polarSubscriptionId: id,
+      customerId,
+      scope: tier.scope,
+      cap: tier.cap,
+      currentPeriodEnd,
+    },
   };
 }
 

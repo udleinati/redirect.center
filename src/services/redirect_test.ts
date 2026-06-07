@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 import { parseDestination } from "./redirect.ts";
 
 // Override config.fqdn for tests
@@ -139,7 +139,8 @@ Deno.test("parseDestination - opts-port", () => {
 });
 
 Deno.test("parseDestination - mix 1", () => {
-  const raw = "127.0.0.1.opts-slash.opts-query.ifqueysdmm.opts-https.redirect.center";
+  const raw =
+    "127.0.0.1.opts-slash.opts-query.ifqueysdmm.opts-https.redirect.center";
   const response = parseDestination(raw, "/any?any=true");
   assertEquals(response, {
     protocol: "https",
@@ -163,7 +164,8 @@ Deno.test("parseDestination - mix 2", () => {
 });
 
 Deno.test("parseDestination - mix 3", () => {
-  const raw = "www.test.com.opts-slash.xmart.opts-slash.xmart.dll.opts-https.redirect.center";
+  const raw =
+    "www.test.com.opts-slash.xmart.opts-slash.xmart.dll.opts-https.redirect.center";
   const response = parseDestination(raw, "/any?any=true");
   assertEquals(response, {
     protocol: "https",
@@ -175,7 +177,8 @@ Deno.test("parseDestination - mix 3", () => {
 });
 
 Deno.test("parseDestination - mix 4", () => {
-  const raw = "www.google.com.opts-path-f52gk43u.opts-query-mfrggplemvta.opts-https.redirect.center";
+  const raw =
+    "www.google.com.opts-path-f52gk43u.opts-query-mfrggplemvta.opts-https.redirect.center";
   const response = parseDestination(raw, "/");
   assertEquals(response, {
     protocol: "https",
@@ -187,7 +190,8 @@ Deno.test("parseDestination - mix 4", () => {
 });
 
 Deno.test("parseDestination - mix 5", () => {
-  const raw = "www.google.com.opts-path-f52gk43u.opts-query-mfrggplemvta.opts-https.opts-uri.redirect.center";
+  const raw =
+    "www.google.com.opts-path-f52gk43u.opts-query-mfrggplemvta.opts-https.opts-uri.redirect.center";
   const response = parseDestination(raw, "/abc?fxa");
   assertEquals(response, {
     protocol: "https",
@@ -199,7 +203,8 @@ Deno.test("parseDestination - mix 5", () => {
 });
 
 Deno.test("parseDestination - mix 6", () => {
-  const raw = "www.google.com.opts-slash.test.opts-slash.abc.html.redirect.center.";
+  const raw =
+    "www.google.com.opts-slash.test.opts-slash.abc.html.redirect.center.";
   const response = parseDestination(raw, "/");
   assertEquals(response, {
     protocol: "http",
@@ -211,7 +216,8 @@ Deno.test("parseDestination - mix 6", () => {
 });
 
 Deno.test("parseDestination - mix 7", () => {
-  const raw = "www.google.com.opts-slash.test.opts-slash.abc.opts-slash.redirect.center.";
+  const raw =
+    "www.google.com.opts-slash.test.opts-slash.abc.opts-slash.redirect.center.";
   const response = parseDestination(raw, "/");
   assertEquals(response, {
     protocol: "http",

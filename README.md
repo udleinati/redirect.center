@@ -3,6 +3,7 @@
 [![Sponsors on Open Collective](https://opencollective.com/redirectcenter/sponsors/badge.svg)](#sponsors)
 
 # redirect.center
+
 Redirect domains using DNS only.
 
 ## Requirements
@@ -28,15 +29,15 @@ export ENTRY_IP=54.84.55.102
 export LISTEN_PORT=80
 ```
 
-| Variable | Default | Description |
-|---|---|---|
-| `FQDN` | `localhost` | Service domain (used to detect homepage vs redirect) |
-| `ENTRY_IP` | `127.0.0.1` | IP users must set in their A record |
-| `LISTEN_PORT` | `3000` | Server port |
-| `LISTEN_IP` | `0.0.0.0` | Server bind address |
-| `ENVIRONMENT` | `dev1` | Environment name |
-| `PROJECT_NAME` | `redirect.center` | Displayed in UI and meta tags |
-| `LOGGER_LEVEL` | `debug` | Log level |
+| Variable       | Default           | Description                                          |
+| -------------- | ----------------- | ---------------------------------------------------- |
+| `FQDN`         | `localhost`       | Service domain (used to detect homepage vs redirect) |
+| `ENTRY_IP`     | `127.0.0.1`       | IP users must set in their A record                  |
+| `LISTEN_PORT`  | `3000`            | Server port                                          |
+| `LISTEN_IP`    | `0.0.0.0`         | Server bind address                                  |
+| `ENVIRONMENT`  | `dev1`            | Environment name                                     |
+| `PROJECT_NAME` | `redirect.center` | Displayed in UI and meta tags                        |
+| `LOGGER_LEVEL` | `debug`           | Log level                                            |
 
 ## How do I run in development?
 
@@ -46,7 +47,8 @@ deno task dev
 
 ### Try the dashboard locally (magic link in Mailpit)
 
-To exercise the "My Domains" dashboard end-to-end without Polar or a real mailbox:
+To exercise the "My Domains" dashboard end-to-end without Polar or a real
+mailbox:
 
 ```sh
 docker compose -f docker-compose.dashboard.yml up --build
@@ -60,9 +62,9 @@ Then:
    whole-domain Tier (cap 1) — add/remove domains to see capacity, redundancy,
    and the `used / cap` counters.
 
-This sandbox runs the app directly over `http://localhost` (no Caddy/TLS), uses a
-local login directory instead of Polar (`DEV_AUTH_CUSTOMERS`), and simulates the
-purchase with `SEED_PLANS`. Tear it down with
+This sandbox runs the app directly over `http://localhost` (no Caddy/TLS), uses
+a local login directory instead of Polar (`DEV_AUTH_CUSTOMERS`), and simulates
+the purchase with `SEED_PLANS`. Tear it down with
 `docker compose -f docker-compose.dashboard.yml down -v`.
 
 ### Sandbox the paid HTTPS tier (Docker)
@@ -77,16 +79,18 @@ cp .env.example .env
 docker compose up --build
 ```
 
-The authorization gate is then testable directly (Caddy proxies `:80` to the app):
+The authorization gate is then testable directly (Caddy proxies `:80` to the
+app):
 
 ```sh
 curl "http://localhost/tls-check?domain=paid-test.redirect.center"  # OK (seeded)
 curl "http://localhost/tls-check?domain=unpaid.example"             # Forbidden
 ```
 
-Issued certs land in RustFS — browse them at the console on `http://localhost:9001`.
-For a production-shaped sandbox (Let's Encrypt staging + real S3), use
-`docker-compose.prod.yml` (see "Paid HTTPS tier (production cutover)").
+Issued certs land in RustFS — browse them at the console on
+`http://localhost:9001`. For a production-shaped sandbox (Let's Encrypt
+staging + real S3), use `docker-compose.prod.yml` (see "Paid HTTPS tier
+(production cutover)").
 
 ## How do I run tests?
 
@@ -98,8 +102,8 @@ deno task test
 
 ### Option 1: systemd (recommended)
 
-This runs the service in the background, auto-restarts on crash, and starts on boot.
-You can SSH in, start it, and disconnect without issues.
+This runs the service in the background, auto-restarts on crash, and starts on
+boot. You can SSH in, start it, and disconnect without issues.
 
 ```sh
 # 1. Copy the service file to systemd
@@ -168,12 +172,12 @@ deno task start
 
 ## Paid HTTPS tier (production cutover)
 
-Free **HTTP** redirects stay free and unchanged. The optional paid **HTTPS** tier
-runs the app behind Caddy: Caddy terminates TLS, asks the app whether an SNI has
-paid (`/tls-check`), issues an on-demand Let's Encrypt cert for paid domains, and
-persists certs to S3. Payments go through Polar (Merchant of Record). The whole
-feature is gated by `HTTPS_TIER_ENABLED`; with it `false` the deployment behaves
-byte-for-byte like the legacy HTTP service.
+Free **HTTP** redirects stay free and unchanged. The optional paid **HTTPS**
+tier runs the app behind Caddy: Caddy terminates TLS, asks the app whether an
+SNI has paid (`/tls-check`), issues an on-demand Let's Encrypt cert for paid
+domains, and persists certs to S3. Payments go through Polar (Merchant of
+Record). The whole feature is gated by `HTTPS_TIER_ENABLED`; with it `false` the
+deployment behaves byte-for-byte like the legacy HTTP service.
 
 Run it with the self-contained prod stack:
 
@@ -185,13 +189,14 @@ docker compose --env-file docker/prod.env -f docker-compose.prod.yml up -d --bui
 ### 1. Cert storage (S3)
 
 Create a **dedicated, private** bucket with **Block Public Access ON** and
-**default encryption** (SSE-S3/AES256 is enough). Create a least-privilege access
-key using [`docker/aws/cert-bucket-iam-policy.json`](docker/aws/cert-bucket-iam-policy.json)
+**default encryption** (SSE-S3/AES256 is enough). Create a least-privilege
+access key using
+[`docker/aws/cert-bucket-iam-policy.json`](docker/aws/cert-bucket-iam-policy.json)
 (replace `YOUR_CERT_BUCKET`). Put the bucket/region/keys in `docker/prod.env`.
-Certs persist here, so a rebuilt box never re-issues (no Let's Encrypt rate-limit
-storm), and `deno task reconcile` rebuilds the **Plans** in Postgres from Polar.
-The app-owned **Domains** live durably in the on-box Postgres (their off-box
-disaster-recovery backup is a later phase).
+Certs persist here, so a rebuilt box never re-issues (no Let's Encrypt
+rate-limit storm), and `deno task reconcile` rebuilds the **Plans** in Postgres
+from Polar. The app-owned **Domains** live durably in the on-box Postgres (their
+off-box disaster-recovery backup is a later phase).
 
 ### 2. Validate on Let's Encrypt staging, then flip to production
 
@@ -220,28 +225,29 @@ Caddy now owns 80/443 and the app moves to an internal, unpublished port. Free
 HTTP redirects keep working throughout. To roll back, stop Compose and
 `systemctl start redirect-center`.
 
-On-demand issuance is rate-limited in `/tls-check` (`TLS_ISSUANCE_RATE_LIMIT` per
-`TLS_ISSUANCE_RATE_WINDOW_MS`) because Caddy removed its built-in on-demand rate
-limit in 2.9; combined with the `ask` gate, unknown-hostname floods cannot trigger
-mass issuance.
+On-demand issuance is rate-limited in `/tls-check` (`TLS_ISSUANCE_RATE_LIMIT`
+per `TLS_ISSUANCE_RATE_WINDOW_MS`) because Caddy removed its built-in on-demand
+rate limit in 2.9; combined with the `ask` gate, unknown-hostname floods cannot
+trigger mass issuance.
 
 ### 4. Dashboard (optional, passwordless)
 
 Set `SESSION_SECRET` (e.g. `openssl rand -hex 32`) to mount the "My Domains"
 dashboard at `/login` + `/portal`. Customers sign in with a passwordless magic
-link — the email is looked up in Polar (so `POLAR_ACCESS_TOKEN` is required) and a
-signed, single-use link is emailed (via Resend when `RESEND_API_KEY`/`EMAIL_FROM`
-are set, otherwise logged to the container). Point the Polar checkout's
-`success_url` at `https://<FQDN>/auth/checkout?checkout_id={CHECKOUT_ID}` for
-post-checkout auto-login. With `SESSION_SECRET` unset, no dashboard/auth routes
-exist and issuance + webhooks run exactly as before.
+link — the email is looked up in Polar (so `POLAR_ACCESS_TOKEN` is required) and
+a signed, single-use link is emailed (via Resend when
+`RESEND_API_KEY`/`EMAIL_FROM` are set, otherwise logged to the container). Point
+the Polar checkout's `success_url` at
+`https://<FQDN>/auth/checkout?checkout_id={CHECKOUT_ID}` for post-checkout
+auto-login. With `SESSION_SECRET` unset, no dashboard/auth routes exist and
+issuance + webhooks run exactly as before.
 
 ### 5. Durability & backup (Postgres → S3)
 
-The `domains` table is **app-owned and not rebuildable from Polar** (ADR-0002), so
-it is the one piece of state that needs its own backup. The `pg-backup` service
-(under the `backup` Compose profile) runs `pg_dump` and uploads a gzipped dump to
-the same S3 bucket that holds the certs:
+The `domains` table is **app-owned and not rebuildable from Polar** (ADR-0002),
+so it is the one piece of state that needs its own backup. The `pg-backup`
+service (under the `backup` Compose profile) runs `pg_dump` and uploads a
+gzipped dump to the same S3 bucket that holds the certs:
 
 ```sh
 # one-off; schedule from host cron (e.g. daily 0 4 * * *)
@@ -259,7 +265,7 @@ docker compose ... run --rm app deno task reconcile   # repopulate Plans from Po
 ```
 
 **Durability boundary (explicit):** recovery needs **certs in S3 + Plans from
-Polar + the Domain list from a dump**. Losing the Postgres volume *without* a
+Polar + the Domain list from a dump**. Losing the Postgres volume _without_ a
 recent dump loses the app-owned Domain list — Plans and certs survive, but each
 Customer must re-add their Domains. Schedule the backup accordingly.
 
@@ -273,25 +279,29 @@ Create a wildcard entry in your DNS:
 
 ## Contributors
 
-This project exists thanks to all the people who contribute. [[Contribute](CONTRIBUTING.md)].
+This project exists thanks to all the people who contribute.
+[[Contribute](CONTRIBUTING.md)].
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore -->
-| [<img src="https://avatars0.githubusercontent.com/u/302277?v=4" width="100px;"/><br /><sub><b>Udlei Nati</b></sub>](https://github.com/udleinati)<br />[💻](https://github.com/udleinati/redirect.center/commits?author=udleinati "Code") [📖](https://github.com/udleinati/redirect.center/commits?author=udleinati "Documentation") [🤔](#ideas-udleinati "Ideas, Planning, & Feedback") [🚇](#infra-udleinati "Infrastructure (Hosting, Build-Tools, etc)") |
-| :---: |
-<!-- ALL-CONTRIBUTORS-LIST:END -->
 
+| [<img src="https://avatars0.githubusercontent.com/u/302277?v=4" width="100px;"/><br /><sub><b>Udlei Nati</b></sub>](https://github.com/udleinati)<br />[💻](https://github.com/udleinati/redirect.center/commits?author=udleinati "Code") [📖](https://github.com/udleinati/redirect.center/commits?author=udleinati "Documentation") [🤔](#ideas-udleinati "Ideas, Planning, & Feedback") [🚇](#infra-udleinati "Infrastructure (Hosting, Build-Tools, etc)") |
+| :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: |
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
 
 ## Backers
 
-Thank you to all our backers! 🙏 [[Become a backer](https://opencollective.com/redirectcenter#backer)]
+Thank you to all our backers! 🙏
+[[Become a backer](https://opencollective.com/redirectcenter#backer)]
 
 <a href="https://opencollective.com/redirectcenter#backers" target="_blank"><img src="https://opencollective.com/redirectcenter/backers.svg?width=890"></a>
 
-
 ## Sponsors
 
-Support this project by becoming a sponsor. Your logo will show up here with a link to your website. [[Become a sponsor](https://opencollective.com/redirectcenter#sponsor)]
+Support this project by becoming a sponsor. Your logo will show up here with a
+link to your website.
+[[Become a sponsor](https://opencollective.com/redirectcenter#sponsor)]
 
 <a href="https://opencollective.com/redirectcenter/sponsor/0/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/0/avatar.svg"></a>
 <a href="https://opencollective.com/redirectcenter/sponsor/1/website" target="_blank"><img src="https://opencollective.com/redirectcenter/sponsor/1/avatar.svg"></a>

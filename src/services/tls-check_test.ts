@@ -1,6 +1,4 @@
-import {
-  assertEquals,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assertEquals } from "@std/assert";
 import { decideTlsCheck } from "./tls-check.ts";
 import { IssuanceRateLimiter } from "./issuance-rate-limit.ts";
 import { authorizeHost, type Domain, type Plan } from "./authorization.ts";
@@ -60,7 +58,10 @@ Deno.test("unpaid requests never consume rate-limit budget", () => {
   const limiter = new IssuanceRateLimiter(1, 60_000, 10_000);
   // Hammer unpaid SNIs — all 403, none should touch the limiter.
   for (let i = 0; i < 50; i++) {
-    assertEquals(decideTlsCheck(`attacker-${i}.com`, auth, limiter, NOW + i), 403);
+    assertEquals(
+      decideTlsCheck(`attacker-${i}.com`, auth, limiter, NOW + i),
+      403,
+    );
   }
   // The single issuance slot is still available for the legitimate paid domain.
   assertEquals(decideTlsCheck("paid.com", auth, limiter, NOW + 100), 200);

@@ -6,18 +6,21 @@
     "test": "deno test --allow-net --allow-read --allow-write --allow-env"
   },
   "imports": {
-    "hono": "jsr:@hono/hono@^4",
-    "hono/cookie": "jsr:@hono/hono@^4/cookie",
-    "hono/compress": "jsr:@hono/hono@^4/compress",
-    "hono/deno": "jsr:@hono/hono@^4/deno",
-    "hono/": "jsr:@hono/hono@^4/",
-    "ventojs": "https://deno.land/x/vento@v1.12.12/mod.ts",
-    "psl": "npm:psl@^1.9.0",
+    "hono": "jsr:@hono/hono@^4.12.23",
+    "hono/cookie": "jsr:@hono/hono@^4.12.23/cookie",
+    "hono/compress": "jsr:@hono/hono@^4.12.23/compress",
+    "hono/deno": "jsr:@hono/hono@^4.12.23/deno",
+    "hono/": "jsr:@hono/hono@^4.12.23/",
+    "ventojs": "jsr:@vento/vento@^1.14.0",
+    "psl": "npm:psl@^1.15.0",
     "parse-domain": "npm:parse-domain@^5.0.0",
     "s3-lite-client": "jsr:@bradenmacdonald/s3-lite-client@^0.9.6",
-    "postgres": "npm:postgres@^3.4.5"
+    "postgres": "npm:postgres@^3.4.9",
+    "@db/redis": "jsr:@db/redis@^0.38.0",
+    "@std/assert": "jsr:@std/assert@^1.0.19"
   },
   "compilerOptions": {
     "strict": true
-  }
+  },
+  "exclude": ["docker/"]
 }

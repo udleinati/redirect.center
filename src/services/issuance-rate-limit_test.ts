@@ -1,7 +1,4 @@
-import {
-  assert,
-  assertFalse,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assert, assertFalse } from "@std/assert";
 import { IssuanceRateLimiter } from "./issuance-rate-limit.ts";
 
 const NOW = 1_700_000_000_000;

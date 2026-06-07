@@ -3,15 +3,25 @@
   "specifiers": {
     "jsr:@bradenmacdonald/s3-lite-client@~0.9.6": "0.9.6",
     "jsr:@davidbonnet/astring@1.8.6": "1.8.6",
-    "jsr:@hono/hono@4": "4.10.4",
+    "jsr:@db/redis@*": "0.38.0",
+    "jsr:@db/redis@0.38": "0.38.0",
+    "jsr:@hono/hono@^4.12.23": "4.12.23",
+    "jsr:@std/assert@^1.0.19": "1.0.19",
+    "jsr:@std/async@1": "1.0.9",
+    "jsr:@std/bytes@1": "1.0.6",
+    "jsr:@std/bytes@^1.0.2-rc.3": "1.0.6",
     "jsr:@std/html@1.0.3": "1.0.3",
+    "jsr:@std/internal@^1.0.12": "1.0.13",
+    "jsr:@std/io@0.224.5": "0.224.5",
     "jsr:@std/path@1.0.8": "1.0.8",
+    "jsr:@vento/vento@^1.14.0": "1.14.0",
     "npm:@types/estree@1.0.6": "1.0.6",
     "npm:estree-walker@3.0.3": "3.0.3",
     "npm:meriyah@6.0.3": "6.0.3",
+    "npm:meriyah@6.0.5": "6.0.5",
     "npm:parse-domain@5": "5.0.0",
-    "npm:postgres@^3.4.5": "3.4.9",
-    "npm:psl@^1.9.0": "1.15.0"
+    "npm:postgres@^3.4.9": "3.4.9",
+    "npm:psl@^1.15.0": "1.15.0"
   },
   "jsr": {
     "@bradenmacdonald/s3-lite-client@0.9.6": {
@@ -20,14 +30,54 @@
     "@davidbonnet/astring@1.8.6": {
       "integrity": "98b4914c8863cdf8c0ff83bb5c528caa67a8dca6020ad6234113499f00583e3a"
     },
-    "@hono/hono@4.10.4": {
-      "integrity": "e54d00c4cf994e7ae297d7321793cf940656b9c5e934564c03ffc15499041b9e"
+    "@db/redis@0.38.0": {
+      "integrity": "d8a25a603a5c5eb2574d8217072b3a47d83c54de5977b76cce1789def42f14c4",
+      "dependencies": [
+        "jsr:@std/async",
+        "jsr:@std/bytes@1",
+        "jsr:@std/io"
+      ]
+    },
+    "@hono/hono@4.12.23": {
+      "integrity": "9d9f3da498f69c311b5f92d973eb3b8ebc973b5fd2b4972781b556e07818a745"
+    },
+    "@std/assert@1.0.19": {
+      "integrity": "eaada96ee120cb980bc47e040f82814d786fe8162ecc53c91d8df60b8755991e",
+      "dependencies": [
+        "jsr:@std/internal"
+      ]
+    },
+    "@std/async@1.0.9": {
+      "integrity": "c6472fd0623b3f3daae023cdf7ca5535e1b721dfbf376562c0c12b3fb4867f91"
+    },
+    "@std/bytes@1.0.6": {
+      "integrity": "f6ac6adbd8ccd99314045f5703e23af0a68d7f7e58364b47d2c7f408aeb5820a"
     },
     "@std/html@1.0.3": {
       "integrity": "7a0ac35e050431fb49d44e61c8b8aac1ebd55937e0dc9ec6409aa4bab39a7988"
     },
+    "@std/internal@1.0.13": {
+      "integrity": "2f9546691d4ac2d32859c82dff284aaeac980ddeca38430d07941e7e288725c0"
+    },
+    "@std/io@0.224.5": {
+      "integrity": "cb84fe655d1273fca94efcff411465027a8b0b4225203f19d6ee98d9c8920a2d",
+      "dependencies": [
+        "jsr:@std/bytes@^1.0.2-rc.3"
+      ]
+    },
     "@std/path@1.0.8": {
       "integrity": "548fa456bb6a04d3c1a1e7477986b6cffbce95102d0bb447c67c4ee70e0364be"
+    },
+    "@vento/vento@1.14.0": {
+      "integrity": "59000a01671ace997f37ece4fafaba5c7b1f3e0db92d048dfd996fdbc09fb431",
+      "dependencies": [
+        "jsr:@davidbonnet/astring",
+        "jsr:@std/html",
+        "jsr:@std/path",
+        "npm:@types/estree",
+        "npm:estree-walker",
+        "npm:meriyah@6.0.5"
+      ]
     }
   },
   "npm": {
@@ -51,6 +101,9 @@
     },
     "meriyah@6.0.3": {
       "integrity": "sha512-NqUbuQIjIH8dxUBPTMHS1kwIHd6n6nF3F7oeLXGWqBkpVP2lZxVHdab5JxbFBisIB4axZ9b/lT4HLJfZxmFK7Q=="
+    },
+    "meriyah@6.0.5": {
+      "integrity": "sha512-SrMqQCox7TTwtftWKHy/ZaVe+ZRpRl20pAgDo+PS9hzcAJrMjYsBJQPPiLXTnjztrqdfGS+Zz99r6Bwvydta1w=="
     },
     "node-fetch@2.7.0": {
       "integrity": "sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==",
@@ -151,10 +204,13 @@
   "workspace": {
     "dependencies": [
       "jsr:@bradenmacdonald/s3-lite-client@~0.9.6",
-      "jsr:@hono/hono@4",
+      "jsr:@db/redis@0.38",
+      "jsr:@hono/hono@^4.12.23",
+      "jsr:@std/assert@^1.0.19",
+      "jsr:@vento/vento@^1.14.0",
       "npm:parse-domain@5",
-      "npm:postgres@^3.4.5",
-      "npm:psl@^1.9.0"
+      "npm:postgres@^3.4.9",
+      "npm:psl@^1.15.0"
     ]
   }
 }

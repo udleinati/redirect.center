@@ -45,7 +45,9 @@ async function resolveCnameDoH(
 
   // Status 0 = NOERROR, 3 = NXDOMAIN
   if (data.Status !== 0 || !data.Answer) {
-    throw new Error(`No CNAME records found for ${host} (status=${data.Status})`);
+    throw new Error(
+      `No CNAME records found for ${host} (status=${data.Status})`,
+    );
   }
 
   // CNAME type = 5
@@ -73,7 +75,9 @@ for (const domain of TEST_DOMAINS) {
         throw new Error("Expected at least one CNAME record");
       }
     } catch (err) {
-      console.log(`  Deno.resolveDns(${domain}) => ERROR: ${(err as Error).message}`);
+      console.log(
+        `  Deno.resolveDns(${domain}) => ERROR: ${(err as Error).message}`,
+      );
       // Some test domains may not have CNAME — that's ok, we still compare behavior
     }
   });
@@ -118,18 +122,27 @@ for (const domain of TEST_DOMAINS) {
       dohError = (err as Error).message;
     }
 
-    console.log(`  Deno: ${denoResult ? JSON.stringify(denoResult) : `ERROR(${denoError})`}`);
-    console.log(`  DoH:  ${dohResult ? JSON.stringify(dohResult) : `ERROR(${dohError})`}`);
+    console.log(
+      `  Deno: ${
+        denoResult ? JSON.stringify(denoResult) : `ERROR(${denoError})`
+      }`,
+    );
+    console.log(
+      `  DoH:  ${dohResult ? JSON.stringify(dohResult) : `ERROR(${dohError})`}`,
+    );
 
     if (denoResult && dohResult) {
       // Normalize trailing dots for comparison
-      const normalize = (r: string[]) => r.map((s) => s.replace(/\.$/, "")).sort();
+      const normalize = (r: string[]) =>
+        r.map((s) => s.replace(/\.$/, "")).sort();
       const d = normalize(denoResult);
       const f = normalize(dohResult);
 
       if (JSON.stringify(d) !== JSON.stringify(f)) {
         throw new Error(
-          `Results differ!\n  Deno: ${JSON.stringify(d)}\n  DoH:  ${JSON.stringify(f)}`,
+          `Results differ!\n  Deno: ${JSON.stringify(d)}\n  DoH:  ${
+            JSON.stringify(f)
+          }`,
         );
       }
       console.log("  ✓ Results match");

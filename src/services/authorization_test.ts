@@ -1,8 +1,4 @@
-import {
-  assert,
-  assertEquals,
-  assertFalse,
-} from "https://deno.land/std@0.224.0/assert/mod.ts";
+import { assert, assertEquals, assertFalse } from "@std/assert";
 import {
   coversHost,
   isRegistrableDomain,
@@ -39,7 +35,9 @@ Deno.test("whole-domain covers apex and arbitrary-depth subdomains", () => {
   assert(coversHost("example.com", "whole-domain", "www.example.com"));
   assert(coversHost("example.com", "whole-domain", "a.b.c.example.com"));
   // ...but never a different registrable domain that merely shares a suffix.
-  assertFalse(coversHost("example.com", "whole-domain", "example.com.attacker.com"));
+  assertFalse(
+    coversHost("example.com", "whole-domain", "example.com.attacker.com"),
+  );
   assertFalse(coversHost("example.com", "whole-domain", "notexample.com"));
 });
 
@@ -49,11 +47,19 @@ Deno.test("whole-domain covers apex and arbitrary-depth subdomains", () => {
 Deno.test("SNI is normalized (case, trailing dot, IDN) before matching", () => {
   assertEquals(normalizeDomain("EXAMPLE.com."), "example.com");
   assert(coversHost("example.com", "single", normalizeDomain("EXAMPLE.com.")));
-  assert(coversHost("example.com", "single", normalizeDomain("WWW.Example.COM")));
+  assert(
+    coversHost("example.com", "single", normalizeDomain("WWW.Example.COM")),
+  );
 
   // IDN apex stored in punycode is matched from its Unicode SNI form.
   assertEquals(normalizeDomain("Bücher.example"), "xn--bcher-kva.example");
-  assert(coversHost("xn--bcher-kva.example", "single", normalizeDomain("Bücher.example")));
+  assert(
+    coversHost(
+      "xn--bcher-kva.example",
+      "single",
+      normalizeDomain("Bücher.example"),
+    ),
+  );
 });
 
 // WHY: a whole-domain target that is a public suffix (e.g. *.com) would let one

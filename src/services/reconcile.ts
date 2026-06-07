@@ -96,7 +96,10 @@ export async function reconcilePlans(
     if (typeof item.id === "string" && item.id) remoteActiveIds.add(item.id);
     // Polar already filtered to active=true, so treat the API as authoritative on
     // "active" and let mapPlanEvent extract customer/scope/cap/period as on a webhook.
-    const action = mapPlanEvent({ type: "subscription.active", data: { ...item, status: "active" } }, { productTiers });
+    const action = mapPlanEvent({
+      type: "subscription.active",
+      data: { ...item, status: "active" },
+    }, { productTiers });
     if (action.type === "upsert") activations.push(action.plan);
   }
 

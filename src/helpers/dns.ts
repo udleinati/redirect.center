@@ -83,7 +83,10 @@ function cacheResult(host: string, records: string[]): string[] {
 
 function cacheError(host: string, error: Error): void {
   evictIfNeeded();
-  cache.set(host, { errorMessage: error.message, expiresAt: Date.now() + CACHE_TTL_MS });
+  cache.set(host, {
+    errorMessage: error.message,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
 }
 
 function evictIfNeeded(): void {
