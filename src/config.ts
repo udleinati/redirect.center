@@ -6,6 +6,8 @@ export interface AppConfig {
   environment: string;
   projectName: string;
   loggerLevel: string;
+  // Redis connection for usage statistics (domains seen; shown on the homepage).
+  redisUrl: string;
   // Paid HTTPS tier (off by default => byte-for-byte legacy behavior).
   httpsTierEnabled: boolean;
   // Trust X-Forwarded-* (only when running behind a reverse proxy, e.g. Caddy).
@@ -79,6 +81,7 @@ export function loadConfig(): AppConfig {
     environment: Deno.env.get("ENVIRONMENT") || "dev1",
     projectName: Deno.env.get("PROJECT_NAME") || "redirect.center",
     loggerLevel: Deno.env.get("LOGGER_LEVEL") || "debug",
+    redisUrl: Deno.env.get("REDIS_URL") || "redis://redis:6379",
     httpsTierEnabled: Deno.env.get("HTTPS_TIER_ENABLED") === "true",
     trustProxy: Deno.env.get("TRUST_PROXY") === "true",
     databaseUrl: Deno.env.get("DATABASE_URL") ||

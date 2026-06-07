@@ -124,7 +124,9 @@
     }
 
     .hero h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 6px; }
-    .hero .tagline { font-size: 1rem; opacity: 0.92; margin-bottom: 16px; }
+    .hero .tagline { font-size: 1rem; opacity: 0.92; margin-bottom: 8px; }
+    .hero .stats { font-size: 0.8rem; opacity: 0.85; margin-bottom: 16px; }
+    .hero .stats strong { font-weight: 700; }
 
     /* CTA Button */
     .btn-cta {
@@ -322,6 +324,10 @@
       <p class="tagline">
         <span class="en">Redirect any domain using only a DNS record. No server, no hosting, no code.</span>
         <span class="pt">Redirecione qualquer dom&iacute;nio usando apenas um registro DNS. Sem servidor, sem hospedagem, sem c&oacute;digo.</span>
+      </p>
+      <p class="stats">
+        <span class="en">Last 24h: <strong>{{ statistics.periodDomains }}</strong> domains &middot; Total: <strong>{{ statistics.everDomains }}</strong> domains</span>
+        <span class="pt">&Uacute;ltimas 24h: <strong>{{ statistics.periodDomains }}</strong> dom&iacute;nios &middot; Total: <strong>{{ statistics.everDomains }}</strong> dom&iacute;nios</span>
       </p>
     </div>
   </section>
@@ -744,6 +750,9 @@
       </div>
 
       <div class="footer-bottom">
+        <a class="muted" href="/terms">Terms</a> &middot;
+        <a class="muted" href="/privacy">Privacy</a> &middot;
+        <a class="muted" href="/refunds">Refunds</a><br>
         &copy; {{ app.projectName }} &middot; Open source under MIT License &middot;
         Other projects:
         <a class="muted" href="https://linkpci.com/" rel="noopener">linkpci</a> &middot;

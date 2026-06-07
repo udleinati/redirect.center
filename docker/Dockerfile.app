@@ -10,7 +10,6 @@ RUN deno install
 
 COPY src/ ./src/
 COPY views/ ./views/
-COPY db/ ./db/
 
 RUN deno cache src/main.ts
 

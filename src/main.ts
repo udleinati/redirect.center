@@ -24,28 +24,55 @@ import {
 import { IssuanceRateLimiter } from "./services/issuance-rate-limit.ts";
 import { decideTlsCheck } from "./services/tls-check.ts";
 import { mountDashboard } from "./services/dashboard.ts";
+import {
+  privacyPage,
+  refundsPage,
+  termsPage,
+} from "./services/dashboard-views.ts";
+import { statistic } from "./services/statistic.ts";
 
 const app = new Hono();
 
-// Pre-render homepage at startup (raw + gzip) to avoid per-request
-// template execution and CompressionStream allocations.
-const homepage = await (async () => {
-  const env = vento({
-    includes: new URL("../views", import.meta.url).pathname,
-    autoescape: false,
-  });
-  const template = await env.load("index.vto");
-  const result = await template({ app: config });
-  const html = result.content;
+// Shared Postgres pool (ADR-0002). Always created: the guardian denylist lives
+// here even on the free tier, and the paid HTTPS block below reuses this pool.
+const db = createDb(config.databaseUrl);
 
+// Guardian denylist (Postgres-backed, mirrored into memory and refreshed every
+// 60s) and usage statistics (Redis). Both degrade gracefully if their store is
+// unreachable, so a redirect never fails because of them.
+await guardian.init(db);
+await statistic.init();
+
+// Homepage is pre-rendered (raw + gzip) to avoid per-request template execution.
+// It embeds live usage stats, so it is re-rendered every 60s with fresh counts.
+const homepageEnv = vento({
+  includes: new URL("../views", import.meta.url).pathname,
+  autoescape: false,
+});
+const homepageTemplate = await homepageEnv.load("index.vto");
+
+async function renderHomepage(): Promise<
+  { html: string; gzip: Uint8Array<ArrayBuffer> }
+> {
+  const statistics = await statistic.overview();
+  const result = await homepageTemplate({ app: config, statistics });
+  const html = result.content;
   const htmlBytes = new TextEncoder().encode(html);
   const gzipStream = new CompressionStream("gzip");
   const compressed = await new Response(
     new Blob([htmlBytes]).stream().pipeThrough(gzipStream),
   ).arrayBuffer();
-
   return { html, gzip: new Uint8Array(compressed) };
-})();
+}
+
+let homepage = await renderHomepage();
+setInterval(() => {
+  renderHomepage()
+    .then((next) => {
+      homepage = next;
+    })
+    .catch((e) => console.error(`[homepage] re-render failed: ${e}`));
+}, 60_000);
 
 app.onError(errorHandler);
 
@@ -97,8 +124,7 @@ let authz: AuthzCache | undefined;
 if (config.httpsTierEnabled) {
   // v2 durable store (ADR-0002): Postgres holds Plans + Domains; the in-process
   // AuthzCache answers /tls-check and the paywall off the handshake hot path.
-  // migrate is idempotent.
-  const db = createDb(config.databaseUrl);
+  // Reuses the shared `db` pool created above. migrate is idempotent.
   await migrate(db);
   const cache = new AuthzCache(db);
   if (config.seedPlansSpec) {
@@ -343,6 +369,22 @@ app.get("/robots.txt", (c) => {
   return c.text("User-agent: *\nDisallow: /\n");
 });
 
+// Public legal pages (Terms / Privacy / Refunds) — served only on the FQDN. On a
+// customer's redirect host these paths belong to their site, so fall through to
+// the redirect engine.
+const legalPages: ReadonlyArray<[string, () => string]> = [
+  ["/terms", termsPage],
+  ["/privacy", privacyPage],
+  ["/refunds", refundsPage],
+];
+for (const [path, render] of legalPages) {
+  app.get(path, async (c, next) => {
+    const host = (c.req.header("host") || "").split(":")[0];
+    if (host === config.fqdn) return c.html(render());
+    await next();
+  });
+}
+
 // FQDN-only routes: return 404 for non-redirect paths on the service domain
 app.all("/*", async (c, next) => {
   const host = (c.req.header("host") || "").split(":")[0];
@@ -396,6 +438,10 @@ async function handleRedirect(c: import("hono").Context): Promise<Response> {
   if (redirect.fqdn === host) {
     throw new HttpError(508, `Loop detected: ${host} redirects to itself`);
   }
+
+  // Record the redirect for the homepage usage stats. Fire-and-forget: never
+  // awaited, and a Redis blip can't fail the redirect.
+  statistic.write(host);
 
   // Encode non-ASCII characters to avoid ByteString errors in Response headers
   let safeLocation: string;

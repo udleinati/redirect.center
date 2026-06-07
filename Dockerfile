@@ -7,7 +7,6 @@ RUN deno install
 
 COPY src/ ./src/
 COPY views/ ./views/
-COPY db/ ./db/
 COPY supervisor.ts .
 
 RUN deno cache src/main.ts

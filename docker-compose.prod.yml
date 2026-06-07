@@ -25,8 +25,11 @@ services:
       LOGGER_LEVEL: ${LOGGER_LEVEL:-info}
       TRUST_PROXY: "true"
       HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-true}
-      # v2 durable store (ADR-0002): on-box Postgres holds Plans + Domains.
+      # v2 durable store (ADR-0002): on-box Postgres holds Plans + Domains (and
+      # the guardian denylist, mirrored into memory and refreshed every 60s).
       DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
+      # Usage statistics (domains seen) in Redis; shown on the homepage.
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # No demo seed in prod — Plans come from webhooks + `deno task reconcile`.
       SEED_PLANS: ""
       POLAR_WEBHOOK_SECRET: ${POLAR_WEBHOOK_SECRET:?set POLAR_WEBHOOK_SECRET}
@@ -60,6 +63,17 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # Usage statistics (domains seen, shown on the homepage). Persisted (appendonly)
+  # so the all-time total survives restarts.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
     restart: unless-stopped
 
   # v2 durable store (ADR-0002): Plans + Domains. On-box single-instance.
@@ -77,7 +91,10 @@ services:
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-redirect} -d ${POSTGRES_DB:-redirect}"]
+      test: [
+        "CMD-SHELL",
+        "pg_isready -U ${POSTGRES_USER:-redirect} -d ${POSTGRES_DB:-redirect}",
+      ]
       interval: 3s
       timeout: 3s
       retries: 10
@@ -143,3 +160,4 @@ volumes:
   caddy-data:
   caddy-config:
   postgres-data:
+  redis-data:

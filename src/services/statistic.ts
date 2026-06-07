@@ -1,85 +1,99 @@
-import { parseDomain } from "parse-domain";
+// Usage statistics in Redis. Each redirect records the registrable domain in a
+// sorted set scored by last-seen time (epoch ms), so the homepage can show:
+//   • everDomains   — distinct domains ever seen        (ZCARD)
+//   • periodDomains — distinct domains seen in last 24h  (ZCOUNT now-24h .. +inf)
+// Writes are fire-and-forget off the redirect hot path; if Redis is down the
+// service degrades to zeros and never throws into a redirect.
+
+import { connect, type Redis } from "@db/redis";
+import { parseDomain, ParseResultType } from "parse-domain";
+import { config } from "../config.ts";
 import { logger } from "../helpers/logger.ts";
 
-interface Statistic {
-  count: number;
-  firstTime?: string;
-  lastTime?: string;
-}
+const DOMAINS_KEY = "stat:domains";
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-interface StatisticOverview {
+export interface StatisticOverview {
   periodDomains: number;
   everDomains: number;
 }
 
-class StatisticService {
-  private kv!: Deno.Kv;
-  private ready: Promise<void>;
+// The registrable domain of a host (a.b.example.com -> example.com), or null for
+// an unlistable host. Counting by registrable domain matches the old behavior.
+function registrableDomain(host: string): string | null {
+  const r = parseDomain(host);
+  if (r.type === ParseResultType.Listed && r.domain) {
+    return `${r.domain}.${r.topLevelDomains.join(".")}`.toLowerCase();
+  }
+  return null;
+}
 
-  constructor() {
-    this.ready = this.init();
+export class StatisticService {
+  #redis?: Redis;
+
+  // Connect once at boot. Resilient: a failed connection leaves stats disabled
+  // (zeros) rather than breaking startup or redirects. `redisUrl` is injectable
+  // for tests; production passes none and uses the configured URL.
+  async init(redisUrl: string = config.redisUrl): Promise<void> {
+    try {
+      const u = new URL(redisUrl);
+      const port = Number(u.port) || 6379;
+      this.#redis = await connect({
+        hostname: u.hostname,
+        port,
+        ...(u.password ? { password: u.password } : {}),
+      });
+      logger.info(`[statistic] connected to redis at ${u.hostname}:${port}`);
+    } catch (e) {
+      logger.error(
+        `[statistic] redis connect failed (stats disabled): ${
+          e instanceof Error ? e.message : e
+        }`,
+      );
+    }
   }
 
-  private async init(): Promise<void> {
-    this.kv = await Deno.openKv();
-    await this.kv.set(["meta", "started"], new Date().toISOString());
+  // Record one hit for a host's registrable domain. Returns a promise so tests can
+  // await it, but the redirect path never awaits (fire-and-forget); the internal
+  // catch means it never rejects, so a Redis blip can't fail a redirect.
+  write(host: string): Promise<void> {
+    if (!this.#redis) return Promise.resolve();
+    const domain = registrableDomain(host);
+    if (!domain) return Promise.resolve();
+    return this.#redis.zadd(DOMAINS_KEY, Date.now(), domain)
+      .then(() => {})
+      .catch((e) => {
+        logger.error(
+          `[statistic] zadd failed: ${e instanceof Error ? e.message : e}`,
+        );
+      });
   }
 
-  async ensureReady(): Promise<void> {
-    await this.ready;
-  }
-
-  async write(host: string): Promise<void> {
-    await this.ensureReady();
-    logger.debug(`[statistic] write received host ${host}`);
-
-    const parsedHost = parseDomain(host) as {
-      domain: string;
-      topLevelDomains: string[];
-    };
-
-    const domain =
-      `${parsedHost.domain}.${parsedHost.topLevelDomains.join(".")}`.toLowerCase();
-    await this.entryDomain(domain);
-  }
-
-  private async entryDomain(domain: string): Promise<void> {
-    const key = ["domain", domain];
-    const existing = await this.kv.get<Statistic>(key);
-
-    const entry: Statistic = existing.value ?? {
-      count: 0,
-      firstTime: new Date().toISOString(),
-    };
-
-    entry.count += 1;
-    entry.lastTime = new Date().toISOString();
-
-    await this.kv.set(key, entry);
-    logger.debug(
-      `[statistic] entryDomain key ${domain}, entry: ${JSON.stringify(entry)}`,
-    );
+  // Close the connection (tests / graceful shutdown).
+  close(): void {
+    this.#redis?.close();
   }
 
   async overview(): Promise<StatisticOverview> {
-    await this.ensureReady();
-
-    const dayBefore = new Date();
-    dayBefore.setDate(dayBefore.getDate() - 1);
-    const dayBeforeISO = dayBefore.toISOString();
-
-    let periodDomains = 0;
-    let everDomains = 0;
-
-    const iter = this.kv.list<Statistic>({ prefix: ["domain"] });
-    for await (const entry of iter) {
-      everDomains++;
-      if (entry.value.lastTime && entry.value.lastTime >= dayBeforeISO) {
-        periodDomains++;
-      }
+    if (!this.#redis) return { periodDomains: 0, everDomains: 0 };
+    try {
+      const [ever, period] = await Promise.all([
+        this.#redis.zcard(DOMAINS_KEY),
+        // Scores are epoch-ms timestamps, always well under MAX_SAFE_INTEGER, so
+        // that upper bound is effectively +inf for "seen in the last 24h".
+        this.#redis.zcount(
+          DOMAINS_KEY,
+          Date.now() - DAY_MS,
+          Number.MAX_SAFE_INTEGER,
+        ),
+      ]);
+      return { periodDomains: Number(period), everDomains: Number(ever) };
+    } catch (e) {
+      logger.error(
+        `[statistic] overview failed: ${e instanceof Error ? e.message : e}`,
+      );
+      return { periodDomains: 0, everDomains: 0 };
     }
-
-    return { periodDomains, everDomains };
   }
 }
 

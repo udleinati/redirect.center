@@ -18,8 +18,11 @@ services:
       # Always behind Caddy in this stack -> trust X-Forwarded-For for the real client IP.
       TRUST_PROXY: "true"
       HTTPS_TIER_ENABLED: ${HTTPS_TIER_ENABLED:-false}
-      # v2 durable store (ADR-0002): Postgres holds Plans + Domains.
+      # v2 durable store (ADR-0002): Postgres holds Plans + Domains (and the
+      # guardian denylist, mirrored into memory and refreshed every 60s).
       DATABASE_URL: ${DATABASE_URL:-postgres://redirect:redirect@postgres:5432/redirect}
+      # Usage statistics (domains seen) in Redis; shown on the homepage.
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # v2 demo seed: plan blocks "customer|scope|cap|domain,domain;…"
       SEED_PLANS: ${SEED_PLANS:-}
       # Polar webhook (Phase 3/9) — signature secret + the per-Scope Tier ladders.
@@ -59,6 +62,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
 
   caddy:
@@ -136,13 +141,22 @@ services:
       - /bin/sh
       - -c
       - |
-        aws configure set default.s3.addressing_style path
-        until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do
-          echo "waiting for rustfs..."; sleep 1;
-        done
-        aws --endpoint-url http://rustfs:9000 s3 mb "s3://$$S3_BUCKET" || true
-        aws --endpoint-url http://rustfs:9000 s3api head-bucket --bucket "$$S3_BUCKET"
-        echo "bucket ready: $$S3_BUCKET"
+          aws configure set default.s3.addressing_style path
+          until aws --endpoint-url http://rustfs:9000 s3 ls >/dev/null 2>&1; do
+            echo "waiting for rustfs..."; sleep 1;
+          done
+          aws --endpoint-url http://rustfs:9000 s3 mb "s3://$$S3_BUCKET" || true
+          aws --endpoint-url http://rustfs:9000 s3api head-bucket --bucket "$$S3_BUCKET"
+          echo "bucket ready: $$S3_BUCKET"
+
+  # Usage statistics (domains seen, shown on the homepage). Persisted (appendonly)
+  # so the all-time total survives restarts.
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
 
   # v2 durable store (ADR-0002): Plans + Domains. On-box single-instance; recovery
   # via pg_dump -> S3 (Phase 12). Domains are a source of truth, not a cache.
@@ -189,3 +203,4 @@ volumes:
   caddy-config:
   rustfs-data:
   postgres-data:
+  redis-data:

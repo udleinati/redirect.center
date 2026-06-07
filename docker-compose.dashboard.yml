@@ -36,6 +36,8 @@ services:
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
       EMAIL_FROM: redirect.center <noreply@redirect.center>
+      # Usage statistics (domains seen) go to Redis; shown on the homepage.
+      REDIS_URL: redis://redis:6379
       # No S3 in this sandbox: removing a domain still deauthorizes it, the cert
       # teardown is just a no-op (there's no Caddy issuing certs here anyway).
     ports:
@@ -43,6 +45,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
     restart: unless-stopped
 
   postgres:
